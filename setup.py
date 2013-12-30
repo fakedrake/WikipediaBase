@@ -15,7 +15,11 @@ setup(
     packages=['wikipediabasepy'],
     include_package_data=True,
     install_requires=[
-        'docopt < 1.0.0'
+        'docopt < 1.0.0',
+        'edn_format'
+    ],
+    tests_require=[
+        'nose',
     ],
     entry_points={
         'console_scripts': [
