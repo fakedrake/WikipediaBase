@@ -14,7 +14,6 @@ except ImportError:
     import unittest
 
 from wikipediabasepy import telnet
-from wikipediabasepy.log import Logger
 
 import telnetlib
 
@@ -24,8 +23,7 @@ def answer(msg):
 class TestTelnet(unittest.TestCase):
 
     def setUp(self):
-        self.log = Logger("filename.log")
-        self.srv = telnet.TelnetServer(answer=answer, log=self.log)
+        self.srv = telnet.TelnetServer(answer=answer)
         self.cli = telnetlib.Telnet("0.0.0.0", 1984)
 
     def test_threaded(self):

@@ -1,7 +1,8 @@
 from itertools import chain
 
+from log import Logging
 
-class Aquirer(object):
+class Aquirer(Logging):
     def __init__(self, providers=None):
         self._providers = providers or []
 
@@ -56,7 +57,7 @@ class ProviderMeta(type):
 
 
 
-class Provider(object):
+class Provider(Logging):
     """
     Can provide a dictionary of resources managed by name. Resources
     can be anything but most of the time they will be callables.

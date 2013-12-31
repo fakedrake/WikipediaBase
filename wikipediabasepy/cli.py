@@ -2,14 +2,11 @@
 wikipediabasepy.
 
 Usage:
-  wikipediabasepy [options] command <param> <another_params>
-  wikipediabasepy [options] another-command <param>
+  wikipediabasepy [options]
 
   wikipediabasepy -h | --help
 
 Options:
-  --kw-arg=<kw>         Keyword option description.
-  -b --boolean          Boolean option description.
   --debug               Debug.
 
   -h --help             Show this screen.
@@ -19,6 +16,9 @@ from docopt import docopt
 import logging
 
 import wikipediabasepy
+from knowledgebase import KnowledgeBase
+from resolvers import StaticResolver, InfoboxResolver
+from frontend import TelnetFrontend
 
 log = logging.getLogger(__name__)
 
@@ -28,3 +28,6 @@ def main():
     debug = arguments['--debug']
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     log.debug('arguments: %s', arguments)
+
+    fe = TelnetFrontend(knowledgebase=KnowledgeBase(resolvers=[StaticResolver(), InfoboxResolver()]))
+    fe.run()

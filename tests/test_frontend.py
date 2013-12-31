@@ -27,8 +27,8 @@ class TestFrontend(unittest.TestCase):
             resources={"get": get_attribute})])
 
     def test_simple(self):
-        self.assertEqual(self.simple_fe.eval("(get \"article\" (:int words))"),
-                         "(Keyword(int), Symbol(words)) of 'article'")
+        self.assertEqual(self.simple_fe.eval("(get \"article\" words)"),
+                         "Symbol(words) of 'article'")
 
     def tearDown(self):
         pass

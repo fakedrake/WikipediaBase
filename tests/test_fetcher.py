@@ -18,7 +18,7 @@ from wikipediabasepy import fetcher
 class TestFetcher(unittest.TestCase):
 
     def setUp(self):
-        self.fetcher = fetcher.WikipediaSiteFetcher()
+        self.fetcher = fetcher.CachingSiteFetcher()
 
     def test_html(self):
         # Remember, this probably needs internet.
