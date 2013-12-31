@@ -1,4 +1,4 @@
-from provider import Aquirer, Provider, provide
+from provider import Acquirer, Provider, provide
 
 
 class KnowledgeBase(Provider):
@@ -10,15 +10,15 @@ class KnowledgeBase(Provider):
         if frontend:
             self.provide_to(frontend)
 
-        self.resolvers_aquirer = Aquirer(providers=resolvers or [])
+        self.resolvers_acquirer = Acquirer(providers=resolvers or [])
 
     def resolvers(self):
         """
         The resolvers the the knowledgebase uses. This is a thin wapper
-        around the stock `Aquirer' functionality.
+        around the stock `Acquirer' functionality.
         """
 
-        return self.resolvers_aquirer._providers
+        return self.resolvers_acquirer._providers
 
     @provide()
     def get(self, v1, v2, v3=None):

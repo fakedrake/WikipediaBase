@@ -2,7 +2,7 @@ from itertools import chain
 
 from log import Logging
 
-class Aquirer(Logging):
+class Acquirer(Logging):
     def __init__(self, providers=None):
         self._providers = providers or []
 
@@ -18,7 +18,7 @@ class Aquirer(Logging):
 
         return dict(chain(*[p._resources.items() for p in self._providers]))
 
-    def aquire_from(self, provider, name=None):
+    def acquire_from(self, provider, name=None):
         """
         Register 'provider' as provider of resources under 'name'.
         """
@@ -65,7 +65,7 @@ class Provider(Logging):
 
     __metaclass__ = ProviderMeta
 
-    def __init__(self, resources={}, aquirer=None, *args, **kwargs):
+    def __init__(self, resources={}, acquirer=None, *args, **kwargs):
         self._resources = {}
 
         for k,f in self.meta_resources:
@@ -73,8 +73,8 @@ class Provider(Logging):
 
         self._resources.update(resources)
 
-        if aquirer:
-            self.provide_to(aquirer)
+        if acquirer:
+            self.provide_to(acquirer)
 
     def provide(self, name, resource):
         """
@@ -83,5 +83,5 @@ class Provider(Logging):
 
         self._resources[name] = resource
 
-    def provide_to(self, aquirer):
-        return aquirer.aquire_from(self)
+    def provide_to(self, acquirer):
+        return acquirer.acquire_from(self)

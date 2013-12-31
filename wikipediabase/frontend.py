@@ -2,20 +2,20 @@
 # -*- coding: utf-8 -*-
 
 from edn_format import loads, Keyword
-from provider import Aquirer, Provider
+from provider import Acquirer, Provider
 from telnet import TelnetServer
 from log import Logging
 
 import logging
 
 
-class Frontend(Aquirer):
+class Frontend(Acquirer):
 
     def __init__(self, knowledgebase=None, *args, **kwargs):
         super(Frontend, self).__init__(*args, **kwargs)
 
         if knowledgebase:
-            self.aquire_from(knowledgebase)
+            self.acquire_from(knowledgebase)
 
         logging.getLogger("edn_format").setLevel(logging.WARNING)
 

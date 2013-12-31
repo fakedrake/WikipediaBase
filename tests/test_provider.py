@@ -13,15 +13,15 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase.provider import Aquirer, Provider
+from wikipediabase.provider import Acquirer, Provider
 
 
 class TestProvider(unittest.TestCase):
     def setUp(self):
         # WTF: how does knowledge base get in here??
-        self.aq = Aquirer()
+        self.aq = Acquirer()
         self.double = lambda x: 2*x
-        self.prov = Provider(resources={"string":"Just a string", "func": self.double}, aquirer=self.aq)
+        self.prov = Provider(resources={"string":"Just a string", "func": self.double}, acquirer=self.aq)
 
     def test_provision(self):
         self.assertEqual(self.aq.resources(), {"string":"Just a string", "func": self.double})
