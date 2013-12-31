@@ -15,10 +15,10 @@ except ImportError:
 
 from common import data
 
-from wikipediabasepy import resolvers
-from wikipediabasepy import fetcher
-from wikipediabasepy.frontend import Frontend
-from wikipediabasepy.knowledgebase import KnowledgeBase
+from wikipediabase import resolvers
+from wikipediabase import fetcher
+from wikipediabase.frontend import Frontend
+from wikipediabase.knowledgebase import KnowledgeBase
 
 ARTICLE = u"""A ninja (忍者?) or shinobi (忍び?) was a covert agent or mercenary
 in feudal Japan. The functions of the ninja included espionage,

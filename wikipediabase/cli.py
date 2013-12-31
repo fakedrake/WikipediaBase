@@ -1,10 +1,10 @@
 """
-wikipediabasepy.
+wikipediabase.
 
 Usage:
-  wikipediabasepy [options]
+  wikipediabase [options]
 
-  wikipediabasepy -h | --help
+  wikipediabase -h | --help
 
 Options:
   --debug               Debug.
@@ -15,7 +15,7 @@ Options:
 from docopt import docopt
 import logging
 
-import wikipediabasepy
+import wikipediabase
 from knowledgebase import KnowledgeBase
 from resolvers import StaticResolver, InfoboxResolver
 from frontend import TelnetFrontend
@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 
 
 def main():
-    arguments = docopt(__doc__, version=wikipediabasepy.__version__)
+    arguments = docopt(__doc__, version=wikipediabase.__version__)
     debug = arguments['--debug']
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     log.debug('arguments: %s', arguments)

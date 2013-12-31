@@ -13,8 +13,8 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabasepy.provider import Provider
-from wikipediabasepy.frontend import Frontend
+from wikipediabase.provider import Provider
+from wikipediabase.frontend import Frontend
 
 
 def get_attribute(x, y):

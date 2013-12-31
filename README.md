@@ -1,26 +1,26 @@
-# wikipediabasepy
+# wikipediabase
 
-[![Build Status](https://secure.travis-ci.org/fakedrake/wikipediabasepy.png)](http://travis-ci.org/fakedrake/wikipediabasepy)
-[![Stories in Ready](https://badge.waffle.io/fakedrake/wikipediabasepy.png?label=ready)](https://waffle.io/fakedrake/wikipediabasepy) [![pypi version](https://badge.fury.io/py/wikipediabasepy.png)](http://badge.fury.io/py/wikipediabasepy)
-[![# of downloads](https://pypip.in/d/wikipediabasepy/badge.png)](https://crate.io/packages/wikipediabasepy?version=latest)
-[![code coverage](https://coveralls.io/repos/fakedrake/wikipediabasepy/badge.png?branch=master)](https://coveralls.io/r/fakedrake/wikipediabasepy?branch=master)
+[![Build Status](https://secure.travis-ci.org/fakedrake/wikipediabase.png)](http://travis-ci.org/fakedrake/wikipediabase)
+[![Stories in Ready](https://badge.waffle.io/fakedrake/wikipediabase.png?label=ready)](https://waffle.io/fakedrake/wikipediabase) [![pypi version](https://badge.fury.io/py/wikipediabase.png)](http://badge.fury.io/py/wikipediabase)
+[![# of downloads](https://pypip.in/d/wikipediabase/badge.png)](https://crate.io/packages/wikipediabase?version=latest)
+[![code coverage](https://coveralls.io/repos/fakedrake/wikipediabase/badge.png?branch=master)](https://coveralls.io/r/fakedrake/wikipediabase?branch=master)
 
 ## Overview
 
 Wikipedia backend interface for start.mit.edu
 
 * features
-* and stuff 
+* and stuff
 
 ## Usage
 
-Install `wikipediabasepy`:
+Install `wikipediabase`:
 
-    pip install wikipediabasepy
+    pip install wikipediabase
 
 ## Documentation
 
-[API Documentation](http://wikipediabasepy.rtfd.org)
+[API Documentation](http://wikipediabase.rtfd.org)
 
 ## Testing
 
@@ -34,7 +34,7 @@ Tests can then be run with:
 
 Lint the project with:
 
-    flake8 wikipediabasepy tests
+    flake8 wikipediabase tests
 
 ## API documentation
 

@@ -1,12 +1,12 @@
 from . import BaseTestCase
 
-from wikipediabasepy import wikipediabasepy
+from wikipediabase import wikipediabase
 
 
-class TestWikipediabasepy(BaseTestCase):
+class TestWikipediabase(BaseTestCase):
 
     def test_something(self):
         self.assertEquals(
             'Hello World!',
-            wikipediabasepy(),
+            wikipediabase(),
         )

@@ -13,8 +13,8 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabasepy.knowledgebase import KnowledgeBase
-from wikipediabasepy.provider import Aquirer, Provider
+from wikipediabase.knowledgebase import KnowledgeBase
+from wikipediabase.provider import Aquirer, Provider
 
 
 class TestKnowledgebase(unittest.TestCase):

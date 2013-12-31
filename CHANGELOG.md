@@ -1,4 +1,4 @@
-# [Changelog](https://github.com/fakedrake/wikipediabasepy/releases)
+# [Changelog](https://github.com/fakedrake/wikipediabase/releases)
 
 ## 0.0.1
 

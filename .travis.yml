@@ -6,7 +6,7 @@ python:
 install:
     - pip install -r requirements.txt --use-mirrors
 script:
-    - nosetests --with-coverage --cover-package=wikipediabasepy
-    - flake8 setup.py wikipediabasepy tests
+    - nosetests --with-coverage --cover-package=wikipediabase
+    - flake8 setup.py wikipediabase tests
 after_success:
   - coveralls

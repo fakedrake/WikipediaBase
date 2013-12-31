@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabasepy import fetcher
+from wikipediabase import fetcher
 
 class TestFetcher(unittest.TestCase):
 

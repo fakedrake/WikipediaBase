@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabasepy import telnet
+from wikipediabase import telnet
 
 import telnetlib
 

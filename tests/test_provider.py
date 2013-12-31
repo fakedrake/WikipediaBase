@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabasepy.provider import Aquirer, Provider
+from wikipediabase.provider import Aquirer, Provider
 
 
 class TestProvider(unittest.TestCase):
