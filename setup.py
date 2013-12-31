@@ -15,6 +15,7 @@ setup(
     packages=['wikipediabase'],
     include_package_data=True,
     install_requires=[
+        'beautifulsoup4',
         'docopt < 1.0.0',
         'edn_format'
     ],
