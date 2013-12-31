@@ -40,6 +40,14 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "Barack Obama" (:ID "BIRTH-DATE"))',
      '((:yyyymmdd 19610804))')]
 
+WIKI_EXAMPLES_RX =[
+    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
+     r'^\(\(:html "8848"\)\)$')]
+
+WIKI_EXAMPLES_NOT_RX =[
+    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
+     r':code')]
+
 class TestResolvers(unittest.TestCase):
 
     def setUp(self):
@@ -69,6 +77,21 @@ class TestResolvers(unittest.TestCase):
         for q, r in WIKI_EXAMPLES:
             ans = self.fe.eval(q)
             self.assertEqual(ans, r)
+
+    def test_compat_rx(self):
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
+
+        for q, r in WIKI_EXAMPLES_RX:
+            ans = self.fe.eval(q)
+            self.assertRegexpMatches(ans, r)
+
+    def test_compat_not_rx(self):
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
+
+        for q, r in WIKI_EXAMPLES_NOT_RX:
+            ans = self.fe.eval(q)
+            self.assertNotRegexpMatches(ans, r)
+
 
     def tearDown(self):
         pass
