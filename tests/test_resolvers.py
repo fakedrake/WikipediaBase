@@ -42,7 +42,7 @@ WIKI_EXAMPLES = [
 
 WIKI_EXAMPLES_RX =[
     ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
-     r'^\(\(:html "8848"\)\)$')
+     r'^\(\(:html "8848"\)\)$'),
     ('(get "wikipedia-military-conflict" "American Civil War" (:code "RESULT"))',
      r'<ul>.*<li>.*<\/ul>')]
 
