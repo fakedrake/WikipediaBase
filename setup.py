@@ -1,4 +1,5 @@
 import re
+import multiprocessing
 from setuptools import setup
 
 init_py = open('wikipediabase/__init__.py').read()
