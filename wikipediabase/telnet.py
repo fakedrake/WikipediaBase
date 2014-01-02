@@ -2,7 +2,7 @@
 A telnet 'chatroom' server.
 """
 
-import socket, select, threading
+import socket, select, threading, time
 
 from log import Logging
 
@@ -39,8 +39,14 @@ class TelnetServer(Logging):
             self.lock.acquire()
             self._running = False
             self.lock.release()
+
+            while self.thread.isAlive():
+                self.log().info("Joining server thread.")
+                self.thread.join()
+
         else:
             self._running = False
+
 
     def start(self, thread=True, bufsize=4096, timeout=1):
         """
@@ -91,6 +97,8 @@ class TelnetServer(Logging):
                         sock.send(ans)
 
             self.lock.acquire()
+
+        self.lock.release()
 
     def answer(self, msg):
         if self.safeword == msg:
