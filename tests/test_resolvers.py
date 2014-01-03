@@ -40,20 +40,8 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "Barack Obama" (:ID "BIRTH-DATE"))',
      '((:yyyymmdd 19610804))'),
 
-    # Next three tests copied from old tests that asserted that each
-    # coordinate was within a small delta (.1) of the tested value, to
-    # allow for minor edits to Wikipedia articles.
-    ('(get "wikipedia-term" "Black Sea" "COORDINATES")',
-     '((:coordinates 44 35))')
-    ('(get "wikipedia-term" "Eiffel Tower" "COORDINATES")',
-     '((:coordinates 48.8583, 2.2945))'),
-    ('(get "wikipedia-term" "Caracas" "COORDINATES")',
-     '((:coordinates 10.5, -66.916664))'),
-
     ('(get "wikipedia-person" "Bill Clinton" "BIRTH-DATE")',
      '((:yyyymmdd 19460819))'),
-    ('(get "wikipedia-person" "Bill Clinton" "DEATH-DATE")',
-     '(((error attribute-value-not-found :reply "Currently alive")))'),
     ('(get "wikipedia-person" "Plato" "BIRTH-DATE")',
      '((:html "ca. 428 BC/427 BC"))'),
     ('(get "wikipedia-person" "Plato" "DEATH-DATE")',
@@ -129,8 +117,23 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "William Shakespeare" "BIRTH-DATE")',
      '((:yyyymmdd 15640400))'),
     ('(get "wikipedia-person" "William Shakesppeare" "BIRTH-DATE")',
-     '#f')
-     ]
+     '#f'),
+
+    # DEGENERATE CASES
+
+    # Next three tests copied from old tests that asserted that each
+    # coordinate was within a small delta (.1) of the tested value, to
+    # allow for minor edits to Wikipedia articles.
+    ('(get "wikipedia-term" "Black Sea" "COORDINATES")',
+     '((:coordinates 44 35))'),
+    ('(get "wikipedia-term" "Eiffel Tower" "COORDINATES")',
+     '((:coordinates 48.8583, 2.2945))'),
+    ('(get "wikipedia-term" "Caracas" "COORDINATES")',
+     '((:coordinates 10.5, -66.916664))'),
+
+    ('(get "wikipedia-person" "Bill Clinton" "DEATH-DATE")',
+     '(((error attribute-value-not-found :reply "Currently alive")))'),
+]
 
 WIKI_EXAMPLES_NOT =[
     ('(get "wikipedia-aircraft-type" "General Dynamics F-16 Fighting Falcon" (:code "UNIT-COST"))',
@@ -146,7 +149,7 @@ WIKI_EXAMPLES_NOT =[
     ('(get "wikipedia-military-conflict" "2006 Lebanon War" (:code "RESULT"))',
      '((:yyyymmdd 20060814))',
      '2006 Lebanon War RESULT is not just a date')
-    ]
+]
 
 WIKI_EXAMPLES_RX =[
     ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
@@ -194,7 +197,7 @@ WIKI_EXAMPLES_RX =[
     ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
      r'1918.*Treaty.*signed',
      'World War I DATE returns end as well as start date')
-    ]
+]
 
 WIKI_EXAMPLES_NOT_RX =[
     ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
@@ -215,9 +218,8 @@ WIKI_EXAMPLES_NOT_RX =[
     # Tests that infobox attributes that aren't dates but may contain
     # dates aren't returned in yyyymmdd format
     ('(get-attributes "wikipedia-military-conflict" "2006 Lebanon War")',
-     r'result[^)]*yyyymmdd',
-     '2006 Lebanon War RESULT attribute is not yyyymmdd')
-    ]
+     r'result[^)]*yyyymmdd')
+]
 
 class TestResolvers(unittest.TestCase):
 
@@ -245,31 +247,48 @@ class TestResolvers(unittest.TestCase):
     def test_compat(self):
         self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
 
-        for q, r in WIKI_EXAMPLES:
-            ans = self.fe.eval(q)
-            self.assertEqual(ans, r)
+        for ans, rx, msg in self._ans_match(WIKI_EXAMPLES):
+            self.assertEqual(ans, rx, msg=msg)
 
     def test_compat_not(self):
         self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
 
-        for q, r in WIKI_EXAMPLES_NOT:
-            ans = self.fe.eval(q)
-            self.assertNotEqual(ans, r)
+        for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT):
+            self.assertNotEqual(ans, rx, msg=msg)
 
     def test_compat_rx(self):
         self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
 
-        for q, r in WIKI_EXAMPLES_RX:
-            ans = self.fe.eval(q)
-            self.assertRegexpMatches(ans, r)
+        for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_RX):
+            self.assertRegexpMatches(ans, rx, msg=msg)
 
     def test_compat_not_rx(self):
         self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
 
-        for q, r in WIKI_EXAMPLES_NOT_RX:
-            ans = self.fe.eval(q)
-            self.assertNotRegexpMatches(ans, r)
+        for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT_RX):
+            self.assertNotRegexpMatches(ans, rx, msg=msg)
 
+
+    def _ans_match(self, lst):
+        """
+        From a list of quieres (query, ans-matcher[, message]) extract the
+        answer that the frontend asked for, the matcher and the
+        message or None. This is a generator.
+        """
+
+        for entry in lst:
+            try:
+                q, m = entry
+                msg = None
+            except ValueError:
+                q, m, msg = entry
+
+            ans = self.fe.eval(q) or ""
+
+            if msg is None:
+                msg = "\n\tQuery: '%s'\n\tAnswer: '%s'\n\tMatcher: '%s" % (q, ans, m)
+
+            yield ans, m, msg
 
     def tearDown(self):
         pass
