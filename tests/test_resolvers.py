@@ -124,7 +124,7 @@ WIKI_EXAMPLES = [
 
     # DEGENERATE CASES
 
-    ('(get "wikipedia-person" "Bill Clinton" "DEATH-DATE")',
+    ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
      '(((error attribute-value-not-found :reply "Currently alive")))'),
 
     # Next three tests copied from old tests that asserted that each
