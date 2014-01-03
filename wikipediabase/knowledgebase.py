@@ -65,9 +65,9 @@ class KnowledgeBase(Provider):
     def get_class(self):
         pass
 
-    @provide()
-    def get_attributes(self):
-        pass
+    @provide(name="get-attributes")
+    def get_attributes(self, symbol, compat=None):
+        raise NotImplementedError
 
     # pass: keywords MUST be in lower case
     @provide(name=":code")

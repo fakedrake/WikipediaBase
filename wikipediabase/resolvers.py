@@ -8,8 +8,7 @@ from fetcher import BaseFetcher, WikipediaSiteFetcher
 
 import re
 
-
-INFOBOX_ATTRIBUTE_REGEX = "\\|\\s*%s\\s*=\\s*(.*)\\s*\\n"
+INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(.*)\s*\n\s*\|"
 DATE_REGEX = r"(\d{4})\|(\d{1,2})\|(\d{1,2})\b"
 
 class BaseResolver(Provider):
@@ -41,8 +40,6 @@ class BaseResolver(Provider):
 
         return self._tag
 
-
-
 class StaticResolver(BaseResolver):
     """
     A resolver that can resolve a fixed set of simple attributes.
@@ -58,6 +55,12 @@ class StaticResolver(BaseResolver):
         self._tag = "html"
         return len(self._words(self.fetcher.fetch(article)))
 
+    @provide(name="COORDINATES")
+    def coordinates(self, article, attribute):
+        self.log().info("Trying 'coordnates' tag from static resolver.")
+        self._tag = 'coordinates'
+
+        return 0,0
 
 class InfoboxResolver(BaseResolver):
     """
@@ -87,10 +90,9 @@ class InfoboxResolver(BaseResolver):
             val = re.search(INFOBOX_ATTRIBUTE_REGEX % attribute, infobox, flags=re.IGNORECASE)
             if val:
                 self.log().info("Found infobox attribute '%s'" % attribute)
-                return re.sub(r"[^\w.,()|]+", " ", val.group(1)).strip()
+                return re.sub(r"[^\w.,()|/]+", " ", val.group(1)).strip()
 
             self.log().warning("Could nont find infobox attribute '%s'" % attribute)
-
 
 class InfoboxDateResolver(InfoboxResolver):
     def __init__(self, *args, **kwargs):
