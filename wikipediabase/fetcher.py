@@ -7,7 +7,6 @@ import bs4
 from log import Logging
 
 
-INFOBOX_REGEX = r"{{Infobox .+?^}}$"
 WIKISOURCE_TAG_ID = "wpTextbox1"
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
 
@@ -62,6 +61,34 @@ class WikipediaSiteFetcher(BaseFetcher):
         self.log().info("Looking for rendered article: %s" % symbol)
         return self.download(symbol=symbol)
 
+    def _infobox_braces(self, txt):
+        ret = ""
+        ibs = -1
+        braces = 0
+        rngs = []
+
+        for m in re.finditer("(({{)\s*(\w*)|(}}))", txt):
+            if m.group(2) == "{{":
+                if braces > 0:
+                    braces += 1
+
+                if m.group(3) == "Infobox":
+                    braces = 1
+                    ibs = m.start(2)
+
+            elif m.group(1) == "}}" and braces > 0:
+                braces -= 1
+
+                if braces == 0:
+                    eoi = m.end(1)
+                    rngs.append((ibs, eoi))
+
+        # There may be more than one infoboxes, concaenate them.
+        for s,e in rngs:
+            ret += txt[s:e]
+
+        return ret or None
+
     def infobox(self, symbol, rendered=False):
         """
         Get the infobox in wiki markup.
@@ -70,14 +97,14 @@ class WikipediaSiteFetcher(BaseFetcher):
         mu = self.source(symbol)
 
         self.log().info("Looking for infobox: %s" % symbol)
-        m = re.search(INFOBOX_REGEX, mu, re.M|re.DOTALL)
 
-        if m:
-            self.log().info("Found an infobox.")
-            return m.group(0)
+        ib = self._infobox_braces(mu)
+
+        if ib:
+            return ib
 
         self.log().warning("Could not find infobox in source (source size: %d)." %
-                      len(mu))
+                           len(mu))
 
     def source(self, symbol, get_request=dict(action="edit")):
         """
