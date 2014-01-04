@@ -143,7 +143,8 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-term" "Eiffel Tower" "COORDINATES")',
      '((:coordinates 48.8583, 2.2945))'),
     ('(get "wikipedia-term" "Caracas" "COORDINATES")',
-     '((:coordinates 10.5, -66.916664))'),]
+     '((:coordinates 10.5, -66.916664))'),    
+    ]
 
 WIKI_EXAMPLES_NOT =[
     ('(get "wikipedia-aircraft-type" "General Dynamics F-16 Fighting Falcon" (:code "UNIT-COST"))',
@@ -162,6 +163,65 @@ WIKI_EXAMPLES_NOT =[
 ]
 
 WIKI_EXAMPLES_RX =[
+
+    # =====================
+    # tests for get-classes
+    # =====================
+
+    # Would be clearer as something like:
+    #   (assert-member 'wikipedia-term' '(get-classes \"Bill Clinton\")')
+    ('(get-classes \"Bill Clinton\")',
+     r'wikipedia-president',
+     'All Wikipedia symbols have calculated class wikipedia-term'),
+    ('(get-classes \"Bill Clinton\")',
+     r'wikipedia-president',
+     'All Wikipedia symbols have calculated class wikipedia-paragraphs'),
+    ('(get-classes \"Bill Clinton\")',
+     r'wikipedia-person',
+     'All people have calculated class wikipedia-person'),
+    ('(get-classes \"Bill Clinton\")',
+     r'wikipedia-president'),
+    ('(get-classes \"Ada (programming language)\")',
+     r'wikipedia-programming-language'),
+    
+    # ========================
+    # tests for get-attributes
+    # ========================
+
+    ('(get-attributes "wikipedia-film" "Gone with the Wind (film)")',
+     r':code \"DIRECTOR\"'),
+    ;; Instead of the next dozen tests, should have an assert-subset operator.
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"KEY-PEOPLE\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r'(:code \"OWNER\" :rendered \"Owner\(s\)\")'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r'(:code \"SERVICES\" :rendered \"Services\")'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"AREA-SERVED\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"LOCATION-COUNTRY\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"NAME\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"LOGO\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"LOCATION-CITY\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r'(:code \"TYPE\" :rendered \"Former type\")'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"INTL\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"NUM-EMPLOYEES\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r'(:code \"INDUSTRY\" :rendered \"Industry\"'),
+    ('(get-attributes "wikipedia-bridge" "Brooklyn Bridge")',
+     r':code \"OPEN\"'),
+
+    # ===============
+    # tests for 'get'
+    # ===============
+
     ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
      r'^\(\(:html "8848"\)\)$'),
     ('(get "wikipedia-military-conflict" "American Civil War" (:code "RESULT"))',
@@ -206,10 +266,25 @@ WIKI_EXAMPLES_RX =[
     # dates aren't returned in yyyymmdd format
     ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
      re.compile(r'1918.*Treaty.*signed', re.DOTALL),
-     'World War I DATE returns end as well as start date')
-]
+     'World War I DATE returns end as well as start date'),
+    ]
 
 WIKI_EXAMPLES_NOT_RX =[
+
+    # ========================
+    # tests for get-attributes
+    # ========================
+
+    # Tests that infobox attributes that aren't dates but may contain
+    # dates aren't returned in yyyymmdd format
+    ('(get-attributes "wikipedia-military-conflict" "2006 Lebanon War")',
+     r'result[^)]*yyyymmdd',
+     "2006 Lebanon War RESULT attribute is not yyyymmdd"),
+
+    # ===============
+    # tests for 'get'
+    # ===============
+
     ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
      r':code'),
     ('(get "wikipedia-film" "Gone with the Wind (film)" (:code "DIRECTOR"))',
@@ -225,11 +300,7 @@ WIKI_EXAMPLES_NOT_RX =[
      r'Watchlist'),
     ('(get "wikipedia-term" "North America" "SHORT-ARTICLE")',
      r'Uploads'),
-    # Tests that infobox attributes that aren't dates but may contain
-    # dates aren't returned in yyyymmdd format
-    # ('(get-attributes "wikipedia-military-conflict" "2006 Lebanon War")',
-    #  r'result[^)]*yyyymmdd')
-]
+    ]
 
 class TestResolvers(unittest.TestCase):
 
