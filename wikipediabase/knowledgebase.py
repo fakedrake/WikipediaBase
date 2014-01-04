@@ -34,12 +34,15 @@ class KnowledgeBase(Provider):
 
     def old_get(self, cls, article, attr):
         raw_ret = self.new_get(article, attr, compat=True)
-        if raw_ret:
-            tag, ret = raw_ret
-            if isinstance(ret, str):
-                ret = '"'+ret+'"'
 
-            return "((:%s %s))" % (tag, ret)
+        return raw_ret
+
+        # if raw_ret:
+        #     tag, ret = raw_ret
+        #     if isinstance(ret, str):
+        #         ret = '"'+ret+'"'
+
+        #     return "((:%s %s))" % (tag, ret)
 
     def new_get(self, article, attr, compat=False):
         """
@@ -52,14 +55,12 @@ class KnowledgeBase(Provider):
 
         # Attribute is wrapped into a dict just until we retrieve the
         # keys.
-        wattr = self.attribute_wrap(attr)
+
         for ar in self.resolvers():
-            res = ar.resolve(article, wattr['val'], **wattr['keys'])
+            res = ar.resolve(article, attr)
             if res:
-                if not compat:
-                    return res
-                else:
-                    return ar.tag(), res
+                return res
+
 
     @provide()
     def get_class(self):
@@ -68,20 +69,6 @@ class KnowledgeBase(Provider):
     @provide(name="get-attributes")
     def get_attributes(self, symbol, compat=None):
         raise NotImplementedError
-
-    # pass: keywords MUST be in lower case
-    @provide(name=":code")
-    def kw_code(self, x):
-        return self.attribute_wrap(x, rendered=False)
-
-    @provide(name=":rendered")
-    def kw_rendered(self, x):
-        return self.attribute_wrap(x, rendered=True)
-
-    @provide(name=":id")
-    def kw_id(self, x):
-        return x
-
 
     def attribute_wrap(self, val, **keys):
         """

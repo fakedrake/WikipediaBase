@@ -115,18 +115,21 @@ class WikipediaSiteFetcher(BaseFetcher):
         # <textarea tabindex="1" accesskey="," id="wpTextbox1" cols="80" rows="25" style="" lang="en" dir="ltr" name="wpTextbox1">
         html = self.download(symbol=symbol, get=get_request)
 
-        # Handle redirections silently
-        redirect = re.search(REDIRECT_REGEX, html)
-        if redirect:
-            self.log().info("Redirecting to '%s'.", redirect.group(1))
-            html = self.download(symbol=redirect.group(1), get=get_request)
-
         soup = bs4.BeautifulSoup(html)
 
         try:
-            return str(self.get_wikisource(soup)[0])
+            src = str(self.get_wikisource(soup)[0])
         except IndexError:
             raise KeyError("Article '%s' not found." % symbol)
+
+        # Handle redirecions silently
+        redirect = re.search(REDIRECT_REGEX, src)
+        if redirect:
+            self.log().info("Redirecting to '%s'.", redirect.group(1))
+            src = self.download(symbol=redirect.group(1), get=get_request)
+
+        return src
+
 
 class CachingSiteFetcher(WikipediaSiteFetcher):
     """
