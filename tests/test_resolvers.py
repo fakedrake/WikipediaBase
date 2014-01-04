@@ -107,9 +107,7 @@ WIKI_EXAMPLES = [
 
      # DEGENERATE CASES
 
-    ('(get "wikipedia-person" "Plato" "DEATH-DATE")',
-     '((:html "ca. 348 BC/347 BC"))'),
-    ('(get "wikipedia-person" "Bill Clinton" "DEATH-DATE")',
+    ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
      '(((error attribute-value-not-found :reply "Currently alive")))'),
 
     # Resolved from text
@@ -163,10 +161,10 @@ WIKI_EXAMPLES_RX =[
      re.compile(r'<ul>.*<li>.*<\/ul>', re.DOTALL),
      'Parse wiki-style list correctly in American Civil War RESULT'),
     ('(get "wikipedia-weapon" "M1 Abrams" (:code "WARS"))',
-     r'Gulf War\s*<br\s*\/>\s*War in Afghanistan/',
+     re.compile(r'Gulf War\s*<br\s*\/>\s*War in Afghanistan', re.DOTALL),
      'Parse <br/>-separated list correctly in M1 Abrams WARS'),
     ('(get "wikipedia-film" "Gone with the Wind (film)" (:code "DIRECTOR"))',
-     '<li>Victor Fleming/',
+     re.compile(r'<li>Victor Fleming/', re.DOTALL),
      r'Parse {{plainlist|...}} template correctly in GWTW DIRECTOR'),
 
     # Next few test the retrieval of infobox attributes that contain the
@@ -186,7 +184,7 @@ WIKI_EXAMPLES_RX =[
      r'290.*km.*3'),
 
     ('(get "wikipedia-military-conflict" "American Civil War" (:code "RESULT"))',
-     r'Union victory.*Slavery abolished.*Territorial integrity.*Lincoln assassinated.*Reconstruction'),
+     re.compile(r'Union victory.*Slavery abolished.*Territorial integrity.*Lincoln assassinated.*Reconstruction', re.DOTALL)),
     ('(get "wikipedia-weapon" "M1 Abrams" (:code "WARS"))',
      r'Persian',
      'Returns link text, not link target'),
@@ -200,8 +198,9 @@ WIKI_EXAMPLES_RX =[
     # Tests that infobox attributes that aren't dates but may contain
     # dates aren't returned in yyyymmdd format
     ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
-     r'1918.*Treaty.*signed',
-     'World War I DATE returns end as well as start date')]
+     re.compile(r'1918.*Treaty.*signed', re.DOTALL),
+     'World War I DATE returns end as well as start date')
+]
 
 WIKI_EXAMPLES_NOT_RX =[
     ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
@@ -277,7 +276,7 @@ class TestResolvers(unittest.TestCase):
 
     def _ans_match(self, lst):
         """
-        From a list of quieres (query, ans-matcher[, message]) extract the
+        From a list of queries (query, ans-matcher[, message]) extract the
         answer that the frontend asked for, the matcher and the
         message or None. This is a generator.
         """
