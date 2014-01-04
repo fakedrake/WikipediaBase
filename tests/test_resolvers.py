@@ -122,6 +122,13 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "William Shakesppeare" "BIRTH-DATE")',
      '#f'),
 
+    ('(get "wikipedia-person" "Bill Clinton" (:code "GENDER"))',
+     ':MASCULINE'),
+    ('(get "wikipedia-person" "William Shakespeare" "GENDER")',
+     ':MASCULINE'),
+    ('(get "wikipedia-person" "Sacagawea" "GENDER")',
+     ':FEMININE'),
+
     # DEGENERATE CASES
 
     ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
