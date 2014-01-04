@@ -251,7 +251,7 @@ WIKI_EXAMPLES_RX =[
 
     ('(get-attributes "wikipedia-film" "Gone with the Wind (film)")',
      r':code \"DIRECTOR\"'),
-    ;; Instead of the next dozen tests, should have an assert-subset operator.
+    # Instead of the next dozen tests, should have an assert-subset operator.
     ('(get-attributes "wikipedia-company" "BBC News")',
      r':code \"KEY-PEOPLE\"'),
     ('(get-attributes "wikipedia-company" "BBC News")',
