@@ -21,7 +21,7 @@ setup(
         'edn_format'
     ],
     tests_require=[
-        'nose',
+        'nose>=1.0',
     ],
     entry_points={
         'console_scripts': [

@@ -41,14 +41,11 @@ WIKI_EXAMPLES = [
      '((:html "George W. Bush"))'),
     ('(get "wikipedia-person" "Barack Obama" (:ID "BIRTH-DATE"))',
      '((:yyyymmdd 19610804))'),
-
-    ('(get "wikipedia-person" "Bill Clinton" "BIRTH-DATE")',
-     '((:yyyymmdd 19460819))'),
+     ('(get "wikipedia-person" "Bill Clinton" "BIRTH-DATE")',
+      '((:yyyymmdd 19460819))'),
     ('(get "wikipedia-person" "Plato" "BIRTH-DATE")',
      # '((:html "ca. 428 BC/427 BC"))'  XXX: Wikipedia was updated it seems
      '((:html "428/427 or 424/423 BC"))'),
-    ('(get "wikipedia-person" "Plato" "DEATH-DATE")',
-     '((:html "ca. 348 BC/347 BC"))'),
     ('(get "wikipedia-person" "Klaus Barbie" "BIRTH-DATE")',
      '((:yyyymmdd 19131025))'),
     ('(get "wikipedia-person" "Klaus Barbie" "DEATH-DATE")',
@@ -57,24 +54,10 @@ WIKI_EXAMPLES = [
      '((:yyyymmdd 19430429))'),
     ('(get "wikipedia-person" "Paul Shardlow" "DEATH-DATE")',
      '((:yyyymmdd 19681014))'),
-    ('(get "wikipedia-person" "Violet Markham" "BIRTH-DATE")',
-     '((:yyyymmdd 18720000))'),
-    ('(get "wikipedia-person" "Violet Markham" "DEATH-DATE")',
-     '((:yyyymmdd 19590202))'),
-    ('(get "wikipedia-person" "Manno Wolf-Ferrari" "BIRTH-DATE")',
-     '((:yyyymmdd 19110000))'),
-    ('(get "wikipedia-person" "Manno Wolf-Ferrari" "DEATH-DATE")',
-     '((:yyyymmdd 19940000))'),
     ('(get "wikipedia-person" "Napoleon" "BIRTH-DATE")',
      '((:yyyymmdd 17690815))'),
     ('(get "wikipedia-person" "Napoleon" "DEATH-DATE")',
      '((:yyyymmdd 18210505))'),
-    ('(get "wikipedia-person" "Freidun Aghalyan" "BIRTH-DATE")',
-     '((:yyyymmdd 18761120))'),
-    ('(get "wikipedia-person" "Freidun Aghalyan" "DEATH-DATE")',
-     '((:yyyymmdd 19440201))'),
-    ('(get "wikipedia-person" "Stephen Gray (scientist)" "BIRTH-DATE")',
-     '((:yyyymmdd 16660000))'),
     ('(get "wikipedia-person" "Stephen Gray (scientist)" "DEATH-DATE")',
      '((:yyyymmdd 17360207))'),
     ('(get "wikipedia-person" "Jesus" "BIRTH-DATE")',
@@ -122,10 +105,30 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "William Shakesppeare" "BIRTH-DATE")',
      '#f'),
 
-    # DEGENERATE CASES
+     # DEGENERATE CASES
 
+    ('(get "wikipedia-person" "Plato" "DEATH-DATE")',
+     '((:html "ca. 348 BC/347 BC"))'),
     ('(get "wikipedia-person" "Bill Clinton" "DEATH-DATE")',
      '(((error attribute-value-not-found :reply "Currently alive")))'),
+
+    # Resolved from text
+    ('(get "wikipedia-person" "Violet Markham" "DEATH-DATE")',
+     '((:yyyymmdd 19590202))'),
+    ('(get "wikipedia-person" "Manno Wolf-Ferrari" "BIRTH-DATE")',
+     '((:yyyymmdd 19110000))'),
+    ('(get "wikipedia-person" "Manno Wolf-Ferrari" "DEATH-DATE")',
+     '((:yyyymmdd 19940000))'),
+    ('(get "wikipedia-person" "Freidun Aghalyan" "BIRTH-DATE")',
+     '((:yyyymmdd 18761120))'),
+    ('(get "wikipedia-person" "Freidun Aghalyan" "DEATH-DATE")',
+     '((:yyyymmdd 19440201))'),
+
+    # Dates can now be evaluated
+    ('(get "wikipedia-person" "Violet Markham" "BIRTH-DATE")',
+     '((:yyyymmdd 18720000))'),
+    ('(get "wikipedia-person" "Stephen Gray (scientist)" "BIRTH-DATE")',
+     '((:yyyymmdd 16660000))'),
 
     # Next three tests copied from old tests that asserted that each
     # coordinate was within a small delta (.1) of the tested value, to
@@ -135,9 +138,7 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-term" "Eiffel Tower" "COORDINATES")',
      '((:coordinates 48.8583, 2.2945))'),
     ('(get "wikipedia-term" "Caracas" "COORDINATES")',
-     '((:coordinates 10.5, -66.916664))'),
-
-]
+     '((:coordinates 10.5, -66.916664))'),]
 
 WIKI_EXAMPLES_NOT =[
     ('(get "wikipedia-aircraft-type" "General Dynamics F-16 Fighting Falcon" (:code "UNIT-COST"))',
@@ -200,8 +201,7 @@ WIKI_EXAMPLES_RX =[
     # dates aren't returned in yyyymmdd format
     ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
      r'1918.*Treaty.*signed',
-     'World War I DATE returns end as well as start date')
-]
+     'World War I DATE returns end as well as start date')]
 
 WIKI_EXAMPLES_NOT_RX =[
     ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
@@ -230,21 +230,23 @@ class TestResolvers(unittest.TestCase):
     def setUp(self):
         self.simple_resolver = resolvers.StaticResolver()
         self.ibresolver = resolvers.InfoboxResolver(fetcher=fetcher.CachingSiteFetcher())
-        self.idr = resolvers.InfoboxDateResolver(fetcher=self.ibresolver.fetcher)
 
         self.fe = Frontend()
         self.kb = KnowledgeBase(frontend=self.fe,
-                                resolvers=[self.simple_resolver, self.idr, self.ibresolver])
+                                resolvers=[self.simple_resolver, self.ibresolver])
 
     def test_resolver(self):
         self.assertEqual(self.simple_resolver.resolve(ARTICLE, "word-count"), \
                          100)
 
     def test_integration(self):
-        self.assertEqual(self.fe.eval("(get \"doctor ninja batman\" \"word-count\")"), 3)
-        self.assertEqual(self.fe.eval("(get \"doctor ninja batman\" (:code \"word-count\"))"), 3)
+        self.assertEqual(self.fe.eval("(get \"doctor ninja batman\" \"word-count\")"), '3')
+        self.assertEqual(self.fe.eval("(get \"doctor ninja batman\n\" (:code \"word-count\"))"), '3')
 
     def test_infobox(self):
+        # Disable compatibility mode: no extra tag info on result.
+        self.ibresolver.compat = False
+
         band_name = self.fe.eval('(get "%s" "Name")' % "Def_Leppard_EP")
         self.assertEqual(band_name,"The Def Leppard E.P.")
 
@@ -280,7 +282,8 @@ class TestResolvers(unittest.TestCase):
         message or None. This is a generator.
         """
 
-        for entry in lst:
+        full = len(lst)
+        for completion, entry in enumerate(lst):
             try:
                 q, m = entry
                 msg = None
@@ -290,7 +293,8 @@ class TestResolvers(unittest.TestCase):
             ans = self.fe.eval(q) or ""
 
             if msg is None:
-                msg = "\n\tQuery: '%s'\n\tAnswer: '%s'\n\tMatcher: '%s" % (q, ans, m)
+                msg = "\n\tQuery: '%s'\n\tAnswer: '%s'\n\tMatcher: '%s'\n\tComp: %d\%d" \
+                      % (q, ans, m, completion+1, full)
 
             yield ans, m, msg
 

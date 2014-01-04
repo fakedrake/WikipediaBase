@@ -5,15 +5,15 @@ of resolving an attribute through `resolve'.
 
 from provider import Provider, provide
 from fetcher import BaseFetcher, WikipediaSiteFetcher
+from enchanted import EnchantedDate, Enchanted, enchant
 
 import re
 
-INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(.*)\s*\n\s*\|"
-DATE_REGEX = r"(\d{4})\|(\d{1,2})\|(\d{1,2})\b"
+INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(.*?)\s*\n\s*\|"
 
 class BaseResolver(Provider):
 
-    def __init__(self, fetcher=None, *args, **kwargs):
+    def __init__(self, fetcher=None, compat=True, *args, **kwargs):
         """
         Provide a way to fetch articles. If no fetcher is provider
         fallback to BaseFetcher.
@@ -21,6 +21,7 @@ class BaseResolver(Provider):
 
         super(BaseResolver, self).__init__(*args, **kwargs)
         self.fetcher = fetcher or BaseFetcher()
+        self.compat = compat
 
         self._tag = None
 
@@ -29,8 +30,10 @@ class BaseResolver(Provider):
         Use your resources to resolve.
         """
 
-        if attribute in self._resources:
-            return self._resources[attribute](article, attribute)
+        key, attr = Enchanted.keyattr(attribute)
+
+        if attr in self._resources:
+            return self._resources[attr](article, attribute)
 
     def tag(self):
         """
@@ -62,6 +65,7 @@ class StaticResolver(BaseResolver):
 
         return 0,0
 
+
 class InfoboxResolver(BaseResolver):
     """
     Use this to resolve based on the resolver.
@@ -73,45 +77,30 @@ class InfoboxResolver(BaseResolver):
         fallback to BaseFetcher.
         """
 
-        super(BaseResolver, self).__init__(*args, **kwargs)
+        super(InfoboxResolver, self).__init__(*args, **kwargs)
         self.fetcher = fetcher or WikipediaSiteFetcher()
         self._tag = "html"
 
-    def resolve(self, article, attribute, rendered=False, **kw):
-        self.log().info("Using infobox resolver")
+    def resolve(self, article, attribute, **kw):
+        self.log().info("Using infobox resolver in %s mode" %
+                        "compatibility" if self.compat else "classic")
         if "\n" in article:
             # There are no newlines in article titles
             return None
 
-        attribute = attribute.replace("-", "_")
-        infobox = self.fetcher.infobox(article, rendered=rendered)
+        key, attr = Enchanted.keyattr(attribute)
+
+        attr = attr.replace("-", "_").lower()
+        infobox = self.fetcher.infobox(article, rendered=(key=="html"))
 
         if infobox:
-            val = re.search(INFOBOX_ATTRIBUTE_REGEX % attribute, infobox, flags=re.IGNORECASE)
+            val = re.search(INFOBOX_ATTRIBUTE_REGEX % attr,
+                            infobox, flags=re.IGNORECASE|re.DOTALL)
             if val:
-                self.log().info("Found infobox attribute '%s'" % attribute)
-                return re.sub(r"[^\w.,()|/]+", " ", val.group(1)).strip()
+                self.log().info("Found infobox attribute '%s'" % attr)
+                ret = val.group(1)
 
-            self.log().warning("Could nont find infobox attribute '%s'" % attribute)
+                return enchant(key, ret, result_from=attr, compat=self.compat, log=self.log())
 
-class InfoboxDateResolver(InfoboxResolver):
-    def __init__(self, *args, **kwargs):
-        super(InfoboxDateResolver, self).__init__(*args, **kwargs)
-        self._tag = "yyyymmdd"
-
-    def resolve(self, *args, **kw):
-        """
-        Try to resolve a date or fail.
-        """
-
-        self.log().info("Trying to pull a date from the infobox.")
-
-        date = super(InfoboxDateResolver, self).resolve(*args, **kw)
-
-        if date:
-            only_date = re.search(DATE_REGEX, date)
-            if only_date:
-                ret = "%04d%02d%02d" % tuple([int(i) for i in only_date.groups()])
-                return int(ret)
-
-        self.log().info("No luck with the dates.")
+            self.log().warning("Could nont find infobox attribute '%s'" \
+                               % attribute)
