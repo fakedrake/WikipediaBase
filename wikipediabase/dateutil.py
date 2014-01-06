@@ -52,15 +52,24 @@ DAY_NAMES = [
     "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun",
 ]
 
+YEAR_DENOTED = merge_rx([join_rx([r"((?<=\s)|\A)\d+", merge_rx([AD,BC])])], name='year')
+
 YEAR_GENERAL = merge_rx([join_rx([r"\d+", merge_rx([AD,BC,""])])], name='year')
 DAY_FIRST_FULL = join_rx([DAY_GENERAL, "(of|)", MONTH_GENERAL, YEAR_GENERAL])
 MONTH_FIRST_FULL = join_rx([MONTH_GENERAL, "(the|)", DAY_GENERAL, YEAR_GENERAL])
 
-def date_parse(m):
-    return (day(m.group('day')), month(m.group('month')), year(m.group('year')))
+def grp(match, key):
+    try:
+        return match.group(key)
+    except IndexError:
+        return '0'
 
-def year_parse(m):
-    return (0, 0, year(m.group("year")))
+def date_parse(m):
+    """
+    The matcher m should have the keyword groups (day, month, year)
+    """
+
+    return (day(grp(m, 'day')), month(grp(m, 'month')), year(grp(m, 'year')))
 
 def day(txt):
     if not txt:
@@ -90,11 +99,12 @@ def month(txt):
 
     return 0
 
+# Date and an float [0-1] showing how sure we are this is a date.
 FULL_DATES = [
-    (DAY_FIRST_FULL, date_parse),
-    (MONTH_FIRST_FULL, date_parse)] + \
-    [(sf, date_parse) for sf in SHORT_FORMATS] + \
-    [(YEAR_GENERAL, year_parse)]
+    (DAY_FIRST_FULL, 1),
+    (MONTH_FIRST_FULL, 1)] + \
+    [(sf, .9) for sf in SHORT_FORMATS] + \
+    [(YEAR_DENOTED, .6), (YEAR_GENERAL, .1)]
 
 def tokenize(txt, tokenizers=FULL_DATES):
     """
@@ -114,7 +124,7 @@ def parse(txt, tokenizers=FULL_DATES, yield_position=False):
     new_txt = ""
     cursor = 0
 
-    for rx,f in tokenizers:
+    for rx, weight in tokenizers:
         if cursor:
             _txt = new_txt
             new_txt = ""
@@ -125,6 +135,6 @@ def parse(txt, tokenizers=FULL_DATES, yield_position=False):
             cursor = m.end()
 
             if yield_position:
-                yield (m.start(), m.end()), f(m)
+                yield (m.start(), m.end()), (weight, date_parse(m))
             else:
-                yield f(m)
+                yield (weight, date_parse(m))

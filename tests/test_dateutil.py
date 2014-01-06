@@ -37,18 +37,18 @@ class TestDateutil(unittest.TestCase):
         self.assertEqual(year('8  B.c.'), 8)
 
     def test_dates(self):
-        self.assertEqual(next(parse("22/7/1991")), (22, 7, 1991))
-        self.assertEqual(next(parse("22 July 1991")), (22, 7, 1991))
-        self.assertEqual(next(parse("22nd of July 1991")), (22, 7, 1991))
-        self.assertEqual(next(parse("July 22nd 1991")), (22, 7, 1991))
-        self.assertEqual(next(parse("07|22|1991")), (22, 7, 1991))
-        self.assertEqual(next(parse("1991")), (0, 0, 1991))
-        self.assertEqual(next(parse("199 BC")), (0, 0, -199))
+        self.assertEqual(next(parse("22/7/1991"))[1], (22, 7, 1991))
+        self.assertEqual(next(parse("22 July 1991"))[1], (22, 7, 1991))
+        self.assertEqual(next(parse("22nd of July 1991"))[1], (22, 7, 1991))
+        self.assertEqual(next(parse("July 22nd 1991"))[1], (22, 7, 1991))
+        self.assertEqual(next(parse("07|22|1991"))[1], (22, 7, 1991))
+        self.assertEqual(next(parse("1991"))[1], (0, 0, 1991))
+        self.assertEqual(next(parse("199 BC"))[1], (0, 0, -199))
 
     def test_multiple_dates(self):
-        self.assertEqual(list(parse("22/7/1991")), [(22, 7, 1991)])
-        self.assertEqual(list(parse("1100 22 july 1991")),
-                         [(22, 7, 1991), (0, 0, 1100)])
+        self.assertIn((22, 7, 1991), list(parse("22/7/1991"))[0])
+        # 22 july 1991 is more probable date that's why we expect to see it first
+        self.assertIn((22, 7, 1991), list(parse("1100 22 july 1991"))[0])
 
     def tearDown(self):
         pass
