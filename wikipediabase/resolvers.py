@@ -5,7 +5,9 @@ of resolving an attribute through `resolve'.
 
 from provider import Provider, provide
 from fetcher import BaseFetcher, WikipediaSiteFetcher
-from enchanted import EnchantedDate, Enchanted, enchant
+from enchanted import Enchanted
+from enchantments import enchant
+from dates import EnchantedDate
 
 import re
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from edn_format import loads, Keyword, Symbol
-from enchanted import enchant
+from enchantments import enchant
 from provider import Acquirer, Provider
 from telnet import TelnetServer
 from log import Logging

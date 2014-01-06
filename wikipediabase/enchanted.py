@@ -1,7 +1,3 @@
-from datetime import datetime as date
-from dateutil.parser import parse as dparse
-import re
-
 from log import Logging
 
 RESULT_TAG_MAP = dict(code="html")
@@ -19,6 +15,8 @@ class Enchanted(Logging):
 
     default_tag = "html"
     force_tag = None
+    allowed_tags = None
+    allowed_que = None
 
     def __init__(self, tag, val=None, compat=True):
         if self.force_tag:
@@ -46,150 +44,63 @@ class Enchanted(Logging):
 
     @staticmethod
     def keyattr(enchanted):
+        """
+        Given an Enchanted object return it's enchant key and value.
+        """
+
         if isinstance(enchanted, Enchanted):
             return (enchanted.tag, enchanted.val)
         else:
             return (None, enchanted)
 
-
-class EnchantedString(Enchanted):
-    def _str(self):
-        return "((:%s \"%s\"))" % (self.tag, re.sub("[\[\]]", "", self.val))
-
-
-class EnchantedList(Enchanted):
-    """
-    This is coordinates and other things like that
-    """
-
-    def _str(self):
-        return "((:%s %s))" % (self.tag, " ".join(self.val))
-
-
-class EnchantedDate(Enchanted):
-    """
-    This is coordinates and other things like that
-    """
-
-    def __init__(self, tag, date, **kw):
+    @classmethod
+    def with_tag(cls, tag):
         """
-        Give the date in year, month day format and profit.
+        Check if it is possible to enchant an object with this tag using
+        this enchantment (aka this Enchanted class). In subclasses you
+        may override this altogether or use the 'allowed_tags' class
+        attribute which is a list of allowed tags. If it is None then
+        just return true.
         """
 
-        super(EnchantedDate, self).__init__(tag, date, **kw)
-        self.log().info("Created an enchanted date obj: %s, tag: %s" \
-                        % (date, self.tag))
+        if cls.allowed_tags is not None:
+            return tag.lower() in cls.allowed_tags
 
+        return True
 
-    def date_string(self):
-        if hasattr(self.val, 'strftime'):
-            m = re.match(r"(\d{4})-(\d{2})-(\d{2}).*", self.val.isoformat())
-            return "".join(m.groups())
-
-        return self.val
-
-    def _str(self):
-        return "((:%s %s))" % (self.tag, self.date_string())
-
-    @staticmethod
-    def extract_date(tag, string, result_from=None, log=None):
+    @classmethod
+    def with_que(cls, que):
         """
-        Try to extract a date out of the given string.
+        Like with_tag() but checks if the que given is ok with this
+        enchantment. 'allowed_que' is a regex.
         """
 
-        dt = re.search(DATE_REGEX, string)
-        if dt:
-            return ("yyyymmdd", date(year=int(dt.group(1)),
-                                     month=int(dt.group(2)), day=int(dt.group(3))))
+        if cls.allowed_que is not None:
+            return re.match(cls.allowed_que, que)
 
+        return True
 
-        # The tag doesnt force and the result doesnt force date parsing
-        if not (tag and tag.lower == "yyyymmdd")  and \
-           not (result_from and "date" in result_from):
-            if log:
-                log.info("No reason to keep looking for a date: %s \
-                (tag: %s, result_from: %s)" % (string, tag, result_from))
-
-            return (None, None)
-
-        # Make some attempts to extract a date
-
-        # We want 0 at the and so no dateutil can help
-        if re.match(r"^\d{4}$", string):
-            if log:
-                log.info("Found just a year: "+string)
-
-            return ('yyyymmdd', string+"0000")
-
-        dstring = re.sub("[{{}}]", " ", string)
-        if log:
-            log.info("Attempting fuzziness on '%s'" % dstring)
-
-        # There will rarely be two dates in the block
-        for ds in dstring.split('|'):
-            val = fuzzy_dates(ds, log=log)
-            if val:
-                return ("yyyymmdd", val)
-
-        # It doesnt HAVE to be a date
-        return (None, None)
-
-
-def fuzzy_dates(string, log=None):
-    # Probably the nastiest hack you will encounter.
-    class Trojan(object):
-        def replace(self, **kw):
-            if 'month' in kw or 'day' in kw or 'year' in kw:
-                self.found = True
-                self.kw = kw
-
-        def tget(self, kw, digs):
-            # Hacking is my business and business is good
-            return ("%%0%dd"%digs) % self.kw.get(kw,0)
-
-    trojan = Trojan()
-    try:
-        dparse(string, fuzzy=True, default=trojan)
-        if hasattr(trojan,'found'):
-            ret  = trojan.tget("year",4)+trojan.tget("month",2)+trojan.tget("day",2)
-            if log:
-                log.info("Found date %s on '%s'" % (ret, string))
-            return ret
-        else:
-            if log:
-                log.info("Failed fuzzy date mathcing on '%s'" % string)
-    except (TypeError, UnicodeDecodeError) as e:
-        # Exceptions are hard to foresee
-        if log:
-            log.info("Could not find date in '%s'" % string)
-            log.info("Exception: " + str(e))
-
-
-
-def enchant(tag, obj, result_from=None, compat=True, log=None):
+def multiplex(ans, tag, que, enchantments):
     """
-    Return an appropriate enchanted object. reslut is true when we are
-    enchanting a result. Sometimes tags mean different thigs in
-    results. Also for now you always want to be enchanting.
+    Given 'ans', the text that contains the information we are looking
+    for or the actual object we are enchanting, it's tag, the question
+    that it came from (the attribute of the query) and a list of
+    Enchanted classes that implement 'with_tag' and 'with_que' return
+    an instance of the correct one that does not raise EnchantError.
     """
 
-    if isinstance(obj, Enchanted):
-        return obj
+    for E in enchantments:
+        if E.with_tag(tag):
+            try:
+                return E(tag, ans)
+            except EnchantError:
+                log.info("Failed to enchant (:%s '%s') with %s" \
+                         % (tag, ans, E.__name__))
 
-    if result_from and tag in RESULT_TAG_MAP:
-        tag = RESULT_TAG_MAP[tag]
-
-    if hasattr(obj, "__iter__"):
-        return EnchantedIterable(tag, obj, compat=compat)
-
-    dtag, date = EnchantedDate.extract_date(tag, obj, result_from=result_from, log=log)
-    if date:
-        if log:
-            log.info("Extract date '%s' from '%s'" % (date, obj))
-            return EnchantedDate(dtag, date, compat=compat)
-
-    if isinstance(obj, str):
-        return EnchantedString(dtag, obj, compat=compat)
-
-
-    return Enchanted(tag, obj, compat=compat)
+    for E in enchantments:
+        if E.with_que(que):
+            try:
+                return E(tag, ans)
+            except EnchantError:
+                log.info("Failed to enchant (:%s '%s') with %s coming \
+                from que %s" % (tag, ans, E.__name__, que))
