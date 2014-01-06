@@ -1,5 +1,6 @@
 """
 wikipediabase.
+Open telnet server XXX: doc this.
 
 Usage:
   wikipediabase [options]

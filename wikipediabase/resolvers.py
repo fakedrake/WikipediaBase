@@ -8,10 +8,10 @@ from fetcher import BaseFetcher, WikipediaSiteFetcher
 from enchanted import Enchanted
 from enchantments import enchant
 from dates import EnchantedDate
+from util import INFOBOX_ATTRIBUTE_REGEX
 
 import re
 
-INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(.*?)\s*\n\s*\|"
 
 class BaseResolver(Provider):
 

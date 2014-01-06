@@ -22,13 +22,13 @@ MDY_RXF = (r"(?P<month>%s)" % MONTH_NUM, r"(?P<day>%s)" % DAY_NUM,
            r"(?P<year>%s)" % YEAR_NUM)
 DMY_RXF = (r"(?P<day>%s)" % DAY_NUM, r"(?P<month>%s)" % MONTH_NUM,
            r"(?P<year>%s)" % YEAR_NUM)
-YMD_RXF = (r"(?P<day>%s)" % DAY_NUM, r"(?P<month>%s)" % MONTH_NUM,
-           r"(?P<year>%s)" % YEAR_NUM)
+YMD_RXF = (r"(?P<year>%s)" % YEAR_NUM, r"(?P<month>%s)" % MONTH_NUM,
+           r"(?P<day>%s)" % DAY_NUM)
 
 DATE_SPLITTERS = ["-", "/", "", r"\.", r"\|" ]
 
 def _join_with(sep):
-    return [r"\b%s\b" % sep.join(f) for f in [MDY_RXF, DMY_RXF, YMD_RXF]]
+    return [r"\b%s\b" % sep.join(f) for f in [YMD_RXF, MDY_RXF, DMY_RXF]]
 
 SHORT_FORMATS = list(chain(*[_join_with(c) for c in DATE_SPLITTERS]))
 
@@ -114,10 +114,12 @@ def tokenize(txt, tokenizers=FULL_DATES):
     global_rx = merge_rx([i for i,j in tokenizers])
     return [t[0] for t in re.findall(global_rx, txt)]
 
-def parse(txt, tokenizers=FULL_DATES, yield_position=False):
+def parse(txt, tokenizers=FULL_DATES, yield_position=False, favor=None, max_favor=0.01):
     """
     Iterate over the dates found in text. More certain dates will
-    appear first.
+    appear first. Favor = {'start'|'end'|None} will slightly favor
+    results that are found first last or will not. It will lineary
+    favor things depending on position with max_favor.
     """
 
     _txt = txt
@@ -130,11 +132,22 @@ def parse(txt, tokenizers=FULL_DATES, yield_position=False):
             new_txt = ""
             cursor = 0
 
+        # if "\|" in rx and "1913" in txt:
+        #     import ipdb; ipdb.set_trace()
+
+
         for m in re.finditer(rx, _txt, re.I):
             new_txt += _txt[cursor:m.start()]
             cursor = m.end()
 
-            if yield_position:
-                yield (m.start(), m.end()), (weight, date_parse(m))
+            if favor == 'start':
+                w = weight + float(len(txt)-m.start())/len(txt) * max_favor
+            elif favor == 'end':
+                w = weight + float(m.end())/len(txt) * max_favor
             else:
-                yield (weight, date_parse(m))
+                w = weight
+
+            if yield_position:
+                yield (m.start(), m.end()), (w, date_parse(m))
+            else:
+                yield (w, date_parse(m))

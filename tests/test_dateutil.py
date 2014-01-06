@@ -50,6 +50,14 @@ class TestDateutil(unittest.TestCase):
         # 22 july 1991 is more probable date that's why we expect to see it first
         self.assertIn((22, 7, 1991), list(parse("1100 22 july 1991"))[0])
 
+    def test_favor(self):
+        d = dict([(d,w) for w,d in parse("16 Jul 1991 17 March 1992",
+                                       favor='end')])
+        self.assertGreater(d[(17, 3, 1992)], d[(16, 7, 1991)])
+
+    def test_almost_overlap(self):
+        self.assertEqual(list(parse("|1991|09|25|1913|10|25", favor='start'))[0][1], (25, 9, 1991))
+
     def tearDown(self):
         pass
 

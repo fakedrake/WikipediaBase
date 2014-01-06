@@ -1,15 +1,19 @@
 from provider import Acquirer, Provider, provide
+from util import INFOBOX_ATTRIBUTE_REGEX
+from fetcher import CachingSiteFetcher
 
+import re
 
 class KnowledgeBase(Provider):
 
-    def __init__(self, frontend=None, resolvers=None, *args, **kwargs):
+    def __init__(self, frontend=None, resolvers=None, fetcher=None, *args, **kwargs):
         super(KnowledgeBase, self).__init__(*args, **kwargs)
         self.frontend = frontend
 
         if frontend:
             self.provide_to(frontend)
 
+        self.fetcher = fetcher or CachingSiteFetcher()
         self.resolvers_acquirer = Acquirer(providers=resolvers or [])
 
     def resolvers(self):
@@ -37,13 +41,6 @@ class KnowledgeBase(Provider):
 
         return raw_ret
 
-        # if raw_ret:
-        #     tag, ret = raw_ret
-        #     if isinstance(ret, str):
-        #         ret = '"'+ret+'"'
-
-        #     return "((:%s %s))" % (tag, ret)
-
     def new_get(self, article, attr, compat=False):
         """
         In compatibility mode new_get returns a tuple of the resolver
@@ -62,13 +59,15 @@ class KnowledgeBase(Provider):
                 return res
 
 
-    @provide()
-    def get_class(self):
+    @provide(name="get-classes")
+    def get_classes(self, symbol):
         pass
 
     @provide(name="get-attributes")
-    def get_attributes(self, symbol, compat=None):
-        raise NotImplementedError
+    def get_attributes(self, wb_class,  symbol, compat=None):
+        return [m.group("attr").replace("_", "-") for m in
+                re.finditer(INFOBOX_ATTRIBUTE_REGEX % r"(?P<attr>\w+)",
+                            self.fetcher.infobox(symbol))]
 
     def attribute_wrap(self, val, **keys):
         """
