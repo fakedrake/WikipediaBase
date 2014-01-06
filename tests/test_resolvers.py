@@ -35,10 +35,52 @@ Kamakura era).[5][6]"""
 
 # A list of (query, expected-answer) tuples
 WIKI_EXAMPLES = [
-    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
-     '((:html "8848"))'),
-    ('(get "wikipedia-officeholder" "Bill Clinton" (:code "SUCCESSOR"))',
-     '((:html "George W. Bush"))'),
+
+    # =====================================
+    # tests for 'get' -- special attributes
+    # =====================================
+
+    ('(get "wikipedia-term" "Sium sisarum" (:code "IMAGE-DATA")',
+     '((0 "illustration_Sium_sisarum0.jpg" "<i>Sium sisarum</i>"))'),
+
+    # Next three tests copied from old tests that asserted that each
+    # coordinate was within a small delta (.1) of the tested value, to
+    # allow for minor edits to Wikipedia articles.
+    ('(get "wikipedia-term" "Black Sea" "COORDINATES")',
+     '((:coordinates 44 35))'),
+    ('(get "wikipedia-term" "Eiffel Tower" "COORDINATES")',
+     '((:coordinates 48.8583, 2.2945))'),
+    ('(get "wikipedia-term" "Caracas" "COORDINATES")',
+     '((:coordinates 10.5, -66.916664))'),    
+
+    ('(get "wikipedia-person" "Bill Clinton" (:code "URL"))',
+     '((:url "http://en.wikipedia.org/wiki/Bill_Clinton"))'),
+
+    ('(get "wikipedia-person" "Bill Clinton" (:code "GENDER"))',
+     ':MASCULINE'),
+    ('(get "wikipedia-person" "William Shakespeare" "GENDER")',
+     ':MASCULINE'),
+    ('(get "wikipedia-person" "Sacagawea" "GENDER")',
+     ':FEMININE'),
+    ('(get "wikipedia-person" "Mary Shakespeare" (:calculated "GENDER"))',
+     ':FEMININE'),
+
+    ('(get "wikipedia-term" "Bill Clinton" (:calculated "PROPER"))',
+     '#t'),
+    ('(get "wikipedia-term" "North American Free Trade Agreement" (:calculated "PROPER"))',
+     '#t'),
+    ('(get "wikipedia-term" "Purchasing power parity" (:calculated "PROPER"))',
+     '#f'),
+
+    ('(get "wikipedia-term" "Bill Clinton" (:calculated "NUMBER"))',
+     '#f'),
+    ('(get "wikipedia-term" "The Beatles" (:calculated "NUMBER"))',
+     '#t'),
+
+    # ==============================================================
+    # tests for 'get' -- attributes from infoboxes -or- article text
+    # ==============================================================
+
     ('(get "wikipedia-person" "Barack Obama" (:ID "BIRTH-DATE"))',
      '((:yyyymmdd 19610804))'),
      ('(get "wikipedia-person" "Bill Clinton" "BIRTH-DATE")',
@@ -104,8 +146,17 @@ WIKI_EXAMPLES = [
      '((:yyyymmdd 15640400))'),
     ('(get "wikipedia-person" "William Shakesppeare" "BIRTH-DATE")',
      '#f'),
+    ('(get "wikipedia-person" "Mary Shakespeare" "BIRTH-DATE")',
+     '((:yyyymmdd 15370000))',
+     'Person without infobox -- get birth date from first paragraph'),
+    ('(get "wikipedia-person" "Mary Shakespeare" "DEATH-DATE")',
+     '((:yyyymmdd 16080000))',
+     'Person without infobox -- get death date from first paragraph'),
+    ('(get "wikipedia-person" "John Shakespeare" "DEATH-DATE")',
+     '((:yyyymmdd 16010907))',
+     'Person without infobox -- get death date from first paragraph'),
 
-     # DEGENERATE CASES
+    # DEGENERATE CASES
 
     ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
      '(((error attribute-value-not-found :reply "Currently alive")))'),
@@ -128,25 +179,40 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "Stephen Gray (scientist)" "BIRTH-DATE")',
      '((:yyyymmdd 16660000))'),
 
-    # Next three tests copied from old tests that asserted that each
-    # coordinate was within a small delta (.1) of the tested value, to
-    # allow for minor edits to Wikipedia articles.
-    ('(get "wikipedia-term" "Black Sea" "COORDINATES")',
-     '((:coordinates 44 35))'),
-    ('(get "wikipedia-term" "Eiffel Tower" "COORDINATES")',
-     '((:coordinates 48.8583, 2.2945))'),
-    ('(get "wikipedia-term" "Caracas" "COORDINATES")',
-     '((:coordinates 10.5, -66.916664))'),]
+    # ============================================
+    # tests for 'get' -- attributes from infoboxes
+    # ============================================
+
+    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
+     '((:html "8848"))'),
+    ('(get "wikipedia-officeholder" "Bill Clinton" (:code "SUCCESSOR"))',
+     '((:html "George W. Bush"))'),
+    ]
 
 WIKI_EXAMPLES_NOT =[
-    ('(get "wikipedia-aircraft-type" "General Dynamics F-16 Fighting Falcon" (:code "UNIT-COST"))',
-     '((:html "F-16A/B: (1998 dollars) F-16C/D: (1998 dollars)"))',
-     'tests the retrieval of infobox attributes that contain the {{US#|...}} template'),
+
+    # =====================================
+    # tests for 'get' -- special attributes
+    # =====================================
+
     ('(get "wikipedia-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))',
      '((:html ""))'),
+
+    # ==============================================================
+    # tests for 'get' -- attributes from infoboxes -or- article text
+    # ==============================================================
+
     ('(get "wikipedia-person" "Jesus" "BIRTH-DATE")',
      '((:yyyymmdd -000200007))',
      'Don\'t absurdly return range of years as year and day.'),
+
+    # ============================================
+    # tests for 'get' -- attributes from infoboxes
+    # ============================================
+
+    ('(get "wikipedia-aircraft-type" "General Dynamics F-16 Fighting Falcon" (:code "UNIT-COST"))',
+     '((:html "F-16A/B: (1998 dollars) F-16C/D: (1998 dollars)"))',
+     'tests the retrieval of infobox attributes that contain the {{US#|...}} template'),
     # Tests that infobox attributes that aren't dates but may contain
     # dates aren't returned in yyyymmdd format
     ('(get "wikipedia-military-conflict" "2006 Lebanon War" (:code "RESULT"))',
@@ -155,6 +221,82 @@ WIKI_EXAMPLES_NOT =[
 ]
 
 WIKI_EXAMPLES_RX =[
+
+    # =====================
+    # tests for get-classes
+    # =====================
+
+    # Would be clearer as something like:
+    #   (assert-member 'wikipedia-term' '(get-classes \"Bill Clinton\")')
+    ('(get-classes \"Bill Clinton\")',
+     r'wikipedia-president',
+     'All Wikipedia symbols have calculated class wikipedia-term'),
+    ('(get-classes \"Bill Clinton\")',
+     r'wikipedia-president',
+     'All Wikipedia symbols have calculated class wikipedia-paragraphs'),
+    ('(get-classes \"Bill Clinton\")',
+     r'wikipedia-person',
+     'All people have calculated class wikipedia-person'),
+    ('(get-classes \"Bill Clinton\")',
+     r'wikipedia-president'),
+    ('(get-classes \"Ada (programming language)\")',
+     r'wikipedia-programming-language'),
+    ('(get-classes \"Mary Shakespeare\")',
+     r'wikipedia-person',
+     'Person without infobox'),
+    
+    # ========================
+    # tests for get-attributes
+    # ========================
+
+    ('(get-attributes "wikipedia-film" "Gone with the Wind (film)")',
+     r':code \"DIRECTOR\"'),
+    # Instead of the next dozen tests, should have an assert-subset operator.
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"KEY-PEOPLE\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r'(:code \"OWNER\" :rendered \"Owner\(s\)\")'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r'(:code \"SERVICES\" :rendered \"Services\")'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"AREA-SERVED\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"LOCATION-COUNTRY\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"NAME\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"LOGO\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"LOCATION-CITY\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r'(:code \"TYPE\" :rendered \"Former type\")'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"INTL\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"NUM-EMPLOYEES\"'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r'(:code \"INDUSTRY\" :rendered \"Industry\"'),
+    ('(get-attributes "wikipedia-bridge" "Brooklyn Bridge")',
+     r':code \"OPEN\"'),
+
+    # =====================================
+    # tests for 'get' -- special attributes
+    # =====================================
+
+    ('(get "wikipedia-term" "Alexander Pushkin" "SHORT-ARTICLE")',
+     r'Russian literature'),
+    ('(get "wikipedia-term" "North America" "SHORT-ARTICLE")',
+     r'It is bordered to the north'),
+    ('(get "wikipedia-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))'
+     r'influence of mothers in society'),
+
+    ('(get "wikipedia-term" "Bill Clinton" (:code "IMAGE-DATA")',
+     '((0 "Bill_Clinton.jpg"'),
+
+    # ============================================
+    # tests for 'get' -- attributes from infoboxes
+    # ============================================
+
     ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
      r'^\(\(:html "8848"\)\)$'),
     ('(get "wikipedia-military-conflict" "American Civil War" (:code "RESULT"))',
@@ -188,21 +330,39 @@ WIKI_EXAMPLES_RX =[
     ('(get "wikipedia-weapon" "M1 Abrams" (:code "WARS"))',
      r'Persian',
      'Returns link text, not link target'),
-    ('(get "wikipedia-term" "Alexander Pushkin" "SHORT-ARTICLE")',
-     r'Russian literature'),
-    ('(get "wikipedia-term" "North America" "SHORT-ARTICLE")',
-     r'It is bordered to the north'),
-    ('(get "wikipedia-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))'
-     r'influence of mothers in society'),
 
     # Tests that infobox attributes that aren't dates but may contain
     # dates aren't returned in yyyymmdd format
     ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
      re.compile(r'1918.*Treaty.*signed', re.DOTALL),
-     'World War I DATE returns end as well as start date')
-]
+     'World War I DATE returns end as well as start date'),
+    ]
 
 WIKI_EXAMPLES_NOT_RX =[
+
+    # ========================
+    # tests for get-attributes
+    # ========================
+
+    # Tests that infobox attributes that aren't dates but may contain
+    # dates aren't returned in yyyymmdd format
+    ('(get-attributes "wikipedia-military-conflict" "2006 Lebanon War")',
+     r'result[^)]*yyyymmdd',
+     "2006 Lebanon War RESULT attribute is not yyyymmdd"),
+
+    # =====================================
+    # tests for 'get' -- special attributes
+    # =====================================
+
+    ('(get "wikipedia-term" "Alexander Pushkin" "SHORT-ARTICLE")',
+     r'Watchlist'),
+    ('(get "wikipedia-term" "North America" "SHORT-ARTICLE")',
+     r'Uploads'),
+
+    # ============================================
+    # tests for 'get' -- attributes from infoboxes
+    # ============================================
+
     ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
      r':code'),
     ('(get "wikipedia-film" "Gone with the Wind (film)" (:code "DIRECTOR"))',
@@ -214,15 +374,7 @@ WIKI_EXAMPLES_NOT_RX =[
     ('(get "wikipedia-military-conflict" "American Civil War" (:code "RESULT"))',
      r'Reconstruction Era of the United States',
      'Returns link text, not link target: Reconstruction...'),
-    ('(get "wikipedia-term" "Alexander Pushkin" "SHORT-ARTICLE")',
-     r'Watchlist'),
-    ('(get "wikipedia-term" "North America" "SHORT-ARTICLE")',
-     r'Uploads'),
-    # Tests that infobox attributes that aren't dates but may contain
-    # dates aren't returned in yyyymmdd format
-    # ('(get-attributes "wikipedia-military-conflict" "2006 Lebanon War")',
-    #  r'result[^)]*yyyymmdd')
-]
+    ]
 
 class TestResolvers(unittest.TestCase):
 
