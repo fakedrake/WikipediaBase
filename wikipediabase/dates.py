@@ -1,7 +1,7 @@
 from collections import defaultdict
 import re
 
-from enchanted import Enchanted
+from enchanted import Enchanted, EnchantError
 
 import dateutil
 
@@ -11,6 +11,7 @@ class EnchantedDate(Enchanted):
     This is coordinates and other things like that
     """
 
+    force_tag = 'yyyymmdd'
     allowed_tags = ['yyyymmdd']
     allowed_que = re.compile(r".*date$", re.I)
 
@@ -32,10 +33,14 @@ class EnchantedDate(Enchanted):
 
         d = defaultdict(lambda :0)
 
-        for w, i in dateutil.parse(txt):
+        for w, i in dateutil.parse(txt, favor='start'):
             d[i] += w
 
-        self.log().error("Found dates: %s" %  sorted(d.items(), key=lambda (x,y): y))
+        if len(d) == 0:
+            raise EnchantError("No dates found in string '%s" % txt)
+
+        self.log().info("Found dates: %s" % d.items())
+
         return max(d.items(), key=lambda (x,y): y)[0]
 
     def date_string(self):

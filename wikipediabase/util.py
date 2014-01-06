@@ -1,3 +1,5 @@
+INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(.*?)\s*(?=\n\s*\|)"
+
 def memoize(f):
     """ Memoization decorator for functions taking one or more arguments. """
     class memodict(dict):

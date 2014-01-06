@@ -1,7 +1,13 @@
 from log import Logging
 
+import re
+
 RESULT_TAG_MAP = dict(code="html")
 DATE_REGEX = r"(\d{4})\|(\d{1,2})\|(\d{1,2})\b"
+
+
+class EnchantError(Exception):
+    pass
 
 class Enchanted(Logging):
     """
@@ -14,9 +20,12 @@ class Enchanted(Logging):
     """
 
     default_tag = "html"
+    base_rate = 0
     force_tag = None
     allowed_tags = None
+    tag_rate = 0.6
     allowed_que = None
+    que_rate = 0.3
 
     def __init__(self, tag, val=None, compat=True):
         if self.force_tag:
@@ -53,34 +62,25 @@ class Enchanted(Logging):
         else:
             return (None, enchanted)
 
-    @classmethod
-    def with_tag(cls, tag):
-        """
-        Check if it is possible to enchant an object with this tag using
-        this enchantment (aka this Enchanted class). In subclasses you
-        may override this altogether or use the 'allowed_tags' class
-        attribute which is a list of allowed tags. If it is None then
-        just return true.
-        """
-
-        if cls.allowed_tags is not None:
-            return tag.lower() in cls.allowed_tags
-
-        return True
 
     @classmethod
-    def with_que(cls, que):
+    def rate(cls, que, tag, ans):
         """
-        Like with_tag() but checks if the que given is ok with this
-        enchantment. 'allowed_que' is a regex.
+        0-1 how good would this enchantment be for this particular value.
         """
 
-        if cls.allowed_que is not None:
-            return re.match(cls.allowed_que, que)
+        r = cls.base_rate
 
-        return True
+        if cls.allowed_tags and tag and tag in cls.allowed_tags:
+            r += cls.tag_rate
 
-def multiplex(ans, tag, que, enchantments):
+        if cls.allowed_que and que and re.match(cls.allowed_que, que):
+            r += cls.que_rate
+
+        return r
+
+
+def multiplex(ans, tag, que, enchantments, log=None):
     """
     Given 'ans', the text that contains the information we are looking
     for or the actual object we are enchanting, it's tag, the question
@@ -89,18 +89,16 @@ def multiplex(ans, tag, que, enchantments):
     an instance of the correct one that does not raise EnchantError.
     """
 
-    for E in enchantments:
-        if E.with_tag(tag):
-            try:
-                return E(tag, ans)
-            except EnchantError:
+    ret = None
+
+    ratings = [(E.rate(que, tag, ans), E) for E in enchantments]
+
+    for r, E in sorted(ratings, key=lambda (x,y): x, reverse=True):
+        try:
+            return E(tag, ans)
+        except EnchantError:
+            if log:
                 log.info("Failed to enchant (:%s '%s') with %s" \
                          % (tag, ans, E.__name__))
 
-    for E in enchantments:
-        if E.with_que(que):
-            try:
-                return E(tag, ans)
-            except EnchantError:
-                log.info("Failed to enchant (:%s '%s') with %s coming \
-                from que %s" % (tag, ans, E.__name__, que))
+    return ret

@@ -89,6 +89,15 @@ class WikipediaSiteFetcher(BaseFetcher):
 
         return ret or None
 
+    def infobox_type(self, symbol, follow=True):
+        """
+        Get the infobox type. 'follow' returns the alias infobox of this
+        infobox. E.g. president => officeholder
+        """
+
+
+
+
     def infobox(self, symbol, rendered=False):
         """
         Get the infobox in wiki markup.
@@ -106,7 +115,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         self.log().warning("Could not find infobox in source (source size: %d)." %
                            len(mu))
 
-    def source(self, symbol, get_request=dict(action="edit")):
+    def source(self, symbol, get_request=dict(action="edit"), redirect=True):
         """
         Get the full wiki markup of the symbol.
         """
@@ -123,10 +132,12 @@ class WikipediaSiteFetcher(BaseFetcher):
             raise KeyError("Article '%s' not found." % symbol)
 
         # Handle redirecions silently
-        redirect = re.search(REDIRECT_REGEX, src)
-        if redirect:
-            self.log().info("Redirecting to '%s'.", redirect.group(1))
-            src = self.download(symbol=redirect.group(1), get=get_request)
+        redirect_match = re.search(REDIRECT_REGEX, src)
+
+        if redirect and redirect_match:
+            self.log().info("Redirecting to '%s'.", redirect_match.group(1))
+            src = self.download(symbol=redirect_match.group(1),
+                                get=get_request)
 
         return src
 

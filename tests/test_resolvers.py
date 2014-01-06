@@ -15,7 +15,7 @@ except ImportError:
 
 from common import data
 
-import re
+import re, logging
 
 from wikipediabase import resolvers
 from wikipediabase import fetcher
@@ -36,46 +36,14 @@ Kamakura era).[5][6]"""
 # A list of (query, expected-answer) tuples
 WIKI_EXAMPLES = [
 
-    # =====================================
-    # tests for 'get' -- special attributes
-    # =====================================
+    # ============================================
+    # tests for 'get' -- attributes from infoboxes
+    # ============================================
 
-    ('(get "wikipedia-term" "Sium sisarum" (:code "IMAGE-DATA")',
-     '((0 "illustration_Sium_sisarum0.jpg" "<i>Sium sisarum</i>"))'),
-
-    # Next three tests copied from old tests that asserted that each
-    # coordinate was within a small delta (.1) of the tested value, to
-    # allow for minor edits to Wikipedia articles.
-    ('(get "wikipedia-term" "Black Sea" "COORDINATES")',
-     '((:coordinates 44 35))'),
-    ('(get "wikipedia-term" "Eiffel Tower" "COORDINATES")',
-     '((:coordinates 48.8583, 2.2945))'),
-    ('(get "wikipedia-term" "Caracas" "COORDINATES")',
-     '((:coordinates 10.5, -66.916664))'),    
-
-    ('(get "wikipedia-person" "Bill Clinton" (:code "URL"))',
-     '((:url "http://en.wikipedia.org/wiki/Bill_Clinton"))'),
-
-    ('(get "wikipedia-person" "Bill Clinton" (:code "GENDER"))',
-     ':MASCULINE'),
-    ('(get "wikipedia-person" "William Shakespeare" "GENDER")',
-     ':MASCULINE'),
-    ('(get "wikipedia-person" "Sacagawea" "GENDER")',
-     ':FEMININE'),
-    ('(get "wikipedia-person" "Mary Shakespeare" (:calculated "GENDER"))',
-     ':FEMININE'),
-
-    ('(get "wikipedia-term" "Bill Clinton" (:calculated "PROPER"))',
-     '#t'),
-    ('(get "wikipedia-term" "North American Free Trade Agreement" (:calculated "PROPER"))',
-     '#t'),
-    ('(get "wikipedia-term" "Purchasing power parity" (:calculated "PROPER"))',
-     '#f'),
-
-    ('(get "wikipedia-term" "Bill Clinton" (:calculated "NUMBER"))',
-     '#f'),
-    ('(get "wikipedia-term" "The Beatles" (:calculated "NUMBER"))',
-     '#t'),
+    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
+     '((:html "8848"))'),
+    ('(get "wikipedia-officeholder" "Bill Clinton" (:code "SUCCESSOR"))',
+     '((:html "George W. Bush"))'),
 
     # ==============================================================
     # tests for 'get' -- attributes from infoboxes -or- article text
@@ -83,11 +51,8 @@ WIKI_EXAMPLES = [
 
     ('(get "wikipedia-person" "Barack Obama" (:ID "BIRTH-DATE"))',
      '((:yyyymmdd 19610804))'),
-     ('(get "wikipedia-person" "Bill Clinton" "BIRTH-DATE")',
-      '((:yyyymmdd 19460819))'),
-    ('(get "wikipedia-person" "Plato" "BIRTH-DATE")',
-     # '((:html "ca. 428 BC/427 BC"))'  XXX: Wikipedia was updated it seems
-     '((:html "428/427 or 424/423 BC"))'),
+    ('(get "wikipedia-person" "Bill Clinton" "BIRTH-DATE")',
+     '((:yyyymmdd 19460819))'),
     ('(get "wikipedia-person" "Klaus Barbie" "BIRTH-DATE")',
      '((:yyyymmdd 19131025))'),
     ('(get "wikipedia-person" "Klaus Barbie" "DEATH-DATE")',
@@ -105,7 +70,8 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "Jesus" "BIRTH-DATE")',
      '((:yyyymmdd -00040000))'),
     ('(get "wikipedia-person" "Jesus" "DEATH-DATE")',
-     '((:yyyymmdd 00300000))'),
+     '((:yyyymmdd 00330000))'), # Used to be '((:yyyymmdd 00300000))'),
+    # But both are equally correct i think.
     ('(get "wikipedia-person" "Albert Einstein" "BIRTH-DATE")',
      '((:yyyymmdd 18790314))'),
     ('(get "wikipedia-person" "Albert Einstein" "DEATH-DATE")',
@@ -155,6 +121,10 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "John Shakespeare" "DEATH-DATE")',
      '((:yyyymmdd 16010907))',
      'Person without infobox -- get death date from first paragraph'),
+    ('(get "wikipedia-person" "Violet Markham" "BIRTH-DATE")',
+     '((:yyyymmdd 18720000))'),
+    ('(get "wikipedia-person" "Stephen Gray (scientist)" "BIRTH-DATE")',
+     '((:yyyymmdd 16660000))'),
 
     # DEGENERATE CASES
 
@@ -174,20 +144,51 @@ WIKI_EXAMPLES = [
      '((:yyyymmdd 19440201))'),
 
     # Dates can now be evaluated
-    ('(get "wikipedia-person" "Violet Markham" "BIRTH-DATE")',
-     '((:yyyymmdd 18720000))'),
-    ('(get "wikipedia-person" "Stephen Gray (scientist)" "BIRTH-DATE")',
-     '((:yyyymmdd 16660000))'),
+    ('(get "wikipedia-person" "Plato" "BIRTH-DATE")',
+     # '((:html "ca. 428 BC/427 BC"))'  XXX: Wikipedia was updated it seems
+     '((:html "428/427 or 424/423 BC"))'),
 
-    # ============================================
-    # tests for 'get' -- attributes from infoboxes
-    # ============================================
+    # =====================================
+    # tests for 'get' -- special attributes
+    # =====================================
 
-    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
-     '((:html "8848"))'),
-    ('(get "wikipedia-officeholder" "Bill Clinton" (:code "SUCCESSOR"))',
-     '((:html "George W. Bush"))'),
-    ]
+    ('(get "wikipedia-term" "Sium sisarum" (:code "IMAGE-DATA")',
+     '((0 "illustration_Sium_sisarum0.jpg" "<i>Sium sisarum</i>"))'),
+
+    # Next three tests copied from old tests that asserted that each
+    # coordinate was within a small delta (.1) of the tested value, to
+    # allow for minor edits to Wikipedia articles.
+    ('(get "wikipedia-term" "Black Sea" "COORDINATES")',
+     '((:coordinates 44 35))'),
+    ('(get "wikipedia-term" "Eiffel Tower" "COORDINATES")',
+     '((:coordinates 48.8583, 2.2945))'),
+    ('(get "wikipedia-term" "Caracas" "COORDINATES")',
+     '((:coordinates 10.5, -66.916664))'),
+
+    ('(get "wikipedia-person" "Bill Clinton" (:code "URL"))',
+     '((:url "http://en.wikipedia.org/wiki/Bill_Clinton"))'),
+
+    ('(get "wikipedia-person" "Bill Clinton" (:code "GENDER"))',
+     ':MASCULINE'),
+    ('(get "wikipedia-person" "William Shakespeare" "GENDER")',
+     ':MASCULINE'),
+    ('(get "wikipedia-person" "Sacagawea" "GENDER")',
+     ':FEMININE'),
+    ('(get "wikipedia-person" "Mary Shakespeare" (:calculated "GENDER"))',
+     ':FEMININE'),
+
+    ('(get "wikipedia-term" "Bill Clinton" (:calculated "PROPER"))',
+     '#t'),
+    ('(get "wikipedia-term" "North American Free Trade Agreement" (:calculated "PROPER"))',
+     '#t'),
+    ('(get "wikipedia-term" "Purchasing power parity" (:calculated "PROPER"))',
+     '#f'),
+
+    ('(get "wikipedia-term" "Bill Clinton" (:calculated "NUMBER"))',
+     '#f'),
+    ('(get "wikipedia-term" "The Beatles" (:calculated "NUMBER"))',
+     '#t'),
+]
 
 WIKI_EXAMPLES_NOT =[
 
@@ -244,7 +245,7 @@ WIKI_EXAMPLES_RX =[
     ('(get-classes \"Mary Shakespeare\")',
      r'wikipedia-person',
      'Person without infobox'),
-    
+
     # ========================
     # tests for get-attributes
     # ========================
@@ -336,7 +337,7 @@ WIKI_EXAMPLES_RX =[
     ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
      re.compile(r'1918.*Treaty.*signed', re.DOTALL),
      'World War I DATE returns end as well as start date'),
-    ]
+]
 
 WIKI_EXAMPLES_NOT_RX =[
 
@@ -374,11 +375,12 @@ WIKI_EXAMPLES_NOT_RX =[
     ('(get "wikipedia-military-conflict" "American Civil War" (:code "RESULT"))',
      r'Reconstruction Era of the United States',
      'Returns link text, not link target: Reconstruction...'),
-    ]
+]
 
 class TestResolvers(unittest.TestCase):
 
     def setUp(self):
+        self.log = logging.getLogger("resolver-testing")
         self.simple_resolver = resolvers.StaticResolver()
         self.ibresolver = resolvers.InfoboxResolver(fetcher=fetcher.CachingSiteFetcher())
 
@@ -399,7 +401,7 @@ class TestResolvers(unittest.TestCase):
         self.ibresolver.compat = False
 
         band_name = self.fe.eval('(get "%s" "Name")' % "Def_Leppard_EP")
-        self.assertEqual(band_name,"The Def Leppard E.P.")
+        self.assertEqual(band_name, '((:html "The Def Leppard E.P."))')
 
     def test_compat(self):
         self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
@@ -440,6 +442,9 @@ class TestResolvers(unittest.TestCase):
                 msg = None
             except ValueError:
                 q, m, msg = entry
+
+            self.log.info("\n\tQuery: '%s'\n\tMatcher: '%s'\n\tComp: %d\%d" \
+                          % (q, m, completion+1, full))
 
             ans = self.fe.eval(q) or ""
 
