@@ -3,7 +3,6 @@ try:
 except ImportError:
     from unittest import TestCase
 
-
 class BaseTestCase(TestCase):
 
     def setUp(self):
