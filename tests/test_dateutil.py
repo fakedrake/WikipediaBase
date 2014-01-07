@@ -40,10 +40,16 @@ class TestDateutil(unittest.TestCase):
         self.assertEqual(next(parse("22/7/1991"))[1], (22, 7, 1991))
         self.assertEqual(next(parse("22 July 1991"))[1], (22, 7, 1991))
         self.assertEqual(next(parse("22nd of July 1991"))[1], (22, 7, 1991))
+        self.assertEqual(next(parse(" July the 22nd 1991"))[1], (22, 7, 1991))
         self.assertEqual(next(parse("July 22nd 1991"))[1], (22, 7, 1991))
         self.assertEqual(next(parse("07|22|1991"))[1], (22, 7, 1991))
+        self.assertEqual(next(parse("22|07|1991"))[1], (22, 7, 1991))
+        self.assertEqual(next(parse("07221991"))[1], (22, 7, 1991))
         self.assertEqual(next(parse("1991"))[1], (0, 0, 1991))
         self.assertEqual(next(parse("199 BC"))[1], (0, 0, -199))
+        self.assertEqual(next(parse("January 2005"))[1], (0, 1, 2005))
+        self.assertEqual(next(parse("January, 2005"))[1], (0, 1, 2005))
+        self.assertEqual(next(parse("January of 2005"))[1], (0, 1, 2005))
 
     def test_multiple_dates(self):
         self.assertIn((22, 7, 1991), list(parse("22/7/1991"))[0])
