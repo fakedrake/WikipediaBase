@@ -124,7 +124,8 @@ def tokenize(txt, tokenizers=FULL_DATES):
 TIMESPAN_GROUPERS = [
     (.9, [r".*", r"\s*-\s*"], (0, 1)),
     (.9, [r".*", r"\s+to\s+"], (0, 1)),
-    (.5, [r".*\b-\s*"], (-1, 0))
+    (.5, [r".*\b-\s*"], (-1, 0)),
+    (.5, [r".*", r".*\b-\s*"], (0, -1))
 ]
 
 class DateParsed(object):
@@ -202,17 +203,21 @@ class DateParsed(object):
 
         return ret
 
-    def _matching_dates(self, intervals, tr, default=(0,0,0), rate_dates=True, **kw):
+    def _matching_dates(self, intervals, tr, default=(0,0,0),
+                        default_rate=.5, rate_dates=True, **kw):
         ret = []
         rate = 1
 
         for i in tr:
-            if i >= 0:
+            # Note that we may be mistakenly trying to match the last
+            # interval which has inter[1]==None
+            if i >= 0 and intervals[i][1]:
                 pos, (r, d) = intervals[i][1]
                 rate *= r
 
                 ret.append(self.format(intervals[i][1], **kw))
             else:
+                rate *= default_rate
                 ret.append(default)
 
         if rate_dates:
