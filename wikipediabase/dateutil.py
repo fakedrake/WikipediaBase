@@ -10,26 +10,27 @@ def merge_rx(rx_list, name=None):
 
     return fmt % r"|".join(["(%s)" % t for t in rx_list])
 
-def join_rx(rx_lists, sep=r"\s*"):
+def join_rx(rx_lists, sep=r"\s*", name=None):
     rxs = [merge_rx(rxl) if hasattr(rxl, '__iter__') else rxl for rxl in rx_lists]
-    return sep.join(rxs)
+    if not name:
+        return sep.join(rxs)
+    else:
+        return "(?P<%s>%s)" % (name, sep.join(rxs))
+
+# Dates
+def _join_with(sep):
+    return [r"\b%s\b" % sep.join(f) for f in [YMD_RXF, MDY_RXF, DMY_RXF]]
 
 MONTH_NUM = r"(0?\d|1[0-2])"
 DAY_NUM = r"([0-2]?\d|3[01])"
 YEAR_NUM = r"(\d{4})"
-
 MDY_RXF = (r"(?P<month>%s)" % MONTH_NUM, r"(?P<day>%s)" % DAY_NUM,
            r"(?P<year>%s)" % YEAR_NUM)
 DMY_RXF = (r"(?P<day>%s)" % DAY_NUM, r"(?P<month>%s)" % MONTH_NUM,
            r"(?P<year>%s)" % YEAR_NUM)
 YMD_RXF = (r"(?P<year>%s)" % YEAR_NUM, r"(?P<month>%s)" % MONTH_NUM,
            r"(?P<day>%s)" % DAY_NUM)
-
 DATE_SPLITTERS = ["-", "/", "", r"\.", r"\|" ]
-
-def _join_with(sep):
-    return [r"\b%s\b" % sep.join(f) for f in [YMD_RXF, MDY_RXF, DMY_RXF]]
-
 SHORT_FORMATS = list(chain(*[_join_with(c) for c in DATE_SPLITTERS]))
 
 AD = r"A\.?D\.?"
@@ -45,18 +46,19 @@ MONTH_NAMES = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ]
-MONTH_GENERAL = merge_rx(MONTH_NAMES, name='month')
+MONTH_NAMED = merge_rx(MONTH_NAMES, name='month')
 
 DAY_NAMES = [
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
     "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun",
 ]
 
-YEAR_DENOTED = merge_rx([join_rx([r"((?<=\s)|\A)\d+", merge_rx([AD,BC])])], name='year')
+YEAR_DENOTED = join_rx([r"((?<=\s)|\A)\d+", merge_rx([AD,BC])], name='year')
+YEAR_GENERAL = join_rx([r"\d+", merge_rx([AD,BC,""])], name='year')
 
-YEAR_GENERAL = merge_rx([join_rx([r"\d+", merge_rx([AD,BC,""])])], name='year')
-DAY_FIRST_FULL = join_rx([DAY_GENERAL, "(of|)", MONTH_GENERAL, YEAR_GENERAL])
-MONTH_FIRST_FULL = join_rx([MONTH_GENERAL, "(the|)", DAY_GENERAL, YEAR_GENERAL])
+DAY_FIRST_FULL = join_rx([DAY_GENERAL, "(of|)", MONTH_NAMED, YEAR_GENERAL])
+MISSING_DAY_FULL = join_rx([MONTH_NAMED, YEAR_GENERAL], sep=r"\s*(?:,|of|)\s*")
+MONTH_FIRST_FULL = join_rx([MONTH_NAMED, "(the|)", DAY_GENERAL, YEAR_GENERAL], sep=r"\b\s*")
 
 def grp(match, key):
     try:
@@ -102,8 +104,9 @@ def month(txt):
 # Date and an float [0-1] showing how sure we are this is a date.
 FULL_DATES = [
     (DAY_FIRST_FULL, 1),
-    (MONTH_FIRST_FULL, 1)] + \
-    [(sf, .9) for sf in SHORT_FORMATS] + \
+    (MONTH_FIRST_FULL, 1),
+    (MISSING_DAY_FULL, .9)] + \
+    [(sf, .8) for sf in SHORT_FORMATS] + \
     [(YEAR_DENOTED, .6), (YEAR_GENERAL, .1)]
 
 def tokenize(txt, tokenizers=FULL_DATES):
@@ -126,15 +129,12 @@ def parse(txt, tokenizers=FULL_DATES, yield_position=False, favor=None, max_favo
     new_txt = ""
     cursor = 0
 
-    for rx, weight in tokenizers:
+    # Greedy algorithm to maximize the correct dates.
+    for rx, weight in sorted(tokenizers, key=lambda (x,y): y, reverse=True):
         if cursor:
             _txt = new_txt
             new_txt = ""
             cursor = 0
-
-        # if "\|" in rx and "1913" in txt:
-        #     import ipdb; ipdb.set_trace()
-
 
         for m in re.finditer(rx, _txt, re.I):
             new_txt += _txt[cursor:m.start()]
@@ -151,3 +151,5 @@ def parse(txt, tokenizers=FULL_DATES, yield_position=False, favor=None, max_favo
                 yield (m.start(), m.end()), (w, date_parse(m))
             else:
                 yield (w, date_parse(m))
+
+# XXX: date ranges
