@@ -1,4 +1,5 @@
-from itertools import chain
+from itertools import chain, izip
+from util import iwindow
 
 import re
 
@@ -10,7 +11,8 @@ def merge_rx(rx_list, name=None):
 
     return fmt % r"|".join(["(%s)" % t for t in rx_list])
 
-def join_rx(rx_lists, sep=r"\s*", name=None):
+# Note the nongreedy space matching so that dates are just dates.
+def join_rx(rx_lists, sep=r"\s*?", name=None):
     rxs = [merge_rx(rxl) if hasattr(rxl, '__iter__') else rxl for rxl in rx_lists]
     if not name:
         return sep.join(rxs)
@@ -117,29 +119,131 @@ def tokenize(txt, tokenizers=FULL_DATES):
     global_rx = merge_rx([i for i,j in tokenizers])
     return [t[0] for t in re.findall(global_rx, txt)]
 
+
+# (rate, separating-rx-list, dates this translates to)
+TIMESPAN_GROUPERS = [
+    (.9, [r".*", r"\s*-\s*"], (0, 1)),
+    (.9, [r".*", r"\s+to\s+"], (0, 1)),
+    (.5, [r".*\b-\s*"], (-1, 0))
+]
+
+class DateParsed(object):
+    def __init__(self, data, txt):
+        """
+        You may pipe here the output of parse with positions like
+
+        >>> d = DateParsed(parse(txt, yield_position=True), txt)
+        """
+
+        self.data = data
+        self.txt = txt
+
+    def format(self, date, ratings=True, full=False):
+        """
+        Return the date in the form (d,m,y) or a list of tuples (rating,
+        date). Full means get a list of ((s,e), (r, (d,m,y))).
+        """
+
+        if full:
+            return date
+
+        pos, (r, d) = date
+        if ratings:
+            return (r, d)
+
+        return d
+
+    def dates(self, **kw):
+        """
+        A list of dates in the format specified by kw, see format()
+        """
+
+        return [self.format(d, **kw) for d in self.data]
+
+
+    # XXX: opt into avoiding overlaps
+    def dategroups(self, groupers=TIMESPAN_GROUPERS, dfilter=None,
+                   grp_yield_position=False, **kw):
+        """
+        Get groups (rate, group) as defined in groupers. Dates in groups
+        are formated as per format() using kw. dfilter filters the
+        dates that are taken into account. It is a function single
+        argument is a date of the full form: ((s,e),(r, (d,m,y))).
+
+        grp_yield_position True means the return value should be ((s,
+        e), (r, grp)) else it is just (r, grp).
+        """
+
+        cursor = 0
+        intervals = []
+
+        for (s,e), rd in sorted(filter(dfilter, self.data),
+                                key=lambda d: d[1][0]):
+            intervals.append((self.txt[cursor:s], ((s,e), rd)))
+            cursor = e
+
+        intervals.append((self.txt[cursor:], None))
+        ret = []
+
+        # Slide a window across intervals returning the dates that match
+        for r, sep_ls, tr in groupers:
+            for intervals_win in iwindow(intervals, len(sep_ls)):
+                if self.win_match(sep_ls, intervals_win):
+                    date_rate, grp = self._matching_dates(intervals_win,
+                                                          tr, **kw)
+                    if grp_yield_position:
+                        # first interval, date, pos, start
+                        s = intervals_win[0][1][0][0]
+                        e = intervals_win[-1][1][0][1]
+
+                        ret.append(((s, e), (r*date_rate, grp)))
+                    else:
+                        ret.append((r*date_rate, grp))
+
+        return ret
+
+    def _matching_dates(self, intervals, tr, default=(0,0,0), rate_dates=True, **kw):
+        ret = []
+        rate = 1
+
+        for i in tr:
+            if i >= 0:
+                pos, (r, d) = intervals[i][1]
+                rate *= r
+
+                ret.append(self.format(intervals[i][1], **kw))
+            else:
+                ret.append(default)
+
+        if rate_dates:
+            return (rate, ret)
+        else:
+            return ret
+
+    def win_match(self, separators, intervals):
+        for rx, (txt, d) in izip(separators, intervals):
+
+            if not re.match(rx, txt):
+                return False
+
+        return True
+
+
 def parse(txt, tokenizers=FULL_DATES, yield_position=False, favor=None, max_favor=0.01):
     """
-    Iterate over the dates found in text. More certain dates will
-    appear first. Favor = {'start'|'end'|None} will slightly favor
-    results that are found first last or will not. It will lineary
-    favor things depending on position with max_favor.
+    Return a tuple (weight, (d,m,y)) or ((s, e), (d,y,m)). More
+    certain dates will appear first. Favor = {'start'|'end'|None} will
+    slightly favor results that are found first last or will not. It
+    will lineary favor things depending on position with max_favor.
     """
 
     _txt = txt
-    new_txt = ""
-    cursor = 0
+    ret = []
 
     # Greedy algorithm to maximize the correct dates.
     for rx, weight in sorted(tokenizers, key=lambda (x,y): y, reverse=True):
-        if cursor:
-            _txt = new_txt
-            new_txt = ""
-            cursor = 0
 
         for m in re.finditer(rx, _txt, re.I):
-            new_txt += _txt[cursor:m.start()]
-            cursor = m.end()
-
             if favor == 'start':
                 w = weight + float(len(txt)-m.start())/len(txt) * max_favor
             elif favor == 'end':
@@ -148,8 +252,11 @@ def parse(txt, tokenizers=FULL_DATES, yield_position=False, favor=None, max_favo
                 w = weight
 
             if yield_position:
-                yield (m.start(), m.end()), (w, date_parse(m))
+                ret.append(((m.start(), m.end()), (w, date_parse(m))))
             else:
-                yield (w, date_parse(m))
+                ret.append((w, date_parse(m)))
 
-# XXX: date ranges
+            # Clear what we just found so we dont amtch it again
+            _txt = _txt[:m.start()]+'\000'*(m.end()-m.start())+_txt[m.end():]
+
+    return ret
