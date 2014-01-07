@@ -83,7 +83,12 @@ class TestDateUtil(unittest.TestCase):
                          [(0, 0, 1998), (0, 0, 2010)])
 
         self.assertEqual(po.dategroups(ratings=False, grp_yield_position=True)[1][0],
-                         (70, 82))
+                        (70, 82))
+
+    def test_ranges(self):
+        txt = "lives 22.7.1991-"
+        po = DateParsed(parse(txt, yield_position=True), txt)
+        self.assertIn([(22, 7, 1991), (0, 0, 0)], po.dategroups(ratings=False)[0])
 
     def tearDown(self):
         pass
