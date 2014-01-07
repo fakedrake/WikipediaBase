@@ -65,7 +65,15 @@ class StaticResolver(BaseResolver):
         self.log().info("Trying 'coordnates' tag from static resolver.")
         self._tag = 'coordinates'
 
-        return 0,0
+        return EnchantedList("coordinates", [0,0])
+
+    @provide(name="gender")
+    def gender(self, article, attribute):
+        return ":hermaphrodie"
+
+    @provide(name="image-data")
+    def image(self, article, attribute):
+        return "hello.jpg"
 
 
 class InfoboxResolver(BaseResolver):
