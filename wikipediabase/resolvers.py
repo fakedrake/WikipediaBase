@@ -108,7 +108,7 @@ class InfoboxResolver(BaseResolver):
                             infobox, flags=re.IGNORECASE|re.DOTALL)
             if val:
                 self.log().info("Found infobox attribute '%s'" % attr)
-                ret = val.group(1)
+                ret = val.group("val")
 
                 return enchant(key, ret, result_from=attr, compat=self.compat, log=self.log())
 

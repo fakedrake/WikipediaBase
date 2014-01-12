@@ -1,6 +1,6 @@
 from itertools import islice
 
-INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(.*?)\s*(?=\n\s*\|)"
+INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(?P<val>.*?)\s*(?=\n\s*\|)"
 
 def iwindow(seq, n):
     "Returns a sliding window (of width n) over data from the iterable"
