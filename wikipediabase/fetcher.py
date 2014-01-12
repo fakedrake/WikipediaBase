@@ -5,6 +5,7 @@ import json
 import bs4
 
 from log import Logging
+from util import INFOBOX_ATTRIBUTE_REGEX
 
 
 WIKISOURCE_TAG_ID = "wpTextbox1"
@@ -53,14 +54,6 @@ class WikipediaSiteFetcher(BaseFetcher):
                             urllib.urlencode(get))
         return urllib.urlopen(url).read()
 
-    def article(self, symbol):
-        """
-        Given a symbol get what wikipedia has to say.
-        """
-
-        self.log().info("Looking for rendered article: %s" % symbol)
-        return self.download(symbol=symbol)
-
     def _infobox_braces(self, txt):
         ret = ""
         ibs = -1
@@ -95,25 +88,68 @@ class WikipediaSiteFetcher(BaseFetcher):
         infobox. E.g. president => officeholder
         """
 
+        raise NotImplementedError
 
-
-
-    def infobox(self, symbol, rendered=False):
+    def _html_infobox_parse(self, html):
         """
-        Get the infobox in wiki markup.
+        Given the infobox html or as soup.
         """
 
-        mu = self.source(symbol)
+        if isinstance(html, str):
+            html = bs4.BeautifulSoup(html)
+
+        tpairs = [(i.parent.th.text, i.text) for i in
+                  html.select('table.infobox > tr > td')
+                  if i.parent.find('th')]
+
+        return tpairs
+
+    def _source_infobox_parse(self, src):
+        """
+        Given the source parse the infobox into pairs of values.
+        """
+
+        matchers = re.finditer(INFOBOX_ATTRIBUTE_REGEX % r"(?P<key>.*)", src)
+        return [(m.group("key"), m.group("val")) for m in matchers]
+
+    def _infobox_rendered(self, html):
+        ret = bs4.BeautifulSoup()
+
+        bs = bs4.BeautifulSoup(html)
+        for i in bs.select('table.infobox'):
+            ret.append(i)
+
+        return ret
+
+    def infobox(self, symbol, rendered=False, parsed=False):
+        """
+        Get the infobox in wiki markup. Renedered means return
+        html. Parsed is to get attribute/value pairs. To change this
+        behaviour in a subclass override any of the following
+        _{html,source}_infobox_parse().
+        """
 
         self.log().info("Looking for infobox: %s" % symbol)
 
-        ib = self._infobox_braces(mu)
+        if not rendered:
+            article = self.source(symbol)
+            ib = self._infobox_braces(article)
+            if parsed:
+                return self._source_infobox_parse(ib)
+
+        else:
+            article = self.download(symbol)
+            ib = self._infobox_rendered(article)
+            if parsed:
+                return self._html_infobox_parse(ib)
+            else:
+                ib = ib.text
 
         if ib:
             return ib
 
         self.log().warning("Could not find infobox in source (source size: %d)." %
-                           len(mu))
+                           len(article))
 
     def source(self, symbol, get_request=dict(action="edit"), redirect=True):
         """
@@ -123,13 +159,12 @@ class WikipediaSiteFetcher(BaseFetcher):
         self.log().info("Looking for article source: %s." % symbol)
         # <textarea tabindex="1" accesskey="," id="wpTextbox1" cols="80" rows="25" style="" lang="en" dir="ltr" name="wpTextbox1">
         html = self.download(symbol=symbol, get=get_request)
-
         soup = bs4.BeautifulSoup(html)
 
         try:
             src = str(self.get_wikisource(soup)[0])
         except IndexError:
-            raise KeyError("Article '%s' not found." % symbol)
+            raise KeyError("Source retrieval for rticle '%s' failed." % symbol)
 
         # Handle redirecions silently
         redirect_match = re.search(REDIRECT_REGEX, src)
@@ -151,15 +186,17 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
 
     def download(self, symbol, get=None):
         try:
-            data = json.load(open(self._fname))
+            if not hasattr(self, 'data'):
+                self.data = json.load(open(self._fname))
+
         except (ValueError, IOError):
-            data = dict()
+            self.data = dict()
 
         dkey = "%s;%s" % (symbol, get)
-        if dkey in data:
-            return data[dkey]
+        if dkey in self.data:
+            return self.data[dkey]
 
         pg = super(CachingSiteFetcher, self).download(symbol, get=get)
-        data[dkey] = pg
-        json.dump(data, open(self._fname, "w"))
+        self.data[dkey] = pg
+        json.dump(self.data, open(self._fname, "w"))
         return pg
