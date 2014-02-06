@@ -1,4 +1,9 @@
-import urllib
+try:
+    from urllib2 import urlopen
+except:
+    from urllib import urlopen
+
+from urllib import urlencode
 import re
 import json
 
@@ -51,8 +56,8 @@ class WikipediaSiteFetcher(BaseFetcher):
             get.update(title=symbol)
 
         url = "%s/%s?%s" % (self.url, self.base,
-                            urllib.urlencode(get))
-        return urllib.urlopen(url).read()
+                            urlencode(get))
+        return urlopen(url).read()
 
     def _infobox_braces(self, txt):
         ret = ""
