@@ -1,6 +1,6 @@
 # wikipediabase
 
-[![Build Status](https://secure.travis-ci.org/fakedrake/wikipediabase.png)](http://travis-ci.org/fakedrake/wikipediabase)
+[![Build Status](https://secure.travis-ci.org/fakedrake/wikipediabase.png)](http://travis-ci.org/fakedrake/WikipediaBase)
 [![Stories in Ready](https://badge.waffle.io/fakedrake/wikipediabase.png?label=ready)](https://waffle.io/fakedrake/wikipediabase) [![pypi version](https://badge.fury.io/py/wikipediabase.png)](http://badge.fury.io/py/wikipediabase)
 [![# of downloads](https://pypip.in/d/wikipediabase/badge.png)](https://crate.io/packages/wikipediabase?version=latest)
 [![code coverage](https://coveralls.io/repos/fakedrake/wikipediabase/badge.png?branch=master)](https://coveralls.io/r/fakedrake/wikipediabase?branch=master)
