@@ -44,10 +44,13 @@ class WikipediaSiteFetcher(BaseFetcher):
 
         return tag
 
-    # XXX: Turn get into a dict and have urllib do the formatting
     def download(self, symbol, get=None):
         """
-        Return the contents of page relative to the current url.
+        Download a wikipedia article.
+
+        :param symbol: The wikipedia symbol we are interested in.
+        :param get: dictionary of the get request. eg. `{'action':'edit'}`
+        :returns: HTML code
         """
         if not get:
             get = dict(title=symbol)
