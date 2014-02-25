@@ -60,7 +60,7 @@ YEAR_GENERAL = join_rx([r"\d+", merge_rx([AD,BC,""])], name='year')
 
 DAY_FIRST_FULL = join_rx([DAY_GENERAL, "(of|)", MONTH_NAMED, YEAR_GENERAL])
 MISSING_DAY_FULL = join_rx([MONTH_NAMED, YEAR_GENERAL], sep=r"\s*(?:,|of|)\s*")
-MONTH_FIRST_FULL = join_rx([MONTH_NAMED, "(the|)", DAY_GENERAL, YEAR_GENERAL], sep=r"\b\s*")
+MONTH_FIRST_FULL = join_rx([MONTH_NAMED, "(the|)", DAY_GENERAL+",?", YEAR_GENERAL], sep=r"\b\s*")
 
 def grp(match, key):
     try:

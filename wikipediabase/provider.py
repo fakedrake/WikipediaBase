@@ -3,6 +3,7 @@ from itertools import chain
 from log import Logging
 
 class Acquirer(Logging):
+
     def __init__(self, providers=None):
         self._providers = providers or []
 

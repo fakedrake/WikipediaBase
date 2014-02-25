@@ -28,7 +28,7 @@ class Regex(object):
 
         if self.name and self.name not in banned_names:
             banned_names.append(self.name)
-            fmt = "(?<"+self.name+">%s)"
+            fmt = "(?P<"+self.name+">%s)"
 
         return fmt
 
@@ -60,11 +60,11 @@ class Regex(object):
 
         return self.rx
 
-    def __str__(self):
-        return self.render()
-
     def compiled(self, flags=None):
         return re.compile(str(self), flags or self.flags)
+
+    def __str__(self):
+        return self.render()
 
     def __nonzero__(self):
         return True if self.render(raw=True) != "" else False
@@ -78,6 +78,9 @@ class Regex(object):
 
     def __or__(self, rx):
         return OrRx(self, rx)
+
+    def match(self, text):
+        pass
 
 
 class RxExpr(Regex):
@@ -97,10 +100,13 @@ class RxExpr(Regex):
         if banned_names is None:
             banned_names = []
 
-        r,s,l = [i.render(banned_names, **kw) if i else "" \
+        r,s,l = [i.render(banned_names, **kw) if i else None \
                  for i in [self.right, self.sep, self.left]]
 
-        return l+s+r
+        if r is not None and l is not None:
+            return l+s+r
+
+        return l or r
 
 
 class OrRx(RxExpr):
@@ -116,7 +122,7 @@ class OrRx(RxExpr):
         elif len(args) == 2:
             rrx = args[1]
         else:
-            rrx = ""
+            rrx = None
 
         kwargs['grouped'] = grp
         super(OrRx, self).__init__(lrx, rrx, **kwargs)
@@ -136,3 +142,28 @@ class ConcatRx(RxExpr):
             rrx = ""
 
         super(ConcatRx, self).__init__(lrx, rrx, **kwargs)
+
+class Matcher(object):
+    """
+    Retrieve a structured version of the text using regular
+    expressions.
+    """
+
+    def __init__(self, rx_map):
+        """
+        :param rx_map: a list of tuples (certainty, Regex).
+        """
+
+        self.rx_map = rx_map
+
+
+    def parse(self, text):
+        """
+        Make a parsable tree using the parser.
+
+        :param text: The text to be parsed.
+        :returns: A tree of elements that are matched.
+        """
+
+        for c, rx in self.rx_map:
+            pass
