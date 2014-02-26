@@ -64,6 +64,12 @@ class TestRegex(unittest.TestCase):
         self.assertEqual(rx.search("a1992").groups("num"), ("1992",))
         self.assertRaises(IndexError, lambda : rx.search("1992", name="num2"))
 
+    def test_flags(self):
+        rx = Regex("july", flags='i', name="m")
+
+        self.assertEqual(rx.render(), '(?P<m>(?i)july)')
+        self.assertEqual(rx.match("July", name="m"), "July")
+
 
     def tearDown(self):
         pass

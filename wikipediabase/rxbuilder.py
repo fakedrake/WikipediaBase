@@ -16,32 +16,41 @@ def rxf(rx):
 class Regex(object):
 
     # Note that rx can be None in subclasses.
-    def __init__(self, rx=None, name=None, grouped=False, flags=None):
+    def __init__(self, rx=None, name=None, grouped=False, flags=""):
         self.rx = rx or ""
         self.grouped = grouped
         self.name = name
-        self.flags = None
+        self.flags = flags
 
-    def _format(self, banned_names, grouped=None):
+    def _format(self, banned_names, flags=None, grouped=None):
         # XXX: this has the side effect of adding to banned
         # names. This means that a named is sure to be there only
         # once.
         fmt = "%s"
-        if (grouped is None and self.grouped) or grouped:
-            fmt = "(%s)"
+
+        flg = flags or self.flags
+        if flg:
+            fmt = "(?%s)%s" % (flg, fmt)
 
         if self.name and self.name not in banned_names:
             banned_names.append(self.name)
-            fmt = "(?P<"+self.name+">%s)"
+            fmt = "(?P<"+self.name+">%s)" % fmt
+        elif (grouped is None and self.grouped) or grouped:
+            fmt = "(%s)" % fmt
+
+        flg = flags or self.flags
+
 
         return fmt
 
-    def render(self, banned_names=None, raw=False, grouped=None):
+    def render(self, banned_names=None, raw=False, flags=None, grouped=None):
         """
         Render the regex.
 
         :param banned_names: A list of names that are banned. if the name
         is among those do not name the rx.
+        :param flags: One or more letters from the set 'i', 'L', 'm',
+        's', 'u', 'x'. This wraps the rx with `(?<flags>rx)`
 
         :returns: String of what this regex means.
         """
@@ -52,7 +61,7 @@ class Regex(object):
         if raw:
             fmt = "%s"
         else:
-            fmt = self._format(banned_names, grouped)
+            fmt = self._format(banned_names, grouped, flags)
 
         s = self.string(banned_names)
 
@@ -64,16 +73,12 @@ class Regex(object):
 
         return self.rx
 
-    def compiled(self, flags=None, **kw):
+    def compiled(self, **kw):
         """
         Note that only the root node flags are used.
         """
 
-        flg = flags or self.flags
-        if flg:
-            return re.compile(self.render(**kw), flg)
-        else:
-            return re.compile(self.render(**kw))
+        return re.compile(self.render(**kw))
 
     def __str__(self):
         return self.render()
@@ -96,7 +101,7 @@ class Regex(object):
         Return a `re` matcher or just the matched text if name is given.
         """
 
-        m = self.compiled(flags).match(text)
+        m = self.compiled(flags=flags).match(text)
         if m is None:
             return
 
@@ -106,7 +111,7 @@ class Regex(object):
         return m
 
     def search(self, text, name=None, flags=None):
-        m = self.compiled(flags).search(text)
+        m = self.compiled(flags=flags).search(text)
         if m is None:
             return
 
