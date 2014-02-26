@@ -98,7 +98,7 @@ class TestResolvers(unittest.TestCase):
         for completion, entry in enumerate(lst):
             try:
                 q, m = entry
-                msg = None
+                msg = ""
             except ValueError:
                 q, m, msg = entry
 
@@ -107,8 +107,7 @@ class TestResolvers(unittest.TestCase):
 
             ans = self.fe.eval(q) or ""
 
-            if msg is None:
-                msg = "\n\tQuery: '%s'\n\tAnswer: '%s'\n\tMatcher: '%s'\n\tComp: %d\%d" \
+            msg += "\n\tQuery: '%s'\n\tAnswer: '%s'\n\tMatcher: '%s'\n\tCompletion: %d\%d" \
                       % (q, ans, m, completion+1, full)
 
             yield ans, m, msg
