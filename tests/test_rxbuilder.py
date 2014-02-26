@@ -44,6 +44,12 @@ class TestRegex(unittest.TestCase):
         self.assertEqual((Regex("a", name="alpha") | "b").render(),
                          "((?P<alpha>a)|b)")
 
+    def test_name_tree(self):
+        rx = Regex("\d+", name="num")
+        ext_rx = ConcatRx("[+-]",rx, name="num")
+        self.assertEqual(rx.render(), r"(?P<num>\d+)")
+        self.assertEqual(ext_rx.render(), r"(?P<num>[+-]\d+)")
+
     def tearDown(self):
         pass
 
