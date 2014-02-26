@@ -51,7 +51,7 @@ class TestResolvers(unittest.TestCase):
         self.assertEqual(self.simple_resolver.resolve(ARTICLE, "word-count"), \
                          100)
 
-    def test_integration(self):
+    def test_random_attributes(self):
         self.assertEqual(self.fe.eval("(get \"doctor ninja batman\" \"word-count\")"), '3')
         self.assertEqual(self.fe.eval("(get \"doctor ninja batman\n\" (:code \"word-count\"))"), '3')
 
