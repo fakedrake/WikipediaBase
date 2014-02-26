@@ -100,11 +100,11 @@ class RxExpr(Regex):
         if banned_names is None:
             banned_names = []
 
-        r,s,l = [i.render(banned_names, **kw) if i else None \
+        r,s,l = [i.render(banned_names, **kw) if bool(i) else None \
                  for i in [self.right, self.sep, self.left]]
 
         if r is not None and l is not None:
-            return l+s+r
+            return l + (s or "") + r
 
         return l or r
 
