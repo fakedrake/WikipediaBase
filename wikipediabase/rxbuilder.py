@@ -1,6 +1,10 @@
 # Requirements:
 # - Operations on regex: sequential/separated, or
 # - Exclusivity in naming.
+#
+# Take a look at the tests to see how this is to be used.
+
+import re
 
 def rxf(rx):
     if not isinstance(rx, Regex):
@@ -18,12 +22,12 @@ class Regex(object):
         self.name = name
         self.flags = None
 
-    def _format(self, banned_names):
+    def _format(self, banned_names, grouped=None):
         # XXX: this has the side effect of adding to banned
         # names. This means that a named is sure to be there only
         # once.
         fmt = "%s"
-        if self.grouped:
+        if (grouped is None and self.grouped) or grouped:
             fmt = "(%s)"
 
         if self.name and self.name not in banned_names:
@@ -32,7 +36,7 @@ class Regex(object):
 
         return fmt
 
-    def render(self, banned_names=None, raw=False):
+    def render(self, banned_names=None, raw=False, grouped=None):
         """
         Render the regex.
 
@@ -48,7 +52,7 @@ class Regex(object):
         if raw:
             fmt = "%s"
         else:
-            fmt = self._format(banned_names)
+            fmt = self._format(banned_names, grouped)
 
         s = self.string(banned_names)
 
@@ -60,8 +64,16 @@ class Regex(object):
 
         return self.rx
 
-    def compiled(self, flags=None):
-        return re.compile(str(self), flags or self.flags)
+    def compiled(self, flags=None, **kw):
+        """
+        Note that only the root node flags are used.
+        """
+
+        flg = flags or self.flags
+        if flg:
+            return re.compile(self.render(**kw), flg)
+        else:
+            return re.compile(self.render(**kw))
 
     def __str__(self):
         return self.render()
@@ -79,8 +91,29 @@ class Regex(object):
     def __or__(self, rx):
         return OrRx(self, rx)
 
-    def match(self, text):
-        pass
+    def match(self, text, name=None, flags=None):
+        """
+        Return a `re` matcher or just the matched text if name is given.
+        """
+
+        m = self.compiled(flags).match(text)
+        if m is None:
+            return
+
+        if name:
+            return m.group(name)
+
+        return m
+
+    def search(self, text, name=None, flags=None):
+        m = self.compiled(flags).search(text)
+        if m is None:
+            return
+
+        if name:
+            return m.group(name)
+
+        return m
 
 
 class RxExpr(Regex):

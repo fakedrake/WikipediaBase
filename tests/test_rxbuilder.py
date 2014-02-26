@@ -50,6 +50,21 @@ class TestRegex(unittest.TestCase):
         self.assertEqual(rx.render(), r"(?P<num>\d+)")
         self.assertEqual(ext_rx.render(), r"(?P<num>[+-]\d+)")
 
+    def test_matching(self):
+        rx = Regex("\d+", name="num")
+        self.assertEqual(rx.match("1992", name="num"), "1992")
+        self.assertEqual(rx.match("1992").groups("num"), ("1992",))
+        self.assertEqual(rx.match("a1992"), None)
+        self.assertRaises(IndexError, lambda : rx.match("1992", name="num2"))
+
+    def test_search(self):
+        rx = Regex("\d+", name="num")
+        self.assertEqual(rx.search("1992", name="num"), "1992")
+        self.assertEqual(rx.search("1992").groups("num"), ("1992",))
+        self.assertEqual(rx.search("a1992").groups("num"), ("1992",))
+        self.assertRaises(IndexError, lambda : rx.search("1992", name="num2"))
+
+
     def tearDown(self):
         pass
 
