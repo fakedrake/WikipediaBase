@@ -82,14 +82,15 @@ class Enchanted(Logging):
 
 def multiplex(ans, tag, que, enchantments, log=None):
     """
-    Given 'ans', the text that contains the information we are looking
-    for or the actual object we are enchanting, it's tag, the question
-    that it came from (the attribute of the query) and a list of
-    Enchanted classes that implement 'with_tag' and 'with_que' return
-    an instance of the correct one that does not raise EnchantError.
-    """
+    Enchant an answer based on the `enchantments` ratings.
 
-    ret = None
+    :param ans: The answer yielded from wikipedia.
+    :param tag: The tag {html,code,...}. This is the tag Enchanted uses
+    :param que: This is also passed to Enchanted to rate.
+    :param enchantments: A list of Enchanted classes to choose from
+    :param log: A logger.
+    :returns: The best enchanted object you could find or None.
+    """
 
     ratings = [(E.rate(que, tag, ans), E) for E in enchantments]
 
@@ -100,5 +101,3 @@ def multiplex(ans, tag, que, enchantments, log=None):
             if log:
                 log.info("Failed to enchant (:%s '%s') with %s" \
                          % (tag, ans, E.__name__))
-
-    return ret
