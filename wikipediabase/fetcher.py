@@ -40,7 +40,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         """
         Get the source from an html soup of the edit page.
         """
-        tag = soup.find_all(attrs={"id":WIKISOURCE_TAG_ID})
+        tag = soup.find_all(attrs={"id": WIKISOURCE_TAG_ID})
 
         return tag
 

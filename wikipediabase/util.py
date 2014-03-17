@@ -44,28 +44,14 @@ def soup_factory(soup_or_article):
     else:
         return soup_or_article
 
-
-class Tree(object):
-
-    def _active_node(self):
-        for n in self._path:
-            ret = self._tree[n]
-
-    def _add_node(self, node):
-        self._active_node()[node.text]
-
-    def _add_leaf(self, leaf):
-        pass
-
-
-def article(rendered_article, nwrap=None, lwrap=None):
+def article_json(rendered_article, nwrap=None, lwrap=None):
     """
-    Return a dict {'head': <heading>, 'paragraphs': [...], 'children': [...]}
+    Return a dict,
 
     Example:
 
     >>> article(get_html("http://en.wikipedia.org/wiki/Edgar_Allan_Poe"))
-
+    {'head': <heading>, 'paragraphs': [...], 'children': [...]}
     """
 
     if nwrap is None:
@@ -120,6 +106,19 @@ def paths_to_tree(ls):
         create_path(path, par, tree)
 
     return tree
+
+def paragraphs(article):
+    """
+    Given an article in json mode iterato over the paragraphs.
+    """
+
+    nodes = [article]
+    while nodes:
+        nod = nodes.pop()
+        for p in nod['paragraphs']:
+            yield p
+
+        nodes += nod['children']
 
 def get_html(url):
     """

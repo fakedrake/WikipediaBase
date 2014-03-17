@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase.util import paths_to_tree, get_html, article
+from wikipediabase.util import paths_to_tree, get_html, article_json, paragraphs
 from .common import data
 
 import os
@@ -45,10 +45,15 @@ class TestUtil(unittest.TestCase):
                              {'head': 3, 'paragraphs': ['l'], 'children': []}]})
 
     def test_article_json(self):
-        l =
-        article(get_html("http://en.wikipedia.org/wiki/Edgar_Allan_Poe"),
+        l = article_json(get_html("http://en.wikipedia.org/wiki/Edgar_Allan_Poe"),
                 nwrap=lambda x: x.text, lwrap=lambda x: x.text)
         self.assertEqual(l['children'][0]['head'], 'Early life')
+
+    def test_paragraph_iter(self):
+        a = article_json(get_html("http://en.wikipedia.org/wiki/Edgar_Allan_Poe"),
+                nwrap=lambda x: x.text, lwrap=lambda x: x.text)
+
+        self.assertIn("Poe", list(paragraphs(a))[0])
 
     def tearDown(self):
         pass

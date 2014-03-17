@@ -70,7 +70,6 @@ class TestRegex(unittest.TestCase):
         self.assertEqual(rx.render(), '(?P<m>(?i)july)')
         self.assertEqual(rx.match("July", name="m"), "July")
 
-
     def tearDown(self):
         pass
 

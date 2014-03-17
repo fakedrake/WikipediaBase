@@ -43,7 +43,8 @@ class BaseResolver(Provider):
         thing.
         """
 
-        return self._tag
+        # return self._tag
+        raise AttributeError("Tags should be taken care of by enchanted objects.")
 
 class StaticResolver(BaseResolver):
     """
@@ -114,3 +115,10 @@ class InfoboxResolver(BaseResolver):
 
             self.log().warning("Could nont find infobox attribute '%s'" \
                                % attribute)
+
+
+class RegexResolver(BaseResolver):
+    """
+    Resolve data from within the text using regex and beautiful
+    soup. InfoboxResolver is obviously stronger than this.
+    """

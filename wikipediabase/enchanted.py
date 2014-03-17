@@ -28,6 +28,10 @@ class Enchanted(Logging):
     que_rate = 0.3
 
     def __init__(self, tag, val=None, compat=True):
+        """
+        Enchant a piece of data. Throws EnchantError on failure.
+        """
+
         if self.force_tag:
             self.tag = self.force_tag
         else:
@@ -82,7 +86,8 @@ class Enchanted(Logging):
 
 def multiplex(ans, tag, que, enchantments, log=None):
     """
-    Enchant an answer based on the `enchantments` ratings.
+    Enchant an answer based on the `enchantments`
+    ratings. EnchantErrors are just logged.
 
     :param ans: The answer yielded from wikipedia.
     :param tag: The tag {html,code,...}. This is the tag Enchanted uses
