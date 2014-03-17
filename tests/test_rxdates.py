@@ -13,7 +13,10 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase import rxdates
+import re
+
+from wikipediabase import rxdates as rd
+from wikipediabase.rxbuilder import fuzzy_match
 
 class TestRxdates(unittest.TestCase):
 
@@ -21,7 +24,11 @@ class TestRxdates(unittest.TestCase):
         pass
 
     def test_months(self):
-        self.assertEqual(MONTH_NAMES.search("22 jun", name="month", flags=re.I), 'jun')
+        self.assertEqual(rd.MONTH_NAMES.search("22 jun", name="month", flags=re.I), 'Jun')
+
+    def test_fuzzy_match(self):
+        dates = [(i.meta[1], str(i)) for i in fuzzy_match("I shall come on 10|10|2001", rd.DATE_RATINGS)]
+        self.assertEqual(dates, str(rd.DMY))
 
     def tearDown(self):
         pass

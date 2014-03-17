@@ -16,11 +16,12 @@ def rxf(rx):
 class Regex(object):
 
     # Note that rx can be None in subclasses.
-    def __init__(self, rx=None, name=None, grouped=False, flags=""):
+    def __init__(self, rx=None, name=None, grouped=True, flags=""):
         self.rx = rx or ""
         self.grouped = grouped
         self.name = name
         self.flags = flags
+        self._cached_str = None
 
     def _format(self, banned_names, flags=None, grouped=None):
         # XXX: this has the side effect of adding to banned
@@ -45,7 +46,8 @@ class Regex(object):
 
     def render(self, banned_names=None, raw=False, flags=None, grouped=None):
         """
-        Render the regex.
+        Render the regex. This just takes care of the grouping and
+        naming. string() is called for the actual regex.
 
         :param banned_names: A list of names that are banned. if the name
         is among those do not name the rx.
@@ -55,19 +57,30 @@ class Regex(object):
         :returns: String of what this regex means.
         """
 
+        if self._cached_str:
+            print "Cached:", self._cached_str, grouped, self.grouped
+            return self._cached_str
+
         if banned_names is None:
             banned_names = []
 
         if raw:
             fmt = "%s"
         else:
-            fmt = self._format(banned_names, grouped, flags)
+            fmt = self._format(banned_names, flags=flags, grouped=grouped)
 
         s = self.string(banned_names)
 
-        return fmt % s
+        self._cached_str = fmt % s
+        print "Calculated:", self._cached_str, grouped, self.grouped
+        return self._cached_str
 
     def string(self, banned_names=None):
+        """
+        This is lower level than render. It just returns the regex without
+        the grouping extras.
+        """
+
         if isinstance(self.rx, Regex):
             return self.rx.render(banned_names)
 
@@ -81,7 +94,14 @@ class Regex(object):
         return re.compile(self.render(**kw))
 
     def __str__(self):
+        """
+        Just a wrapper for render.
+        """
+
         return self.render()
+
+    def __repr__(self):
+        return '<%s instance: "%s">' % (self.__class__.__name__, str(self))
 
     def __nonzero__(self):
         return True if self.render(raw=True) != "" else False
@@ -181,27 +201,36 @@ class ConcatRx(RxExpr):
 
         super(ConcatRx, self).__init__(lrx, rrx, **kwargs)
 
-class Matcher(object):
+
+class TextOverlay(object):
+    def __init__(self, text, rng, meta=None):
+        """
+        :param text: The text to be overlayed
+        :param rng: The range over which to overlay.
+        :param meta: Metadata over the range.
+        """
+
+        self.text = text
+        self.start, self.end = rng
+        self.meta = meta
+
+    def __str__(self):
+        return self.text[self.start:self.end]
+
+    def __repr__(self):
+        return "<%s instance: '%s' - %s>" % \
+            (self.__class__.__name__, str(self), self.meta)
+
+def fuzzy_match(text, rxes):
     """
-    Retrieve a structured version of the text using regular
-    expressions.
+    Generate a list of overlays for the text based on rxes with the
+    (rate, matcher) as meta.
     """
 
-    def __init__(self, rx_map):
-        """
-        :param rx_map: a list of tuples (certainty, Regex).
-        """
+    for rate, rx in rxes:
+        if isinstance(rx, str):
+            rx = Regex(rx)
 
-        self.rx_map = rx_map
-
-
-    def parse(self, text):
-        """
-        Make a parsable tree using the parser.
-
-        :param text: The text to be parsed.
-        :returns: A tree of elements that are matched.
-        """
-
-        for c, rx in self.rx_map:
-            pass
+        m = rx.search(text)
+        if m:
+            yield TextOverlay(text, (m.start(), m.end()), (m, rate))
