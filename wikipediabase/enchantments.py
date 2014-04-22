@@ -90,32 +90,60 @@ class EnchantedDate(Enchanted):
     def tag_str(self):
         return "yyyymmdd"
 
-    def _range_middle(self, (d1, d2)):
-        # Very impercise
-
-        return tuple(int((i+j)/2) for i,j in zip(d1, d2))
-
     def should_parse(self):
         if self.question and self.question.lower().endswith("date"):
             return True
 
         return self.tag == "yyyymmdd"
 
+    def _range_middle(self, (d1, d2)):
+        # Very impercise
+
+        return tuple(int((i+j)/2) for i,j in zip(d1, d2))
+
+    def _in_range(self, date, rng):
+        sd, ed = rng
+
+        for c, rs, re in reversed(zip(date, sd, ed)):
+            # If all are defined and c is between [grs, re)
+            if c*rs*re != 0 and c >= rs and c < re:
+                return True
+
+        return False
+
+
     def parse_val(self, txt):
         """
         Return of the extracted date the one appearing most often.
         """
 
-        dr = overlay_parse.dates.just_props(txt, {'date'}, {'range'})
-        if dr:
-            ret = dr[0]
-        else:
-            return None
+        # Do not parse separately, it's expensive and you will get
+        # date duplicates from range edges.
+        dnr = overlay_parse.dates.just_props(txt, {'date'}, {'range'})
+        dates = [d for d in dnr if len(d) == 3]
+        ranges = [r for r in dnr if len(r) == 2]
 
-        if len(ret) == 2:
-            return self._range_middle(ret)
+        # Most common date
+        scores = dict()
+        for d in dates:
+            score = scores.get(d, 0)
 
-        return ret
+            for r in ranges:
+                if self._in_range(d, r):
+                    score += 1
+
+            scores[d] = score+1
+
+        # if "BC" in txt:
+        #     import ipdb; ipdb.set_trace()
+
+        try:
+            return max(dates, key=lambda d: scores[d])
+        except ValueError:
+            if ranges:
+                return self._range_middle(ranges[0])
+
+        return None
 
 def enchant(tag, obj, result_from=None, compat=True, log=None):
     """
