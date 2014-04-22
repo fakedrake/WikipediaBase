@@ -172,7 +172,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         try:
             src = str(self.get_wikisource(soup)[0])
         except IndexError:
-            raise KeyError("Source retrieval for rticle '%s' failed." % symbol)
+            raise KeyError("Source retrieval for article '%s' failed." % symbol)
 
         # Handle redirecions silently
         redirect_match = re.search(REDIRECT_REGEX, src)
