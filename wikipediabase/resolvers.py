@@ -3,12 +3,13 @@ Each resolver is a provider tha may also provide an abstract way
 of resolving an attribute through `resolve'.
 """
 
+import re
+import bs4
+
 from provider import Provider, provide
 from fetcher import BaseFetcher, WikipediaSiteFetcher
 from enchantments import enchant, Enchanted
 from util import INFOBOX_ATTRIBUTE_REGEX
-
-import re
 
 
 class BaseResolver(Provider):
@@ -113,7 +114,9 @@ class InfoboxResolver(BaseResolver):
                             infobox, flags=re.IGNORECASE|re.DOTALL)
             if val:
                 self.log().info("Found infobox attribute '%s'" % attr)
-                ret = val.group("val")
+
+                # ret = re.sub("<.*>", "", unicode(bs4.BeautifulSoup(val.group("val")).encode('ascii', 'backslashreplace')))
+                ret= val.group("val")
 
                 return enchant(key, ret, result_from=attr,
                                compat=self.compat, log=self.log())
