@@ -5,9 +5,7 @@ of resolving an attribute through `resolve'.
 
 from provider import Provider, provide
 from fetcher import BaseFetcher, WikipediaSiteFetcher
-from enchanted import Enchanted
-from enchantments import enchant
-from dates import EnchantedDate
+from enchantments import enchant, Enchanted
 from util import INFOBOX_ATTRIBUTE_REGEX
 
 import re
@@ -32,7 +30,10 @@ class BaseResolver(Provider):
         Use your resources to resolve.
         """
 
-        key, attr = Enchanted.keyattr(attribute)
+        if isinstance(attribute, Enchanted):
+            attr = attribute.val
+        else:
+            attr = attribute
 
         if attr in self._resources:
             return self._resources[attr](article, attribute)
@@ -99,7 +100,10 @@ class InfoboxResolver(BaseResolver):
             # There are no newlines in article titles
             return None
 
-        key, attr = Enchanted.keyattr(attribute)
+        if isinstance(attribute, Enchanted):
+            key, attr = attribute.tag, attribute.val
+        else:
+            key, attr = None, attribute
 
         attr = attr.replace("-", "_").lower()
         infobox = self.fetcher.infobox(article, rendered=(key=="html"))
@@ -111,7 +115,8 @@ class InfoboxResolver(BaseResolver):
                 self.log().info("Found infobox attribute '%s'" % attr)
                 ret = val.group("val")
 
-                return enchant(key, ret, result_from=attr, compat=self.compat, log=self.log())
+                return enchant(key, ret, result_from=attr,
+                               compat=self.compat, log=self.log())
 
             self.log().warning("Could nont find infobox attribute '%s'" \
                                % attribute)

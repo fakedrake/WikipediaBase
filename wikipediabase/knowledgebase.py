@@ -27,24 +27,22 @@ class KnowledgeBase(Provider):
     @provide()
     def get(self, v1, v2, v3=None):
         """
-        Iterate of the provided attribute resolvers.
+        Iterate of the provided attribute resolvers. The wikipedia class
+        in the question which would be v2 if all 3 args are present is
+        obsolete.
         """
 
-        if v3:
-            return self.old_get(v1, v2, v3)
+        if v3 is not None:
+            article, attr = v2, v3
+        else:
+            article, attr = v1, v2
 
-        return self.new_get(v1, v2)
+        return self._get(article, attr, compat=bool(v3))
 
-
-    def old_get(self, cls, article, attr):
-        raw_ret = self.new_get(article, attr, compat=True)
-
-        return raw_ret
-
-    def new_get(self, article, attr, compat=False):
+    def _get(self, article, attr, compat):
         """
-        In compatibility mode new_get returns a tuple of the resolver
-        gives to the answer (for now 'code' or 'html') and the actual
+        In compatibility mode _get returns a tuple of the resolver gives
+        to the answer (for now 'code' or 'html') and the actual
         answer.
         """
 
