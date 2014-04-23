@@ -67,7 +67,7 @@ class Enchanted(object):
 
 class EnchantedString(Enchanted):
     def tag_str(self):
-        if self.tag == "code":
+        if self.tag == "code" or not self.tag:
             return "html"
 
         return self.tag

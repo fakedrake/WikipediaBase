@@ -90,7 +90,9 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "Stephen Gray (scientist)" "BIRTH-DATE")',
      '((:yyyymmdd 16661200))'), # '((:yyyymmdd 16660000))'), xxx it
                                 # actually sais december of 1666
+]
 
+DEGENERATE_EXAMPLES = [
     # DEGENERATE CASES
     # Resolved from text
     ('(get "wikipedia-person" "Mary Shakespeare" "DEATH-DATE")',
