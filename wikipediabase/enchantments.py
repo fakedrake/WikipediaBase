@@ -66,11 +66,7 @@ class Enchanted(object):
 
 class EnchantedString(Enchanted):
     def tag_str(self):
-<<<<<<< HEAD
         if self.tag == "code" or not self.tag:
-=======
-        if self.tag == "code":
->>>>>>> f13b29d247954483a732ac285a47e842d1694087
             return "html"
 
         return self.tag
