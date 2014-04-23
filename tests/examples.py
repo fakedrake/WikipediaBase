@@ -39,10 +39,12 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "Stephen Gray (scientist)" "DEATH-DATE")',
      '((:yyyymmdd 17360207))'),
     ('(get "wikipedia-person" "Jesus" "BIRTH-DATE")',
-     '((:yyyymmdd -00040000))'),
+     '((:yyyymmdd -00050000))'), # Used to be 4BC but the correct
+     # answer would be a range 7-2BC amyway
     ('(get "wikipedia-person" "Jesus" "DEATH-DATE")',
-     '((:yyyymmdd 00330000))'), # Used to be '((:yyyymmdd 00300000))'),
-    # But both are equally correct i think.
+     '((:yyyymmdd 00310000))'), # Used to be '((:yyyymmdd
+    # 00300000))'), But both are equally correct i think. For the same
+    # reasons: range I choose 31 instead of 33
     ('(get "wikipedia-person" "Albert Einstein" "BIRTH-DATE")',
      '((:yyyymmdd 18790314))'),
     ('(get "wikipedia-person" "Albert Einstein" "DEATH-DATE")',

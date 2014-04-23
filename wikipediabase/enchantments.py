@@ -85,7 +85,7 @@ class EnchantedDate(Enchanted):
 
     def val_str(self):
         d, m, y = self.val
-        return "%04d%02d%02d" % (y, m, d)
+        return "%s%04d%02d%02d" % ("-" if y<0 else "" ,abs(y), m, d)
 
     def tag_str(self):
         return "yyyymmdd"
@@ -101,20 +101,25 @@ class EnchantedDate(Enchanted):
 
         return tuple(int((i+j)/2) for i,j in zip(d1, d2))
 
-    def _in_range(self, date, rng):
-        sd, ed = rng
+    def parse_val(self, txt):
+        dor = overlay_parse.dates.just_props(txt, {'date'}, {'range'})
 
-        for c, rs, re in reversed(zip(date, sd, ed)):
-            # If all are defined and c is between [grs, re)
-            if c*rs*re != 0 and c >= rs and c < re:
-                return True
+        if dor:
+            if len(dor[0]) == 2:
+                return self._range_middle(dor[0])
 
-        return False
+            return dor[0]
 
 
+class EnchantedDateVoting(EnchantedDate):
     def parse_val(self, txt):
         """
-        Return of the extracted date the one appearing most often.
+        Return of the extracted date the one appearing most often. Count
+        the ones that are in ranges etc.
+
+        Note that while this works it is not used. See results for the
+        jesus date of birth. The correct way would be to have a
+        sepcial enchantment that may be a date or a date range.
         """
 
         # Do not parse separately, it's expensive and you will get
@@ -134,9 +139,6 @@ class EnchantedDate(Enchanted):
 
             scores[d] = score+1
 
-        # if "BC" in txt:
-        #     import ipdb; ipdb.set_trace()
-
         try:
             return max(dates, key=lambda d: scores[d])
         except ValueError:
@@ -144,6 +146,18 @@ class EnchantedDate(Enchanted):
                 return self._range_middle(ranges[0])
 
         return None
+
+    def _in_range(self, date, rng):
+        sd, ed = rng
+
+        for c, rs, re in reversed(zip(date, sd, ed)):
+            # If all are defined and c is between [grs, re)
+            if c*rs*re != 0 and c >= rs and c < re:
+                return True
+
+        return False
+
+
 
 def enchant(tag, obj, result_from=None, compat=True, log=None):
     """
