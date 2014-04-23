@@ -23,12 +23,11 @@ class BaseFetcher(Logging):
     complex fetchers.
     """
 
-    def fetch(self, article):
-        """
-        Just return the article itself.
-        """
+    def download(self, symbol, get=None):
+        raise NotImplemented
 
-        return article
+    def source(self, symbol, redirect=True):
+        raise NotImplemented
 
 
 class WikipediaSiteFetcher(BaseFetcher):
@@ -61,103 +60,6 @@ class WikipediaSiteFetcher(BaseFetcher):
         url = "%s/%s?%s" % (self.url, self.base,
                             urlencode(get))
         return urlopen(url).read()
-
-    def _infobox_braces(self, txt):
-        ret = ""
-        ibs = -1
-        braces = 0
-        rngs = []
-
-        for m in re.finditer("(({{)\s*(\w*)|(}}))", txt):
-            if m.group(2) == "{{":
-                if braces > 0:
-                    braces += 1
-
-                if m.group(3) == "Infobox":
-                    braces = 1
-                    ibs = m.start(2)
-
-            elif m.group(1) == "}}" and braces > 0:
-                braces -= 1
-
-                if braces == 0:
-                    eoi = m.end(1)
-                    rngs.append((ibs, eoi))
-
-        # There may be more than one infoboxes, concaenate them.
-        for s,e in rngs:
-            ret += txt[s:e]
-
-        return ret or None
-
-    def infobox_type(self, symbol, follow=True):
-        """
-        Get the infobox type. 'follow' returns the alias infobox of this
-        infobox. E.g. president => officeholder
-        """
-
-        raise NotImplementedError
-
-    def _html_infobox_parse(self, html):
-        """
-        Given the infobox html or as soup.
-        """
-
-        if isinstance(html, str):
-            html = bs4.BeautifulSoup(html)
-
-        tpairs = [(i.parent.th.text, i.text) for i in
-                  html.select('table.infobox > tr > td')
-                  if i.parent.find('th')]
-
-        return tpairs
-
-    def _source_infobox_parse(self, src):
-        """
-        Given the source parse the infobox into pairs of values.
-        """
-
-        matchers = re.finditer(INFOBOX_ATTRIBUTE_REGEX % r"(?P<key>.*)", src)
-        return [(m.group("key"), m.group("val")) for m in matchers]
-
-    def _infobox_rendered(self, html):
-        ret = bs4.BeautifulSoup()
-
-        bs = bs4.BeautifulSoup(html)
-        for i in bs.select('table.infobox'):
-            ret.append(i)
-
-        return ret
-
-    def infobox(self, symbol, rendered=False, parsed=False):
-        """
-        Get the infobox in wiki markup. Renedered means return
-        html. Parsed is to get attribute/value pairs. To change this
-        behaviour in a subclass override any of the following
-        _{html,source}_infobox_parse().
-        """
-
-        self.log().info("Looking for infobox: %s" % symbol)
-
-        if not rendered:
-            article = self.source(symbol)
-            ib = self._infobox_braces(article)
-            if parsed:
-                return self._source_infobox_parse(ib)
-
-        else:
-            article = self.download(symbol)
-            ib = self._infobox_rendered(article)
-            if parsed:
-                return self._html_infobox_parse(ib)
-            else:
-                ib = ib.text
-
-        if ib:
-            return ib
-
-        self.log().warning("Could not find infobox in source (source size: %d)." %
-                           len(article))
 
     def source(self, symbol, get_request=dict(action="edit"), redirect=True):
         """

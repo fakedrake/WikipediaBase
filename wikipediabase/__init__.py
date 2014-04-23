@@ -5,6 +5,10 @@ __email__ = 'darksaga2006@gmail.com'
 __url__ = 'https://github.com/fakedrake/wikipediabase'
 __version__ = '0.0.1'
 
+from knowledgebase import KnowledgeBase
+from resolvers import StaticResolver
+from frontend import TelnetFrontend
 
 def wikipediabase():
-    return 'Hello World!'
+    fe = TelnetFrontend(knowledgebase=KnowledgeBase(resolvers=[StaticResolver()]))
+    fe.start()

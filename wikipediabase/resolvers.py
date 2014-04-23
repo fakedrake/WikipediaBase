@@ -39,14 +39,6 @@ class BaseResolver(Provider):
         if attr in self._resources:
             return self._resources[attr](article, attribute)
 
-    def tag(self):
-        """
-        For compatibility reasons we will want to know where we found each
-        thing.
-        """
-
-        # return self._tag
-        raise AttributeError("Tags should be taken care of by enchanted objects.")
 
 class StaticResolver(BaseResolver):
     """
@@ -107,14 +99,15 @@ class InfoboxResolver(BaseResolver):
             key, attr = None, attribute
 
         attr = attr.replace("-", "_").lower()
-        infobox = self.fetcher.infobox(article, rendered=(key=="html"))
+        ibox = Infobox(article, self.fetcher)
+
+        if key == 'html':
+            infobox = ibox
 
         if infobox:
-            val = re.search(INFOBOX_ATTRIBUTE_REGEX % attr,
-                            infobox, flags=re.IGNORECASE|re.DOTALL)
+            ret = ibox.get(attr)
             if val:
                 self.log().info("Found infobox attribute '%s'" % attr)
-                ret= val.group("val")
 
                 return enchant(key, ret, result_from=attr,
                                compat=self.compat, log=self.log())
