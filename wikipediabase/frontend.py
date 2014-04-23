@@ -66,10 +66,3 @@ class TelnetFrontend(Frontend):
     def run(self):
         self.log().info("Running telnet server...")
         self.srv.start(thread=False)
-
-if __name__ == '__main__':
-    from knowledgebase import KnowledgeBase
-    from resolvers import StaticResolver
-
-    fe = TelnetFrontend(knowledgebase=KnowledgeBase(resolvers=[StaticResolver()]))
-    fe.start()

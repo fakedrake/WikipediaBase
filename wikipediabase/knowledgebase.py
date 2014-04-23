@@ -1,6 +1,7 @@
 from provider import Acquirer, Provider, provide
 from util import INFOBOX_ATTRIBUTE_REGEX
 from fetcher import CachingSiteFetcher
+from infobox import Infobox
 
 import re
 
@@ -63,9 +64,11 @@ class KnowledgeBase(Provider):
 
     @provide(name="get-attributes")
     def get_attributes(self, wb_class,  symbol, compat=None):
+        ibox = Infobox(symbol, self.fetcher)
+
         return [m.group("attr").replace("_", "-") for m in
                 re.finditer(INFOBOX_ATTRIBUTE_REGEX % r"(?P<attr>\w+)",
-                            self.fetcher.infobox(symbol))]
+                            ibox.markup_source())]
 
     def attribute_wrap(self, val, **keys):
         """
