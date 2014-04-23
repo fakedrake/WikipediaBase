@@ -1,3 +1,11 @@
+"""
+Enchantments are meant to represent anything that comes in the
+form (:<key> <vale>). The interface to the outer world is
+enchant(). To add your own enchantments teach enchant() how to deal
+with them.
+"""
+
+
 import re
 
 import overlay_parse

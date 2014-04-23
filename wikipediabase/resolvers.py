@@ -115,7 +115,6 @@ class InfoboxResolver(BaseResolver):
             if val:
                 self.log().info("Found infobox attribute '%s'" % attr)
 
-                # ret = re.sub("<.*>", "", unicode(bs4.BeautifulSoup(val.group("val")).encode('ascii', 'backslashreplace')))
                 ret= val.group("val")
 
                 return enchant(key, ret, result_from=attr,
@@ -123,10 +122,3 @@ class InfoboxResolver(BaseResolver):
 
             self.log().warning("Could nont find infobox attribute '%s'" \
                                % attribute)
-
-
-class RegexResolver(BaseResolver):
-    """
-    Resolve data from within the text using regex and beautiful
-    soup. InfoboxResolver is obviously stronger than this.
-    """
