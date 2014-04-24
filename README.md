@@ -14,6 +14,10 @@ Wikipedia backend interface for start.mit.edu
 
 ## Usage
 
+Install `pip` if not installed:
+
+    apt-get install python-setuptools
+
 Install `wikipediabase`:
 
     pip install wikipediabase
@@ -24,7 +28,8 @@ Install `wikipediabase`:
 
 ## Testing
 
-Install development requirements:
+Install development requirements (do this after every 'git pull' in
+case there are new requirements):
 
     pip install -r requirements.txt
 
