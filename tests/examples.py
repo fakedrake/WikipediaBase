@@ -136,6 +136,8 @@ DEGENERATE_EXAMPLES = [
 
     ('(get "wikipedia-term" "Sium sisarum" (:code "IMAGE-DATA")',
      '((0 "illustration_Sium_sisarum0.jpg" "<i>Sium sisarum</i>"))'),
+    ('(get "wikipedia-term" "Yuri I. Manin" (:CODE "IMAGE-DATA")',
+     '((0 "Juri_Manin,_Ksenia_Semenova.jpeg" "Yuri Manin with his wife Ksenia Semenova at the ICM 2006 in Madrid"))'),
 
     # Next three tests copied from old tests that asserted that each
     # coordinate was within a small delta (.1) of the tested value, to
