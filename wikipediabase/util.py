@@ -48,3 +48,6 @@ def soup_factory(soup_or_article):
         return BeautifulSoup(soup_or_article)
     else:
         return soup_or_article
+
+def tag_depth(tag):
+    return len(list(tag.parents))

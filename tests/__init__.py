@@ -3,7 +3,6 @@ try:
 except ImportError:
     from unittest import TestCase
 
-import test_util
 
 class BaseTestCase(TestCase):
 

@@ -7,6 +7,11 @@ INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(?P<val>.*?)\s*(?=\n\s*\|)"
 
 
 class Infobox(Logging):
+    """
+    The interface with attributes accepts and provides attributes with
+    - instead of _.
+    """
+
     def __init__(self, title, fetcher):
         self.title = title
         self.fetcher = fetcher
@@ -27,20 +32,38 @@ class Infobox(Logging):
         is None try 'markup', then 'html'.
         """
 
+        key = key.lower().replace("-", "_")
+
         # Try the markup first
         if source is None or source == 'markup':
-            # regexes are faster than the parsed.
-            mu = self.markup_source()
-            m = re.search(INFOBOX_ATTRIBUTE_REGEX % attr, mu,
-                          flags=re.IGNORECASE|re.DOTALL)
-
-            if m:
-                return val.group("val")
+            for k, v in self.markup_parsed_iter():
+                if k == key:
+                    return v
 
         # Html parsing however is done by bs anyway.
         for k, v in self.html_parsed():
-            if k == attr:
+            if k == key:
                 return v
+
+    def markup_parsed_iter(self):
+        """
+        Generate the pairs from markup
+        """
+
+        mu = self.markup_source()
+        for m in re.finditer(INFOBOX_ATTRIBUTE_REGEX % "(?P<key>[a-z\-_]*)", mu,
+                             flags=re.IGNORECASE|re.DOTALL):
+            key = m.group("key").replace("-", "_").lower()
+            val = m.group("val")
+
+            yield key, val
+
+    def markup_parsed(self):
+        """
+        Markup parsed as a list of (key, val)
+        """
+
+        return list(self.markup_parsed_iter())
 
     def markup_source(self):
         """
@@ -67,6 +90,7 @@ class Infobox(Logging):
 
     def rendered(self):
         return self.html_source().text
+
 
     def html_parsed(self):
         """
