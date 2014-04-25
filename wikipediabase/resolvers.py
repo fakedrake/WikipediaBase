@@ -9,8 +9,7 @@ import bs4
 from provider import Provider, provide
 from fetcher import BaseFetcher, WikipediaSiteFetcher
 from enchantments import enchant, Enchanted
-from util import INFOBOX_ATTRIBUTE_REGEX
-
+from infobox import Infobox
 
 class BaseResolver(Provider):
 
@@ -53,7 +52,7 @@ class StaticResolver(BaseResolver):
     def word_cout(self, article, attribute):
         self.log().info("Trying 'word-count' tag from static resolver.")
         self._tag = "html"
-        return len(self._words(self.fetcher.fetch(article)))
+        return len(self._words(self.fetcher.download(article)))
 
     @provide(name="COORDINATES")
     def coordinates(self, article, attribute):
@@ -87,6 +86,10 @@ class InfoboxResolver(BaseResolver):
         self._tag = "html"
 
     def resolve(self, article, attribute, **kw):
+        """
+        Return the value of the attribute for the article.
+        """
+
         self.log().info("Using infobox resolver in %s mode" %
                         "compatibility" if self.compat else "classic")
         if "\n" in article:
@@ -98,19 +101,18 @@ class InfoboxResolver(BaseResolver):
         else:
             key, attr = None, attribute
 
-        attr = attr.replace("-", "_").lower()
         ibox = Infobox(article, self.fetcher)
 
-        if key == 'html':
-            infobox = ibox
-
-        if infobox:
+        if ibox:
             ret = ibox.get(attr)
-            if val:
+            if ret:
                 self.log().info("Found infobox attribute '%s'" % attr)
 
                 return enchant(key, ret, result_from=attr,
                                compat=self.compat, log=self.log())
 
             self.log().warning("Could nont find infobox attribute '%s'" \
-                               % attribute)
+                               % attr)
+        else:
+            self.log().warning("Could nont find infobox for article '%s'" \
+                               % article)

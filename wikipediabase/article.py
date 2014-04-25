@@ -1,64 +1,116 @@
-from bs4 import BeutifulSoup
+import bs4
+import re
+import itertools
+
+from log import Logging
+from util import tag_depth
+
+from fetcher import CachingSiteFetcher
 
 class Heading(object):
     """
     The main container of paragraphs.
     """
 
-    def __init__(self, soup):
+    def __init__(self, tag):
         """
-        Lazily get your paragraphs when you have to. The given soup's
-        first heading item is the one we are interested in.
+        tag is a bs4 tag of the header
         """
 
-        self.soup = soup
+        self.tag = tag
+        self.level = int(self.tag.name[1])
+        self.document = list(tag.parents).pop()
         self._name = None
         self._paragrpahs = None
         self._subheadings = None
 
-    def paragraphs(self):
+    def _next_tags(self):
+        if self.level == 1:
+            return self.document.select("#mw-content-text")[0].children
+
+        return self.tag.next_siblings
+
+    def paragraphs(self, subheadings=False):
         """
-        Generate paragraphs from soup.
+        List of paragraphs of this heading, if subheadings is True then
+        look into the subheadings too.
         """
 
-        raise NotImplemented
+        if self._paragrpahs is not None:
+            return self._paragrpahs
+
+        # Get paragraphs until the first subheading.
+
+        hfilter = lambda c: re.match(r"(p|h[%d-%d])" % (1, self.level+1),
+                                     str(c.name))
+        tags = filter(hfilter, self._next_tags())
+        pars = itertools.takewhile(lambda x: x.name == 'p',
+                                     tags)
+
+        return filter(lambda x: len(x.text) != 0, pars)
 
     def name(self):
         """
         Get the name from the soup.
         """
 
-        raise NotImplemented
+        if self._name is not None:
+            return self._name
+
+        self._name = self.tag.text.replace("[edit]","")
+        return self._name
 
     def subheadings(self):
         """
         Generate subheadings.
         """
 
-        raise NotImplemented
+        if self._subheadings is not None:
+            return self._subheadings
 
+        # use select
+        hfilter = lambda c: re.match(r"h[%d-%d]" % (1, self.level+1),
+                                     str(c.name))
+        htags = filter(hfilter, self._next_tags())
+        htags1 = itertools.takewhile(lambda x: int(x.name[1]) == self.level+1,
+                                     htags)
 
+        self._subheadings = map(Heading, htags1)
+
+        return self._subheadings
+
+    def __repr__(self):
+        return "<Wikipedia Heading object '%s' of depth %d>" % \
+            (self.name(), self.level)
 
 # XXX: also support images.
-class BaseArticle(object):
+class Article(Logging):
     """
     This is meant to be a wrapper around a fetcher. I do not use
     articles as a very persistent resource so this is only an
     abstraction.
     """
 
-    def __init__(self, title, fetcher):
+    def __init__(self, title, fetcher=CachingSiteFetcher()):
         self.title = title
-        self.fetchers = fetcher
+        self.fetcher = fetcher
         self.ibox = None
+
+    def _soup(self):
+        """
+        A BeautifulSoup object of the entire article.
+        """
+
+        return bs4.BeautifulSoup(self.html_source())
 
     def _primary_heading(self):
         """
-        The primary nameless heading. This is the starting point for the
-        rest headings.
+        The primary heading. This is the starting point for the rest
+        headings.
         """
 
-        raise NotImplemented
+        h1 = self._soup().find("h1")
+        return Heading(h1)
 
     def markup_source(self):
         """

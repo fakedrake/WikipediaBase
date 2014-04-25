@@ -28,7 +28,7 @@ class TestKnowledgebase(unittest.TestCase):
         self.assertEquals(self.fe.resources()['get'], self.kb.get)
 
     def test_get_attributes(self):
-        self.assertIn("birth-date",
+        self.assertIn("birth_date",
                       self.fe.resources()['get-attributes']("wikipedia-person", "Bill Clinton"))
 
     def tearDown(self):

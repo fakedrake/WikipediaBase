@@ -10,7 +10,6 @@ import json
 import bs4
 
 from log import Logging
-from util import INFOBOX_ATTRIBUTE_REGEX
 
 
 WIKISOURCE_TAG_ID = "wpTextbox1"
@@ -24,7 +23,7 @@ class BaseFetcher(Logging):
     """
 
     def download(self, symbol, get=None):
-        raise NotImplemented
+        return symbol
 
     def source(self, symbol, redirect=True):
         raise NotImplemented
