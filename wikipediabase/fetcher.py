@@ -60,6 +60,7 @@ class WikipediaSiteFetcher(BaseFetcher):
 
         url = "%s/%s?%s" % (self.url, self.base,
                             urlencode(get))
+        self.log().info("Fetching url: " + url)
         return urlopen(url).read()
 
     def source(self, symbol, get_request=dict(action="edit"), redirect=True):

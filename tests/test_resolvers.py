@@ -53,8 +53,8 @@ class TestResolvers(unittest.TestCase):
                          100)
 
     def test_random_attributes(self):
-        self.assertEqual(self.fe.eval("(get \"doctor ninja batman\" \"word-count\")"), '3')
-        self.assertEqual(self.fe.eval("(get \"doctor ninja batman\n\" (:code \"word-count\"))"), '3')
+        self.assertEqual(self.fe.eval("(get \"doctor ninja batman\" \"word-count\")"), '(3)')
+        self.assertEqual(self.fe.eval("(get \"doctor ninja batman\n\" (:code \"word-count\"))"), '(3)')
 
     def test_infobox(self):
         # Disable compatibility mode: no extra tag info on result.

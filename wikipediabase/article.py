@@ -92,7 +92,7 @@ class Article(Logging):
     """
 
     def __init__(self, title, fetcher=CachingSiteFetcher()):
-        self.title = title
+        self._title = title
         self.fetcher = fetcher
         self.ibox = None
 
@@ -112,19 +112,29 @@ class Article(Logging):
         h1 = self._soup().find("h1")
         return Heading(h1)
 
+    def title(self):
+        """
+        The title after redirections and stuff.
+        """
+        # Warning!! dont feed this to the fetcher. This depends on the
+        # fetcher to resolve redirects and a cirular recursion will
+        # occur
+
+        return self._primary_heading().name()
+
     def markup_source(self):
         """
         Markup source of the article.
         """
 
-        return self.fetcher.source(self.title)
+        return self.fetcher.source(self._title)
 
     def html_source(self):
         """
         Markup source of the article.
         """
 
-        return self.fetcher.download(self.title)
+        return self.fetcher.download(self._title)
 
     def infobox(self):
         """
@@ -132,7 +142,7 @@ class Article(Logging):
         """
 
         if self.ibox is None:
-            self.ibox = Infobox(self.title, self.fetcher)
+            self.ibox = Infobox(self.title(), self.fetcher)
 
         return self.ibox
 

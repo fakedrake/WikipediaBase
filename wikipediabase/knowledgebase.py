@@ -1,6 +1,7 @@
 from provider import Acquirer, Provider, provide
 from fetcher import CachingSiteFetcher
 from infobox import Infobox
+from enchantments import enchant
 
 import re
 
@@ -37,7 +38,7 @@ class KnowledgeBase(Provider):
         else:
             article, attr = v1, v2
 
-        return self._get(article, attr, compat=bool(v3))
+        return "(%s)" % self._get(article, attr, compat=bool(v3))
 
     def _get(self, article, attr, compat):
         """
@@ -59,19 +60,27 @@ class KnowledgeBase(Provider):
 
     @provide(name="get-classes")
     def get_classes(self, symbol):
-        pass
+        ibox = Infobox(symbol, self.fetcher)
+        return enchant(None, ibox.types())
 
     @provide(name="get-attributes")
-    def get_attributes(self, wb_class,  symbol, compat=None):
+    def get_attributes(self, wb_class,  symbol=None):
+        if symbol is not None:
+            return self._get_attrs(symbol)
+
+        # We dont really need wb_class, symbol is eough so it might
+        # not be provided
+        return self._get_attrs(wb_class)
+
+    def _get_attrs(self, symbol):
         ibox = Infobox(symbol, self.fetcher)
 
-        return [k for k,v in ibox.markup_parsed_iter()]
+        return " ".join(["\"%s\"" % k for k,v in ibox.markup_parsed_iter()])
 
     def attribute_wrap(self, val, **keys):
         """
-        Make a dict with val and keys. This wraps
-        attributes which are strings only for internal use in
-        knowledgebase.
+        Make a dict with val and keys. This wraps attributes which are
+        strings only for internal use in knowledgebase.
         """
 
         try:

@@ -2,6 +2,7 @@ import re
 import bs4
 
 from log import Logging
+from article import Article
 
 INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(?P<val>.*?)\s*(?=\n\s*\|)"
 
@@ -19,12 +20,34 @@ class Infobox(Logging):
     def __nonzero__(self):
         return bool(self.fetcher.download(self.title))
 
-    def type(self):
+    def _to_start_type(self, ibx):
+        """
+        Turn an infobox into a strart type.
+        """
+
+        ret = ibx.lower().replace("template:", "")
+        return ret.replace(" ","-").replace("infobox", "wikipedia")
+
+    def types(self):
         """
         The infobox type.
         """
 
-        raise NotImplemented
+        ret = set()
+        ibox_source = self.markup_source()
+        if ibox_source:
+            for m in re.finditer(r'{{\s*(?P<type>Infobox\s+[\w ]*)',
+                                    ibox_source):
+                # The direct ibox
+                primary = m.group('type')
+                ret.add(self._to_start_type(primary))
+
+                # The ibox redirect
+                title = Article("Template:"+primary, self.fetcher).title()
+                ret.add(self._to_start_type(title))
+
+        return ret
+
 
     def get(self, key, source=None):
         """

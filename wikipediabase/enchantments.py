@@ -6,10 +6,11 @@ with them.
 """
 
 import re
-
 import overlay_parse
 
-class Enchanted(object):
+from log import Logging
+
+class Enchanted(Logging):
     """
     An enchanted object's string representation is something that
     START understands. Also its `val` attribute is something that
@@ -27,10 +28,13 @@ class Enchanted(object):
 
         self.tag = tag
         self.question = question
+        self.val = val
 
         if self.should_parse():
+            self.log().info("Enchanting (:%s %s)" % (tag, val))
             self.val = self.parse_val(val)
         else:
+            self.log().info("Not enchanting (:%s %s)" % (tag, val))
             self.val = None
 
     def should_parse(self):
@@ -52,7 +56,9 @@ class Enchanted(object):
 
     def __str__(self):
         if self:
-            return "((:%s %s))" % (self.tag_str(), self.val_str())
+            return "(:%s %s)" % (self.tag_str(), self.val_str())
+
+        return 'none-object'
 
     def val_str(self):
         return str(self.val)
@@ -80,8 +86,17 @@ class EnchantedList(Enchanted):
     This is coordinates and other things like that
     """
 
+    def should_parse(self):
+        return type(self.val) in [list, set]
+
+    def __str__(self):
+        if self.tag:
+            return super(EnchantedList, self).__str__()
+
+        return self.val_str()
+
     def val_str(self):
-        return " ".join(self.val)
+        return " ".join(["\"%s\"" % str(v) for v in self.val])
 
 
 class EnchantedDate(Enchanted):
@@ -173,7 +188,7 @@ def enchant(tag, obj, result_from=None, compat=True, log=None):
     results. Also for now you always want to be enchanting.
     """
 
-    for E in [EnchantedDate, EnchantedString, EnchantedList]:
+    for E in [EnchantedDate, EnchantedList, EnchantedString]:
         ret = E(tag, obj, question=result_from)
         if ret:
             return ret

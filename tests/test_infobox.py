@@ -21,8 +21,8 @@ from wikipediabase import fetcher
 class TestInfobox(unittest.TestCase):
 
     def setUp(self):
-        ftchr = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
-        self.ibox = Infobox("Led Zeppelin", ftchr)
+        self.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
+        self.ibox = Infobox("Led Zeppelin", self.fetcher)
 
     def test_markup(self):
         self.assertEqual(self.ibox.markup_source()[:9], "{{Infobox")
@@ -38,6 +38,13 @@ class TestInfobox(unittest.TestCase):
 
     def test_attributes(self):
         self.assertEqual(self.ibox.get("origin"), "London, England")
+
+    def test_types(self):
+        self.assertEqual(self.ibox.types(), {'wikipedia-musical-artist'})
+
+    def test_types_redirect(self):
+        clinton = Infobox("Bill Clinton", self.fetcher)
+        self.assertIn('wikipedia-president', clinton.types())
 
     def tearDown(self):
         pass

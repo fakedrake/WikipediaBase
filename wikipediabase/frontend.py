@@ -46,7 +46,7 @@ class Frontend(Acquirer):
 
         args = [self._eval(a) for a in ls[1:]]
 
-        return fn(*args)
+        return fn(*args) or "nil"
 
     def eval(self, string):
         ls = loads(string)
