@@ -3,6 +3,7 @@ import bs4
 
 from log import Logging
 from article import Article
+from fetcher import CachingSiteFetcher
 
 INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(?P<val>.*?)\s*(?=\n\s*\|)"
 
@@ -13,7 +14,12 @@ class Infobox(Logging):
     - instead of _.
     """
 
-    def __init__(self, title, fetcher):
+    def __init__(self, title, fetcher=CachingSiteFetcher()):
+        """
+        It is a good idea to provide a fetcher as caching will be done
+        much better.
+        """
+
         self.title = title
         self.fetcher = fetcher
 
@@ -37,7 +43,7 @@ class Infobox(Logging):
         ibox_source = self.markup_source()
         if ibox_source:
             for m in re.finditer(r'{{\s*(?P<type>Infobox\s+[\w ]*)',
-                                    ibox_source):
+                                    ibox_source, re.IGNORECASE):
                 # The direct ibox
                 primary = m.group('type')
                 ret.add(self._to_start_type(primary))

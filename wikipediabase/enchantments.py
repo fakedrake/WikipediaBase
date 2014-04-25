@@ -93,7 +93,7 @@ class EnchantedList(Enchanted):
         if self.tag:
             return super(EnchantedList, self).__str__()
 
-        return self.val_str()
+        return '(%s)' % self.val_str()
 
     def val_str(self):
         return " ".join(["\"%s\"" % str(v) for v in self.val])
