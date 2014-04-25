@@ -14,6 +14,8 @@ from log import Logging
 
 WIKISOURCE_TAG_ID = "wpTextbox1"
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
+OFFLINE_PAGES = "pages.json"
+
 
 class BaseFetcher(Logging):
     """
@@ -30,7 +32,7 @@ class BaseFetcher(Logging):
 
 
 class WikipediaSiteFetcher(BaseFetcher):
-    def __init__(self, url="http://en.wikipedia.org", base="w"):
+    def __init__(self, url="http://en.wikipedia.org", base="w", **kw):
         self.url = url.strip('/')
         self.base = base.strip('/')
 
@@ -73,7 +75,8 @@ class WikipediaSiteFetcher(BaseFetcher):
         try:
             src = str(self.get_wikisource(soup)[0])
         except IndexError:
-            raise KeyError("Source retrieval for article '%s' failed." % symbol)
+            raise ValueError("Got invalid source page for article '%s'." %
+                              symbol)
 
         # Handle redirecions silently
         redirect_match = re.search(REDIRECT_REGEX, src)
@@ -91,7 +94,19 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
     Caches pages in a json file and reads from there.
     """
 
-    _fname = "/tmp/pages.json"
+    _fname = OFFLINE_PAGES
+
+    def __init__(self, *args, **kw):
+        """
+        The `offline` keyword arg will stop ot from looking pages up
+        online. The default is True.
+        """
+
+        self.offline = kw.get("offline", False)
+        self._fname = kw.get("fname", self._fname)
+
+        super(CachingSiteFetcher, self).__init__(*args, **kw)
+
 
     def download(self, symbol, get=None):
         try:
@@ -105,7 +120,12 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         if dkey in self.data:
             return self.data[dkey]
 
-        pg = super(CachingSiteFetcher, self).download(symbol, get=get)
-        self.data[dkey] = pg
-        json.dump(self.data, open(self._fname, "w"))
-        return pg
+        if not self.offline:
+            pg = super(CachingSiteFetcher, self).download(symbol, get=get)
+            if pg:
+                self.data[dkey] = pg
+                json.dump(self.data, open(self._fname, "w"))
+                return pg
+
+        raise LookupError("Failed to find page '%s' (%s online)." %
+                          (symbol, "didnt look" if self.offline else "looked"))

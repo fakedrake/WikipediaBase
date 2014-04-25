@@ -34,16 +34,18 @@ class Infobox(Logging):
 
         key = key.lower().replace("-", "_")
 
-        # Try the markup first
-        if source is None or source == 'markup':
-            for k, v in self.markup_parsed_iter():
+        # Look into html first. The results here are much more
+        # readable.
+        if source is None or source == 'html':
+            for k, v in self.html_parsed():
                 if k == key:
                     return v
 
-        # Html parsing however is done by bs anyway.
-        for k, v in self.html_parsed():
+        # Then look into the markup
+        for k, v in self.markup_parsed_iter():
             if k == key:
                 return v
+
 
     def markup_parsed_iter(self):
         """

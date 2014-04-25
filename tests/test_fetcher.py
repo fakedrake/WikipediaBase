@@ -13,12 +13,14 @@ try:
 except ImportError:
     import unittest
 
+from common import TEST_FETCHER_SETUP
+
 from wikipediabase import fetcher
 
 class TestFetcher(unittest.TestCase):
 
     def setUp(self):
-        self.fetcher = fetcher.CachingSiteFetcher()
+        self.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
 
     def test_html(self):
         # Remember, this probably needs internet.

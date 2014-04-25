@@ -13,13 +13,15 @@ try:
 except ImportError:
     import unittest
 
+from common import TEST_FETCHER_SETUP
+
 from wikipediabase.article import Article
 from wikipediabase import fetcher
 
 class TestArticle(unittest.TestCase):
 
     def setUp(self):
-        self.ftchr = fetcher.CachingSiteFetcher()
+        self.ftchr = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
         self.rtcl = Article("Astaroth", self.ftchr)
 
     def test_html(self):
@@ -44,7 +46,7 @@ class TestArticle(unittest.TestCase):
 class TestHeading(unittest.TestCase):
 
     def setUp(self):
-        ftchr = fetcher.CachingSiteFetcher()
+        ftchr = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
         rtcl = Article("Led Zeppelin", ftchr)
         self.h = rtcl._primary_heading()
 

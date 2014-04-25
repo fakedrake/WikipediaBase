@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from common import data
+from common import data, TEST_FETCHER_SETUP
 
 import re, logging
 
@@ -41,7 +41,8 @@ class TestResolvers(unittest.TestCase):
     def setUp(self):
         self.log = logging.getLogger("resolver-testing")
         self.simple_resolver = resolvers.StaticResolver()
-        self.ibresolver = resolvers.InfoboxResolver(fetcher=fetcher.CachingSiteFetcher())
+        self.ibresolver = resolvers.InfoboxResolver(
+            fetcher=fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP))
 
         self.fe = Frontend()
         self.kb = KnowledgeBase(frontend=self.fe,
@@ -63,25 +64,25 @@ class TestResolvers(unittest.TestCase):
         self.assertEqual(band_name, '((:html "The Def Leppard E.P."))')
 
     def test_compat(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
 
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES):
             self.assertEqual(ans, rx, msg=msg)
 
     def test_compat_not(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
 
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT):
             self.assertNotEqual(ans, rx, msg=msg)
 
     def test_compat_rx(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
 
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_RX):
             self.assertRegexpMatches(ans, rx, msg=msg)
 
     def test_compat_not_rx(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
 
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT_RX):
             self.assertNotRegexpMatches(ans, rx, msg=msg)
