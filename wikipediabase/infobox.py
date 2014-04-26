@@ -49,7 +49,7 @@ class Infobox(Logging):
         ibox_source = self.markup_source()
         if ibox_source:
             for m in re.finditer(r'{{\s*(?P<type>[Ii]nfobox\s+[\w ]*)',
-                                    ibox_source):
+                                 ibox_source):
                 # The direct ibox
                 primary = m.group('type')
                 ret.add(self._to_start_type(primary, to_start))
@@ -149,10 +149,43 @@ class Infobox(Logging):
         """
 
         soup = self.html_source()
-        tpairs = [(i.parent.th.text, i.text) for i in soup.select('tr > td')
-                  if i.parent.find('th')]
+        # Render all tags except <ul> and <li>. Escape them in some way and then reparse
+
+
+        tpairs = []
+
+        for val in soup.select('tr > td'):
+            if val.find_previous_sibling('th'):
+                key = val.parent.th.text
+                # self._unwrapper(val)
+                # val = str(val).replace("<td>", "").replace("</td>", "")
+
+                val = bs4.BeautifulSoup(self._escape_list(str(val)),
+                                        "html.parser").text
+                tpairs.append((key, val))
 
         return tpairs
+
+    def _escape_list(self, val):
+        """
+        We dont want to render lists because then we have no way of
+        knowing they were lists.
+        """
+
+        if not val:
+            val = ""
+
+        for i in {'ul' 'li', "/ul", "/li"}:
+            val = val.replace("<%s>" % i, "&lt;%s&gt" %i)
+
+        return val
+
+    def _unwrapper(self, val):
+        for tag in val:
+            if isinstance(tag, bs4.Tag):
+                self._unwrapper(tag)
+                if tag.name not in {'ul','li'}:
+                    tag.unwrap()
 
     def _braces_markup(self, txt):
         """
