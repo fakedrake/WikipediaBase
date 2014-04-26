@@ -2,8 +2,13 @@ from provider import Acquirer, Provider, provide
 from fetcher import CachingSiteFetcher
 from infobox import Infobox
 from enchantments import enchant
+from resolvers import StaticResolver, InfoboxResolver
 
 import re
+
+
+DEFAULT_RESOLVERS = [StaticResolver, InfoboxResolver]
+
 
 class KnowledgeBase(Provider):
 

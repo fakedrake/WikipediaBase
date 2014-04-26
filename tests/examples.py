@@ -206,7 +206,7 @@ WIKI_EXAMPLES_NOT =[
      'tests the retrieval of infobox attributes that contain the {{US#|...}} template'),
 ]
 
-WIKI_EXAMPLES_RX =[
+WIKI_EXAMPLES_RX = [
     # =====================
     # tests for get-classes
     # =====================
@@ -272,7 +272,7 @@ WIKI_EXAMPLES_RX =[
      re.compile(r'Gulf War\s*<br\s*\/>\s*War in Afghanistan', re.DOTALL),
      'Parse <br/>-separated list correctly in M1 Abrams WARS'),
     ('(get "wikipedia-film" "Gone with the Wind (film)" (:code "DIRECTOR"))',
-     re.compile(r'<li>Victor Fleming/', re.DOTALL),
+     re.compile(r'Victor Fleming', re.DOTALL),
      r'Parse {{plainlist|...}} template correctly in GWTW DIRECTOR'),
 
     # Next few test the retrieval of infobox attributes that contain the
@@ -304,7 +304,8 @@ WIKI_EXAMPLES_RX =[
     ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
      re.compile(r'1918.*Treaty.*signed', re.DOTALL),
      'World War I DATE returns end as well as start date'),
-        # A bit edgy...
+
+    # A bit edgy...
     ('(get-classes \"Mary Shakespeare\")',
      r'wikipedia-person',
      'Person without infobox'),

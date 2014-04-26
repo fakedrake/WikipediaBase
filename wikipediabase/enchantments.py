@@ -57,7 +57,7 @@ class Enchanted(Logging):
 
     def __str__(self):
         if self:
-            return "(:%s %s)" % (self.tag_str(), self.val_str())
+            return ("(:%s %s)" % (self.tag_str(), self.val_str())).encode('ascii', 'ignore')
 
         return 'none-object'
 

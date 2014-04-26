@@ -7,7 +7,7 @@ import re
 import bs4
 
 from provider import Provider, provide
-from fetcher import BaseFetcher, WikipediaSiteFetcher
+from fetcher import BaseFetcher, WikipediaSiteFetcher, CachingSiteFetcher
 from enchantments import enchant, Enchanted
 from infobox import Infobox
 
@@ -20,7 +20,7 @@ class BaseResolver(Provider):
         """
 
         super(BaseResolver, self).__init__(*args, **kwargs)
-        self.fetcher = fetcher or BaseFetcher()
+        self.fetcher = fetcher or CachingSiteFetcher()
         self.compat = compat
 
         self._tag = None

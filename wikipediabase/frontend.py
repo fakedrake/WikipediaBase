@@ -5,6 +5,7 @@ from edn_format import loads, Keyword, Symbol
 from enchantments import enchant
 from provider import Acquirer, Provider
 from telnet import TelnetServer
+from knowledgebase import KnowledgeBase
 from log import Logging
 
 import logging
@@ -15,8 +16,8 @@ class Frontend(Acquirer):
     def __init__(self, knowledgebase=None, *args, **kwargs):
         super(Frontend, self).__init__(*args, **kwargs)
 
-        if knowledgebase:
-            self.acquire_from(knowledgebase)
+        if 'providers' not in kwargs:
+            self.acquire_from(knowledgebase or KnowledgeBase())
 
         logging.getLogger("edn_format").setLevel(logging.WARNING)
 

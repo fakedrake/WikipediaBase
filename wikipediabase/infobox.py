@@ -22,6 +22,7 @@ class Infobox(Logging):
 
         self.title = title
         self.fetcher = fetcher
+        self._rendered_keys = dict()
 
     def __nonzero__(self):
         return bool(self.fetcher.download(self.title))
@@ -71,9 +72,13 @@ class Infobox(Logging):
         # Look into html first. The results here are much more
         # readable.
         html_key = key.lower().replace("-", " ")
+        markup_key = key.lower().replace("-", "_")
+        rendered_key = self.rendered_key(markup_key)
+
         if source is None or source == 'html':
             for k, v in self.html_parsed():
-                if k.lower() == html_key:
+                if k.lower().replace(".", "") == html_key or \
+                   k == rendered_key:
                     return v
 
         # Then look into the markup
@@ -88,12 +93,19 @@ class Infobox(Logging):
         """
 
         mkey = mkey.lower().replace("-","_")
+        ret = self._rendered_keys.get(mkey, False)
+        if ret is not False:
+            return ret
+
         for t in self.types(extend=False, to_start=False):
 
             tibox = Infobox("Template:"+t)
             for k,v in tibox.html_parsed():
-                if v == '{{{%s}}}' % mkey:
+                if v == '{{{%s}}}' % mkey or v == mkey + " text":
+                    self._rendered_keys[mkey] = k
                     return k
+
+        self._rendered_keys[mkey] = None
 
     def markup_parsed_iter(self):
         """
@@ -175,10 +187,8 @@ class Infobox(Logging):
         if not val:
             val = ""
 
-        for i in {'ul' 'li', "/ul", "/li"}:
-            val = val.replace("<%s>" % i, "&lt;%s&gt" %i)
+        return re.sub(r"<(br\s*/?|/?ul|/?li)>", "&lt;\\1&gt;", val)
 
-        return val
 
     def _unwrapper(self, val):
         for tag in val:
