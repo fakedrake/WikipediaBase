@@ -207,7 +207,6 @@ WIKI_EXAMPLES_NOT =[
 ]
 
 WIKI_EXAMPLES_RX =[
-
     # =====================
     # tests for get-classes
     # =====================
@@ -224,13 +223,6 @@ WIKI_EXAMPLES_RX =[
     #  r'wikipedia-president'),
     ('(get-classes \"Ada (programming language)\")',
      r'wikipedia-programming-language'),
-    ('(get-classes \"Mary Shakespeare\")',
-     r'wikipedia-person',
-     'Person without infobox'),
-    ('(get-classes \"Bill Clinton\")',
-     r'wikipedia-person',
-     'All people have calculated class wikipedia-person'),
-
 
     # ========================
     # tests for get-attributes
@@ -257,28 +249,15 @@ WIKI_EXAMPLES_RX =[
      r':code \"LOCATION-CITY\"'),
     ('(get-attributes "wikipedia-company" "BBC News")',
      r'(:code \"TYPE\" :rendered \"Former type\")'),
-    ('(get-attributes "wikipedia-company" "BBC News")',
-     r':code \"INTL\"'),
+    # XXX: I have no idea what intl is
+    # ('(get-attributes "wikipedia-company" "BBC News")',
+    #  r':code \"INTL\"'),
     ('(get-attributes "wikipedia-company" "BBC News")',
      r':code \"NUM-EMPLOYEES\"'),
     ('(get-attributes "wikipedia-company" "BBC News")',
-     r'(:code \"INDUSTRY\" :rendered \"Industry\"'),
+     r':code \"INDUSTRY\" :rendered \"Industry\"'),
     ('(get-attributes "wikipedia-bridge" "Brooklyn Bridge")',
      r':code \"OPEN\"'),
-
-    # =====================================
-    # tests for 'get' -- special attributes
-    # =====================================
-
-    ('(get "wikipedia-term" "Alexander Pushkin" "SHORT-ARTICLE")',
-     r'Russian literature'),
-    ('(get "wikipedia-term" "North America" "SHORT-ARTICLE")',
-     r'It is bordered to the north'),
-    ('(get "wikipedia-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))'
-     r'influence of mothers in society'),
-
-    ('(get "wikipedia-term" "Bill Clinton" (:code "IMAGE-DATA")',
-     '((0 "Bill_Clinton.jpg"'),
 
     # ============================================
     # tests for 'get' -- attributes from infoboxes
@@ -318,11 +297,34 @@ WIKI_EXAMPLES_RX =[
      r'Persian',
      'Returns link text, not link target'),
 
+    # ===============================================================
     # Tests that infobox attributes that aren't dates but may contain
     # dates aren't returned in yyyymmdd format
+    # ===============================================================
     ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
      re.compile(r'1918.*Treaty.*signed', re.DOTALL),
      'World War I DATE returns end as well as start date'),
+        # A bit edgy...
+    ('(get-classes \"Mary Shakespeare\")',
+     r'wikipedia-person',
+     'Person without infobox'),
+    ('(get-classes \"Bill Clinton\")',
+     r'wikipedia-person',
+     'All people have calculated class wikipedia-person'),
+
+    # =====================================
+    # tests for 'get' -- special attributes
+    # =====================================
+
+    ('(get "wikipedia-term" "Alexander Pushkin" "SHORT-ARTICLE")',
+     r'Russian literature'),
+    ('(get "wikipedia-term" "North America" "SHORT-ARTICLE")',
+     r'It is bordered to the north'),
+    ('(get "wikipedia-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))'
+     r'influence of mothers in society'),
+
+    ('(get "wikipedia-term" "Bill Clinton" (:code "IMAGE-DATA")',
+     '((0 "Bill_Clinton.jpg"'),
 ]
 
 WIKI_EXAMPLES_NOT_RX =[

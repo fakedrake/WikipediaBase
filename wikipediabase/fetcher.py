@@ -14,7 +14,7 @@ from log import Logging
 
 WIKISOURCE_TAG_ID = "wpTextbox1"
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
-OFFLINE_PAGES = "pages.json"
+OFFLINE_PAGES = "/tmp/pages.json"
 
 
 class BaseFetcher(Logging):
@@ -74,7 +74,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         soup = bs4.BeautifulSoup(html)
 
         try:
-            src = str(self.get_wikisource(soup)[0])
+            src = self.get_wikisource(soup)[0].text.encode("utf8", "ignore")
         except IndexError:
             raise ValueError("Got invalid source page for article '%s'." %
                               symbol)

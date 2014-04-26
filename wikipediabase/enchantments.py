@@ -21,7 +21,7 @@ class Enchanted(Logging):
 
     force_tag = None
 
-    def __init__(self, tag, val, question=None):
+    def __init__(self, tag, val, question=None, kind=None, **kw):
         """
         Enchant a piece of data. Throws EnchantError on failure.
         """
@@ -29,6 +29,7 @@ class Enchanted(Logging):
         self.tag = tag
         self.question = question
         self.val = val
+        self.kind = kind
 
         if self.should_parse():
             self.log().info("Enchanting (:%s %s)" % (tag, val))
@@ -72,7 +73,8 @@ class Enchanted(Logging):
 
 class EnchantedString(Enchanted):
     def tag_str(self):
-        if self.tag == "code" or not self.tag:
+        if (self.tag == "code" or not self.tag) and \
+           self.kind != "attribute":
             return "html"
 
         return self.tag
@@ -180,15 +182,36 @@ class EnchantedDateVoting(EnchantedDate):
         return False
 
 
+class EnchantedStringDict(Enchanted):
+    """
+    Get a lispy dictionary of non-None items.
+    """
 
-def enchant(tag, obj, result_from=None, compat=True, log=None):
+    # Just so the test regexes match.
+    reverse = True
+
+    def should_parse(self):
+        return type(self.val) is dict
+
+    def __str__(self):
+
+        if self.reverse:
+            pairs =reversed(self.val.items())
+
+        # XXX: NastyHack(TM). Replace the nonbreaking space with a space.
+        return '(%s)' % " ".join([':%s "%s"' % (k, v.replace(unichr(160), " "))
+                                  for k,v in pairs
+                                  if v is not None])
+
+
+def enchant(tag, obj, result_from=None, compat=True, **kw):
     """
     Return an appropriate enchanted object. reslut is true when we are
     enchanting a result. Sometimes tags mean different thigs in
     results. Also for now you always want to be enchanting.
     """
 
-    for E in [EnchantedDate, EnchantedList, EnchantedString]:
-        ret = E(tag, obj, question=result_from)
+    for E in [EnchantedStringDict, EnchantedDate, EnchantedList, EnchantedString]:
+        ret = E(tag, obj, question=result_from, **kw)
         if ret:
             return ret

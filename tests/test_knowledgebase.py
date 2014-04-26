@@ -19,12 +19,14 @@ from wikipediabase.knowledgebase import KnowledgeBase
 from wikipediabase.provider import Acquirer, Provider
 
 CLINTON_ATTRS = \
-re.sub("\s+", " ", '"name" "image" "order" "office" "vicepresident" "term_start"\
-        "term_end" "predecessor" "successor" "birth_name"\
-        "birth_date" "birth_place" "death_date" "death_place" "party"\
-        "spouse" "children" "alma_mater" "religion" "signature"\
-        "signature_alt"')
-
+re.sub("\s+", " ",
+       """(:code "NAME") (:code "IMAGE") (:code "ORDER") (:code "OFFICE")
+(:code "VICEPRESIDENT") (:code "TERM-START") (:code "TERM-END") (:code
+"PREDECESSOR") (:code "SUCCESSOR") (:code "BIRTH-NAME") (:code
+"BIRTH-DATE") (:code "BIRTH-PLACE") (:code "DEATH-DATE") (:code
+"DEATH-PLACE") (:code "PARTY") (:code "SPOUSE") (:code "CHILDREN")
+(:code "ALMA-MATER") (:code "RELIGION") (:code "SIGNATURE") (:code
+"SIGNATURE-ALT")""")
 
 class TestKnowledgebase(unittest.TestCase):
     def setUp(self):
@@ -37,8 +39,9 @@ class TestKnowledgebase(unittest.TestCase):
         self.assertEquals(self.fe.resources()['get'], self.kb.get)
 
     def test_get_attributes(self):
-        self.assertIn("birth_date",
-                      self.fe.resources()['get-attributes']("wikipedia-person", "Bill Clinton"))
+        self.assertIn("BIRTH-DATE",
+                      self.fe.resources()['get-attributes']("wikipedia-person",
+                                                            "Bill Clinton"))
 
     def test_attributes_format(self):
         self.assertEqual(self.fe.resources()['get-attributes']("Bill Clinton"),

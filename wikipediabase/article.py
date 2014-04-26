@@ -136,16 +136,6 @@ class Article(Logging):
 
         return self.fetcher.download(self._title)
 
-    def infobox(self):
-        """
-        This article's infobox.
-        """
-
-        if self.ibox is None:
-            self.ibox = Infobox(self.title(), self.fetcher)
-
-        return self.ibox
-
     def paragraphs(self):
         """
         Generate paragraphs.

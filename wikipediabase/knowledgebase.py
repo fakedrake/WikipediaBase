@@ -61,7 +61,8 @@ class KnowledgeBase(Provider):
     @provide(name="get-classes")
     def get_classes(self, symbol):
         ibox = Infobox(symbol, self.fetcher)
-        return enchant(None, ibox.types())
+        types = ibox.types().union({'wikipedia-term'})
+        return enchant(None, types)
 
     @provide(name="get-attributes")
     def get_attributes(self, wb_class,  symbol=None):
@@ -75,7 +76,14 @@ class KnowledgeBase(Provider):
     def _get_attrs(self, symbol):
         ibox = Infobox(symbol, self.fetcher)
 
-        return " ".join(["\"%s\"" % k for k,v in ibox.markup_parsed_iter()])
+        ret = []
+        for k,v in ibox.markup_parsed_iter():
+            tmp = enchant(None, dict(code= k.upper(),
+                                     rendered=ibox.rendered_key(k)))
+
+            ret.append(str(tmp))
+
+        return " ".join(ret)
 
     def attribute_wrap(self, val, **keys):
         """

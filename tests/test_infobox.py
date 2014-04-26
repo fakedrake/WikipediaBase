@@ -46,6 +46,11 @@ class TestInfobox(unittest.TestCase):
         clinton = Infobox("Bill Clinton", self.fetcher)
         self.assertIn('wikipedia-president', clinton.types())
 
+    def test_html_keys(self):
+        bbc = Infobox("BBC News", self.fetcher)
+        self.assertEquals("Owner(s)", bbc.rendered_key("owner"))
+
+
     def tearDown(self):
         pass
 
