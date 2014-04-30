@@ -232,4 +232,5 @@ class Infobox(Logging):
         for s,e in rngs:
             ret += txt[s:e]
 
-        return ret or None
+        if ret:
+            return ret

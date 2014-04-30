@@ -28,7 +28,7 @@ class BaseFetcher(Logging):
         return symbol
 
     def source(self, symbol, redirect=True):
-        raise NotImplemented
+        return symbol
 
 
 class WikipediaSiteFetcher(BaseFetcher):

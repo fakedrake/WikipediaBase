@@ -207,6 +207,7 @@ WIKI_EXAMPLES_NOT =[
 ]
 
 WIKI_EXAMPLES_RX = [
+
     # =====================
     # tests for get-classes
     # =====================
@@ -301,9 +302,6 @@ WIKI_EXAMPLES_RX = [
     # Tests that infobox attributes that aren't dates but may contain
     # dates aren't returned in yyyymmdd format
     # ===============================================================
-    ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
-     re.compile(r'1918.*Treaty.*signed', re.DOTALL),
-     'World War I DATE returns end as well as start date'),
 
     # A bit edgy...
     ('(get-classes \"Mary Shakespeare\")',
@@ -364,4 +362,10 @@ WIKI_EXAMPLES_NOT_RX =[
     ('(get "wikipedia-military-conflict" "American Civil War" (:code "RESULT"))',
      r'Reconstruction Era of the United States',
      'Returns link text, not link target: Reconstruction...'),
+
+    # See issue 10
+    ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
+     re.compile(r'1918.*Treaty.*signed', re.DOTALL),
+     'World War I DATE returns end as well as start date'),
+
 ]

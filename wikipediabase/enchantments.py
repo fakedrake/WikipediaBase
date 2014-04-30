@@ -53,11 +53,11 @@ class Enchanted(Logging):
         return val
 
     def __repr__(self):
-        return "<%s object (:%s %s)>" % (self.__class__, self.tag, self.val)
+        return u"<%s object (:%s %s)>" % (self.__class__, self.tag, self.val)
 
     def __str__(self):
         if self:
-            return ("(:%s %s)" % (self.tag_str(), self.val_str())).encode('ascii', 'ignore')
+            return u"(:%s %s)" % (self.tag_str(), self.val_str())
 
         return 'none-object'
 
@@ -80,7 +80,7 @@ class EnchantedString(Enchanted):
         return self.tag
 
     def val_str(self):
-        return "\"%s\"" % re.sub(r"[[\]]" , "", self.val)
+        return u"\"%s\"" % re.sub(r"[[\]]" , "", self.val)
 
 
 class EnchantedList(Enchanted):

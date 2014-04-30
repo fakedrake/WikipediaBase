@@ -50,7 +50,6 @@ class TestInfobox(unittest.TestCase):
         bbc = Infobox("BBC News", self.fetcher)
         self.assertEquals("Owner(s)", bbc.rendered_key("owner"))
 
-
     def tearDown(self):
         pass
 

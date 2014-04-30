@@ -20,7 +20,9 @@ class KnowledgeBase(Provider):
             self.provide_to(frontend)
 
         self.fetcher = fetcher or CachingSiteFetcher()
-        self.resolvers_acquirer = Acquirer(providers=resolvers or [])
+        self.resolvers_acquirer = Acquirer(providers=resolvers or
+                                           [R(self.fetcher) for R in
+                                            DEFAULT_RESOLVERS])
 
     def resolvers(self):
         """
@@ -43,7 +45,9 @@ class KnowledgeBase(Provider):
         else:
             article, attr = v1, v2
 
-        return "(%s)" % self._get(article, attr, compat=bool(v3))
+        txt = self._get(article, attr, compat=bool(v3))
+
+        return u"(%s)" % txt
 
     def _get(self, article, attr, compat):
         """

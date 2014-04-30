@@ -25,10 +25,15 @@ class TestFrontend(unittest.TestCase):
     def setUp(self):
         self.simple_fe = Frontend(providers=[Provider(
             resources={"get": get_attribute})])
+        self.fe = Frontend()
 
     def test_simple(self):
         self.assertEqual(self.simple_fe.eval("(get \"article\" words)"),
                          "Symbol(words) of 'article'")
+
+    def test_unicode(self):
+        date = self.fe.eval('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))')
+        self.assertEqual(date, '((:yyyymmdd 19140728))')
 
     def tearDown(self):
         pass

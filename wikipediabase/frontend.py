@@ -17,7 +17,8 @@ class Frontend(Acquirer):
         super(Frontend, self).__init__(*args, **kwargs)
 
         if 'providers' not in kwargs:
-            self.acquire_from(knowledgebase or KnowledgeBase())
+            self.knowledgebase = knowledgebase or KnowledgeBase(frontend=self)
+
 
         logging.getLogger("edn_format").setLevel(logging.WARNING)
 
@@ -44,15 +45,15 @@ class Frontend(Acquirer):
             return ls
 
         fn = self.get_callable(self._eval(ls[0]))
-
         args = [self._eval(a) for a in ls[1:]]
+        ret = fn(*args) or "nil"
 
-        return fn(*args) or "nil"
+        return ret
 
     def eval(self, string):
         ls = loads(string)
 
-        return str(self._eval(ls))
+        return unicode(self._eval(ls))
 
 
 class TelnetFrontend(Frontend):

@@ -107,9 +107,8 @@ class InfoboxResolver(BaseResolver):
             ret = ibox.get(attr)
             if ret:
                 self.log().info("Found infobox attribute '%s'" % attr)
-
                 return enchant(key, ret, result_from=attr,
-                               compat=self.compat, log=self.log())
+                               gcompat=self.compat, log=self.log())
 
             self.log().warning("Could nont find infobox attribute '%s'" \
                                % attr)
