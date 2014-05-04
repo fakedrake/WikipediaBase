@@ -5,7 +5,7 @@ from log import Logging
 from article import Article
 from fetcher import CachingSiteFetcher
 
-INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(?P<val>.*?)\s*(?=\n\s*\|)"
+INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
 
 
 class Infobox(Logging):
