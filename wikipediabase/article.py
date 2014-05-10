@@ -3,7 +3,6 @@ import re
 import itertools
 
 from log import Logging
-from util import tag_depth
 
 from fetcher import CachingSiteFetcher
 

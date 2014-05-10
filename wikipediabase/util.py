@@ -49,5 +49,9 @@ def soup_factory(soup_or_article):
     else:
         return soup_or_article
 
-def tag_depth(tag):
-    return len(list(tag.parents))
+def safe_unicode(txt):
+    try:
+        return unicode(txt)
+    except UnicodeDecodeError:
+        ascii_text = str(txt).encode('string_escape')
+        return unicode(ascii_text)

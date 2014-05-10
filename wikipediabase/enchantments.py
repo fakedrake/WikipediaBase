@@ -9,6 +9,7 @@ import re
 import overlay_parse
 
 from log import Logging
+from util import safe_unicode
 
 class Enchanted(Logging):
     """
@@ -80,7 +81,7 @@ class EnchantedString(Enchanted):
         return self.tag
 
     def val_str(self):
-        return u"\"%s\"" % re.sub(r"[[\]]" , "", self.val)
+        return safe_unicode(self.val)
 
 
 class EnchantedList(Enchanted):
@@ -133,6 +134,20 @@ class EnchantedDate(Enchanted):
                 return self._range_middle(dor[0])
 
             return dor[0]
+
+
+class EnchantedDateRange(EnchantedString):
+    def parse_val(self, txt):
+        """
+        If we fid a range that is bigger than the biggest date in the text
+        then this is a proper enchanted string.
+        """
+
+        rngs = overlay_parse.dates.just_props(txt, {'date'}, {'range'},
+                                              values=False)
+
+        if rngs and rngs[0].match(props={'range'}):
+            return txt
 
 
 class EnchantedDateVoting(EnchantedDate):
@@ -211,7 +226,7 @@ def enchant(tag, obj, result_from=None, compat=True, **kw):
     results. Also for now you always want to be enchanting.
     """
 
-    for E in [EnchantedStringDict, EnchantedDate, EnchantedList, EnchantedString]:
+    for E in [EnchantedStringDict, EnchantedDateRange, EnchantedDate, EnchantedList, EnchantedString]:
         ret = E(tag, obj, question=result_from, **kw)
         if ret:
             return ret

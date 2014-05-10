@@ -1,7 +1,7 @@
 try:
-    from urllib2 import urlopen
+    from urllib2 import urlopen, HTTPError
 except:
-    from urllib import urlopen
+    from urllib import urlopen, HTTPError
 
 from urllib import urlencode
 import re
@@ -61,7 +61,16 @@ class WikipediaSiteFetcher(BaseFetcher):
         url = "%s/%s?%s" % (self.url, self.base,
                             urlencode(get))
         self.log().info("Fetching url: " + url)
-        return urlopen(url).read()
+
+        try:
+            ret = urlopen(url).read()
+        except HTTPError:
+            raise HTTPError("Could not download '%s'" % url)
+
+        try:
+            return unicode(ret)
+        except UnicodeDecodeError:
+            return unicode(str(ret).encode("string_escape"))
 
     def source(self, symbol, get_request=dict(action="edit"), redirect=True):
         """
