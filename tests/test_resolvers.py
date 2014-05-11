@@ -40,7 +40,7 @@ class TestResolvers(unittest.TestCase):
 
     def setUp(self):
         self.log = logging.getLogger("resolver-testing")
-        self.simple_resolver = resolvers.StaticResolver(fetcher=fetcher.CachingSiteFetcher())
+        self.simple_resolver = resolvers.StaticResolver(fetcher=fetcher.BaseFetcher())
         self.ibresolver = resolvers.InfoboxResolver(
             fetcher=fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP))
 
