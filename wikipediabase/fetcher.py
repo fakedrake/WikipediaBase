@@ -1,7 +1,7 @@
 try:
-    from urllib2 import urlopen, HTTPError
+    from urllib2 import urlopen, URLError
 except:
-    from urllib import urlopen, HTTPError
+    from urllib import urlopen, URLError
 
 from urllib import urlencode
 import re
@@ -64,8 +64,8 @@ class WikipediaSiteFetcher(BaseFetcher):
 
         try:
             ret = urlopen(url).read()
-        except HTTPError:
-            raise HTTPError("Could not download '%s'" % url)
+        except URLError:
+            raise URLError("Could not download '%s'" % url)
 
         try:
             return unicode(ret)
