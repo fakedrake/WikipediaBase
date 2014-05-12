@@ -7,10 +7,9 @@
 
 ## Overview
 
-Wikipedia backend interface for start.mit.edu
-
-* features
-* and stuff
+Wikipedia backend interface for
+[InfoLab's START](http://start.mit.edu). It an answer s-expression
+queries via Telnet.
 
 ## Usage
 
@@ -35,19 +34,10 @@ case there are new requirements):
 
 Tests can then be run with:
 
-    nosetests
-
-Lint the project with:
-
-    flake8 wikipediabase tests
+    python setup.py test
 
 ## API documentation
 
 Generate the documentation with:
 
     cd docs && PYTHONPATH=.. make singlehtml
-
-To monitor changes to Python files and execute flake8 and nosetests
-automatically, execute the following from the root project directory:
-
-    stir
