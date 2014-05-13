@@ -1,3 +1,6 @@
+*nder active development. Go no further unless you know what you are
+ doing.*
+
 # wikipediabase
 
 [![Build Status](https://secure.travis-ci.org/fakedrake/WikipediaBase.png)](http://travis-ci.org/fakedrake/WikipediaBase)
