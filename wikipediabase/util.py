@@ -6,6 +6,7 @@ import re
 
 from bs4 import BeautifulSoup
 
+_CONTEXT = dict()
 
 # General tools
 def iwindow(seq, n):
@@ -51,3 +52,32 @@ def soup_factory(soup_or_article):
 
 def tag_depth(tag):
     return len(list(tag.parents))
+
+
+def get_infobox(symbol):
+    from infobox import Infobox
+
+    return _get_context(symbol, "infobox", Infobox)
+
+def get_article(symbol):
+    from article import Article
+
+    return _get_context(symbol, "article", Article)
+
+def _get_context(symbol, domain, cls):
+    global _CONTEXT
+
+    if isinstance(symbol, cls):
+        return symbol
+
+    if not domain in _CONTEXT:
+        _CONTEXT[domain] = dict()
+
+    ret = _CONTEXT[domain].get(symbol, None)
+    if ret:
+        return ret
+
+    ret = cls(symbol)
+    _CONTEXT[domain][symbol] = ret
+
+    return ret

@@ -9,7 +9,7 @@ import bs4
 from provider import Provider, provide
 from fetcher import BaseFetcher, WikipediaSiteFetcher, CachingSiteFetcher
 from enchantments import enchant, Enchanted
-from infobox import Infobox
+from util import (get_infobox, get_article)
 
 class BaseResolver(Provider):
 
@@ -27,7 +27,8 @@ class BaseResolver(Provider):
 
     def resolve(self, article, attribute, **kw):
         """
-        Use your resources to resolve.
+        Use your resources to resolve. Use provided methods if available
+        or return None.
         """
 
         if isinstance(attribute, Enchanted):
@@ -101,7 +102,7 @@ class InfoboxResolver(BaseResolver):
         else:
             key, attr = None, attribute
 
-        ibox = Infobox(article, self.fetcher)
+g        ibox = get_infobox(article, self.fetcher)
 
         if ibox:
             ret = ibox.get(attr)
@@ -115,3 +116,49 @@ class InfoboxResolver(BaseResolver):
         else:
             self.log().warning("Could nont find infobox for article '%s'" \
                                % article)
+
+class LifespanPragraphResolver(BaseResolver):
+    """
+    Resolve paragraph related stuff.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        super(ParagraphResolver, self).__init__(*args, **kwargs)
+
+    def resolve(self, article, attrirbute, **kw):
+        """
+        Resolve birth and death dates based on the first paragraph.
+        """
+
+        art = get_article(article)
+
+        # The frst paragraph
+        text = next(article.paragraphs())
+        paren = self.first_paren(text)
+
+
+    def _first_paren(self, text):
+        """
+        If the first sentence in the text has parentheses return those. If
+        not return None.
+        """
+
+        depth = 0
+        first_paren = 0
+
+        for i, c in enumerate(text):
+            if c == "(":
+                depth += 1
+                if depth == 1:
+                    first_paren = i+1
+
+            elif c == ")" and depth > 0:
+                depth -= 1
+                if depth == 0:
+                    return text[first_paren:i]
+
+            elif c == "." and depth == 0:
+                return None
+
+        return text
