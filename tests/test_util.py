@@ -32,6 +32,14 @@ class TestUtil(unittest.TestCase):
         self.assertIs(Article, type(util.get_article(self.symbol)))
         self.assertIs(Article, type(util.get_article(art)))
 
+    def test_paren(self):
+        txt = "Hello (dr. hello 2000-2012) I like bananas. Of couse i do (they are the begist)"
+
+        # First paren will stop at the first sentence.
+        txt_none = "Hello. My name is Bond (James Bond)"
+        self.assertEqual(util.first_paren(txt), "dr. hello 2000-2012")
+        self.assertIs(util.first_paren(txt_none), None)
+
     def tearDown(self):
         pass
 

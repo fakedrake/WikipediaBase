@@ -28,6 +28,15 @@ re.sub("\s+", " ",
 (:code "ALMA-MATER") (:code "RELIGION") (:code "SIGNATURE") (:code
 "SIGNATURE-ALT")""")
 
+
+def _as(atrrs_string):
+    """
+    Split attributes string so we can compare lists
+    """
+
+    return atrrs_string.split(") (")
+
+
 class TestKnowledgebase(unittest.TestCase):
     def setUp(self):
         self.fe = Acquirer()     # A dumb frontend
@@ -44,8 +53,10 @@ class TestKnowledgebase(unittest.TestCase):
                                                             "Bill Clinton"))
 
     def test_attributes_format(self):
-        self.assertEqual(self.fe.resources()['get-attributes']("Bill Clinton"),
-                         CLINTON_ATTRS)
+        result_attrs = _as(self.fe.resources()['get-attributes']("Bill Clinton"))
+
+        for a in _as(CLINTON_ATTRS):
+            self.assertIn(a, result_attrs)
 
     def test_classes(self):
         self.assertIn("wikipedia-president", str(self.fe.resources()['get-classes']("Bill Clinton")))
