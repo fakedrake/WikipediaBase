@@ -126,7 +126,7 @@ def get_dbfetcher(new=False, **kw):
 def _main():
     import json
     fetcher = get_dbfetcher()
-    json.dump(list(fetcher.all_article_categories()), "~/Documets/article_categories.json")
+    json.dump(list(fetcher.all_article_categories()), "./article_categories.json")
 
 if __name__ == "__main__":
     _main()
