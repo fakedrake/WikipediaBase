@@ -75,7 +75,7 @@ def markup_categories(wiki_markup):
     def first_part(s):
         return s.split(']]', 1)[0]
 
-    return map(first_part, txt.split("[[Category:")[1:])
+    return map(first_part, wiki_markup.split("[[Category:")[1:])
 
 
 def _get_context(symbol, domain, cls, fetcher=None):
@@ -91,36 +91,12 @@ def _get_context(symbol, domain, cls, fetcher=None):
     if ret:
         return ret
 
-    kw = fetcher and dict(fetcher=fetcher) or dict()
+    kw = dict(fetcher=fetcher) if fetcher else dict()
     ret = cls(symbol, **kw)
     _CONTEXT[domain][symbol] = ret
 
     return ret
 
-
-def first_paren(text):
-    """
-    If the first sentence in the text has parentheses return those. If
-    not return None.
-    """
-
-    depth = 0
-    first_paren = None
-
-    for i, c in enumerate(text):
-        if c == "(":
-            depth += 1
-            if depth == 1:
-                first_paren = i+1
-
-        elif c == ")" and depth > 0:
-            if depth == 1:
-                return text[first_paren:i]
-
-            depth -= 1
-
-        elif c == "." and depth == 0:
-            return None
 
 # This is for printing out stuff only. It is too slow to use for too
 # much data.
@@ -140,5 +116,16 @@ def time_interval(key="default"):
 
     return ret
 
-def sublcasses(cls):
-    retirn [c for c in cls.subclasses if not c.__name__.startswith("_")]
+def subclasses(cls, instantiate=True, **kw):
+    """
+    A list of instances of subclasses of cls. Instantiate wit kw and
+    return just the classes with instantiate=False.
+    """
+
+    clss = sorted(cls.__subclasses__(), key=lambda c: c.priority, reverse=True)
+    if not instantiate:
+        return [C for C in clss
+                if not C.__name__.startswith("_")]
+
+    return [C(**kw) for C in clss
+            if not C.__name__.startswith("_")]

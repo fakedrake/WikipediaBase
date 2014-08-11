@@ -4,6 +4,7 @@ from wikipediabase.provider import Provider
 
 class BaseResolver(Provider):
 
+    priority = 0
     def __init__(self, fetcher=None, compat=True, *args, **kwargs):
         """
         Provide a way to fetch articles. If no fetcher is provider

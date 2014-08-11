@@ -1,21 +1,22 @@
-from wikipediabase.resolvers.base import BaseResolver
-from wikipediabase.util import get_infobox
-from wikipediabase.enchantments import enchant, Enchanted
-
+from .base import BaseResolver
+from ..util import get_infobox
+from ..enchantments import enchant, Enchanted
+from ..fetcher import WIKIBASE_FETCHER
 
 class InfoboxResolver(BaseResolver):
     """
     Use this to resolve based on the resolver.
     """
 
-    def __init__(self, fetcher=None, *args, **kwargs):
+    priority = 10
+    def __init__(self, *args, **kwargs):
         """
         Provide a way to fetch articles. If no fetcher is provider
         fallback to BaseFetcher.
         """
 
         super(InfoboxResolver, self).__init__(*args, **kwargs)
-        self.fetcher = fetcher or WikipediaSiteFetcher()
+        self.fetcher = kwargs.get('fetcher', WIKIBASE_FETCHER)
         self._tag = "html"
 
     def resolve(self, article, attribute, **kw):

@@ -5,7 +5,7 @@ import itertools
 from .log import Logging
 from .util import tag_depth, markup_categories
 
-from .fetcher import CachingSiteFetcher
+from .fetcher import WIKIBASE_FETCHER
 
 
 class Heading(object):
@@ -92,7 +92,7 @@ class Article(Logging):
     abstraction.
     """
 
-    def __init__(self, title, fetcher=CachingSiteFetcher()):
+    def __init__(self, title, fetcher=WIKIBASE_FETCHER):
         self._title = title
         self.fetcher = fetcher
         self.ibox = None
@@ -105,7 +105,7 @@ class Article(Logging):
         return bs4.BeautifulSoup(self.html_source())
 
     def categories(self):
-        return makup_categories(self.markup_source())
+        return markup_categories(self.markup_source())
 
     def infobox(self):
         if not self.ibox:

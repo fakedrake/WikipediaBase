@@ -22,6 +22,8 @@ from wikipediabase import fetcher
 from wikipediabase.frontend import Frontend
 from wikipediabase.knowledgebase import KnowledgeBase
 
+from wikipediabase.resolvers.paragraph import first_paren
+
 from tests.examples import *
 
 ARTICLE = u"""A ninja (忍者?) or shinobi (忍び?) was a covert agent or mercenary
@@ -45,14 +47,14 @@ class TestResolvers(unittest.TestCase):
             fetcher=fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP))
 
         self.fe = Frontend()
-        self.kb = KnowledgeBase(frontend=self.fe,
-                                resolvers=[self.simple_resolver, self.ibresolver])
+        self.kb = KnowledgeBase(frontend=self.fe)
 
     def test_resolver(self):
         self.assertEqual(self.simple_resolver.resolve(ARTICLE, "word-count"), \
                          100)
 
     def test_random_attributes(self):
+        self.fe.kb.resolvers
         self.assertEqual(self.fe.eval("(get \"doctor ninja batman\" \"word-count\")"), '(3)')
         self.assertEqual(self.fe.eval("(get \"doctor ninja batman\n\" (:code \"word-count\"))"), '(3)')
 
@@ -87,6 +89,9 @@ class TestResolvers(unittest.TestCase):
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT_RX):
             self.assertNotRegexpMatches(ans, rx, msg=msg)
 
+    def test_first_paren(self):
+        query = "I (Joe (sir) doe) am here (an0other paren here) and text"
+        self.assertEqual(first_paren(query), "Joe (sir) doe")
 
     def _ans_match(self, lst):
         """

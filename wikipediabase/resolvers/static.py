@@ -8,6 +8,8 @@ class StaticResolver(BaseResolver):
     A resolver that can resolve a fixed set of simple attributes.
     """
 
+    priority = 1
+
     def _words(self, article):
         return re.findall('\w+', article.lower())
 

@@ -41,8 +41,6 @@ class TestKnowledgebase(unittest.TestCase):
     def setUp(self):
         self.fe = Acquirer()     # A dumb frontend
         self.kb = KnowledgeBase(frontend=self.fe)
-        self.att_res = Provider(resources={'status': lambda art,attr: "unknown"},
-                                acquirer=self.kb.resolvers_acquirer)
 
     def test_get(self):
         self.assertEquals(self.fe.resources()['get'], self.kb.get)
@@ -59,7 +57,8 @@ class TestKnowledgebase(unittest.TestCase):
             self.assertIn(a, result_attrs)
 
     def test_classes(self):
-        self.assertIn("wikipedia-president", str(self.fe.resources()['get-classes']("Bill Clinton")))
+        self.assertIn("wikipedia-president",
+                      str(self.fe.resources()['get-classes']("Bill Clinton")))
 
 
     def tearDown(self):

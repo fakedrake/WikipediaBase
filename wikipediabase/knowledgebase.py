@@ -1,8 +1,11 @@
-from provider import Provider, provide
-from fetcher import WIKIBASE_FETCHER
-from infobox import Infobox
-from enchantments import enchant
-from resolvers import WIKIBASE_RESOLVERS
+from itertools import chain
+
+from .provider import Provider, provide
+from .fetcher import WIKIBASE_FETCHER
+from .infobox import Infobox
+from .enchantments import enchant, EnchantedList
+from .resolvers import WIKIBASE_RESOLVERS
+from .classifiers import WIKIBASE_CLASSIFIERS
 
 import re
 
@@ -19,14 +22,14 @@ class KnowledgeBase(Provider):
         """
 
         super(KnowledgeBase, self).__init__(*args, **kw)
-        self.frontend = self.kw.get('frontend')
+        self.frontend = kw.get('frontend')
 
         if self.frontend:
             self.provide_to(self.frontend)
 
-        self.fetcher =  self.kw.get('fetcher', WIKIBASE_FETCHER)
-        self.resolvers = self.kw.get('resolvers', WIKIBASE_RESOLVERS)
-        self.classifiers = self.kw.get('classifiers', WIKIBASE_CLASSIFIERS)
+        self.fetcher =  kw.get('fetcher', WIKIBASE_FETCHER)
+        self.resolvers = kw.get('resolvers', WIKIBASE_RESOLVERS)
+        self.classifiers = kw.get('classifiers', WIKIBASE_CLASSIFIERS)
 
     @provide()
     def get(self, v1, v2, v3=None):
@@ -65,8 +68,9 @@ class KnowledgeBase(Provider):
         Get a symbol classes.
         """
 
-        return chain.from_iterable((c(symbol) for
-                                    c in self.classifiers()))
+        it = chain.from_iterable((c.classify(symbol) for c in self.classifiers))
+
+        return EnchantedList(None, it)
 
     @provide(name="get-attributes")
     def get_attributes(self, wb_class,  symbol=None):

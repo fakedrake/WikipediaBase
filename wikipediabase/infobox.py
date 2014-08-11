@@ -3,7 +3,7 @@ import bs4
 
 from log import Logging
 from article import Article
-from fetcher import CachingSiteFetcher
+from fetcher import WIKIBASE_FETCHER
 
 INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
 
@@ -14,7 +14,7 @@ class Infobox(Logging):
     - instead of _.
     """
 
-    def __init__(self, title, fetcher=CachingSiteFetcher()):
+    def __init__(self, title, fetcher=WIKIBASE_FETCHER):
         """
         It is a good idea to provide a fetcher as caching will be done
         much better.

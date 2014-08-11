@@ -8,7 +8,8 @@ with them.
 import re
 import overlay_parse
 
-from log import Logging
+from .log import Logging
+from .util import subclasses
 
 class Enchanted(Logging):
     """
@@ -20,6 +21,7 @@ class Enchanted(Logging):
     """
 
     force_tag = None
+    priority = 0
 
     def __init__(self, tag, val, question=None, kind=None, **kw):
         """
@@ -72,6 +74,7 @@ class Enchanted(Logging):
 
 
 class EnchantedString(Enchanted):
+    priority = 3
     def tag_str(self):
         if (self.tag == "code" or not self.tag) and \
            self.kind != "attribute":
@@ -88,8 +91,10 @@ class EnchantedList(Enchanted):
     This is coordinates and other things like that
     """
 
+    priority = 4
+
     def should_parse(self):
-        return type(self.val) in [list, set]
+        return hasattr(self.val, '__iter__')
 
     def __str__(self):
         if self.tag:
@@ -100,12 +105,16 @@ class EnchantedList(Enchanted):
     def val_str(self):
         return " ".join(["\"%s\"" % str(v) for v in self.val])
 
+    def __iter__(self):
+        return iter(self.val)
+
 
 class EnchantedDate(Enchanted):
     """
     Date enchantment but using the overlay framework.
     """
     force_tag = "yyyymmdd"
+    priority = 5
 
     def val_str(self):
         d, m, y = self.val
@@ -135,7 +144,9 @@ class EnchantedDate(Enchanted):
             return dor[0]
 
 
-class EnchantedDateVoting(EnchantedDate):
+class _EnchantedDateVoting(EnchantedDate):
+    priority = 5
+
     def parse_val(self, txt):
         """
         Return of the extracted date the one appearing most often. Count
@@ -181,6 +192,7 @@ class EnchantedDateVoting(EnchantedDate):
 
         return False
 
+EnchantedDateVoting = _EnchantedDateVoting
 
 class EnchantedStringDict(Enchanted):
     """
@@ -189,6 +201,7 @@ class EnchantedStringDict(Enchanted):
 
     # Just so the test regexes match.
     reverse = True
+    priority = 10
 
     def should_parse(self):
         return type(self.val) is dict
@@ -203,6 +216,7 @@ class EnchantedStringDict(Enchanted):
                                   for k,v in pairs
                                   if v is not None])
 
+WIKIBASE_ENCHANTMENTS = subclasses(Enchanted, instantiate=False)
 
 def enchant(tag, obj, result_from=None, compat=True, **kw):
     """
@@ -211,7 +225,7 @@ def enchant(tag, obj, result_from=None, compat=True, **kw):
     results. Also for now you always want to be enchanting.
     """
 
-    for E in [EnchantedStringDict, EnchantedDate, EnchantedList, EnchantedString]:
+    for E in WIKIBASE_ENCHANTMENTS:
         ret = E(tag, obj, question=result_from, **kw)
         if ret:
             return ret

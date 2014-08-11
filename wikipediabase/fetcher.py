@@ -9,7 +9,8 @@ import json
 
 import bs4
 
-from log import Logging
+from .log import Logging
+from .util import subclasses
 
 
 WIKISOURCE_TAG_ID = "wpTextbox1"
@@ -24,6 +25,8 @@ class BaseFetcher(Logging):
     complex fetchers.
     """
 
+    priority = 0
+
     def download(self, symbol, get=None):
         return symbol
 
@@ -32,6 +35,9 @@ class BaseFetcher(Logging):
 
 
 class WikipediaSiteFetcher(BaseFetcher):
+
+    priority = 1
+
     def __init__(self, url="http://en.wikipedia.org", base="w", **kw):
         self.url = url.strip('/')
         self.base = base.strip('/')
@@ -52,6 +58,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         :param get: dictionary of the get request. eg. `{'action':'edit'}`
         :returns: HTML code
         """
+
         if not get:
             get = dict(title=symbol)
         else:
@@ -95,6 +102,7 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
     Caches pages in a json file and reads from there.
     """
 
+    priority = 10
     _fname = OFFLINE_PAGES
 
     def __init__(self, *args, **kw):
@@ -131,4 +139,4 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         raise LookupError("Failed to find page '%s' (%s online)." %
                           (symbol, "didnt look" if self.offline else "looked"))
 
-WIKIBASE_FETCHER = CachingSiteFetcher
+WIKIBASE_FETCHER = CachingSiteFetcher()
