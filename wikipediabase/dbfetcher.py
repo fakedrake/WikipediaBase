@@ -86,18 +86,6 @@ class DBFetcher(BaseFetcher):
 
         return self._categories(self.article_text(article))
 
-    def _categories(self, txt):
-        """
-        return the names of the categories.
-        """
-
-        # It is slightly faster like this because we are nto creating
-        # a lambda obj each time.
-        def first_part(s):
-            return s.split(']]', 1)[0]
-
-        return map(first_part, txt.split("[[Category:")[1:])
-
     def all_article_categories(self, limit=None, threads=None):
         return chain.from_iterable((((id, cat) for cat in self._categories(txt) )
                                     for id, txt in self.all_articles(limit)))

@@ -2,10 +2,11 @@ import bs4
 import re
 import itertools
 
-from log import Logging
-from util import tag_depth
+from .log import Logging
+from .util import tag_depth, markup_categories
 
-from fetcher import CachingSiteFetcher
+from .fetcher import CachingSiteFetcher
+
 
 class Heading(object):
     """
@@ -102,6 +103,18 @@ class Article(Logging):
         """
 
         return bs4.BeautifulSoup(self.html_source())
+
+    def categories(self):
+        return makup_categories(self.markup_source())
+
+    def infobox(self):
+        if not self.ibox:
+            self.ibox = Infobox(self.title, fetcher=self.fetcher)
+
+        return self.ibox
+
+    def types(self):
+        return self.infobox().types()
 
     def _primary_heading(self):
         """

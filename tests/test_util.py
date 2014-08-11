@@ -13,6 +13,9 @@ try:
 except ImportError:
     import unittest
 
+import datetime
+
+
 from wikipediabase import util
 from wikipediabase.infobox import Infobox
 from wikipediabase.article import Article
@@ -39,6 +42,22 @@ class TestUtil(unittest.TestCase):
         txt_none = "Hello. My name is Bond (James Bond)"
         self.assertEqual(util.first_paren(txt), "dr. hello 2000-2012")
         self.assertIs(util.first_paren(txt_none), None)
+
+    def test_interval(self):
+        class DateTime(datetime.datetime):
+            x = 0
+
+            @classmethod
+            def now(cls):
+                return cls.x
+
+        datetime.datetime = DateTime
+
+        util.time_interval("now")
+        for i in  xrange(20):
+            # Increment time between calls
+            DateTime.x += 1
+            self.assertEqual(util.time_interval("now"), 1)
 
     def tearDown(self):
         pass

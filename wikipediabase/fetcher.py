@@ -130,3 +130,5 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
 
         raise LookupError("Failed to find page '%s' (%s online)." %
                           (symbol, "didnt look" if self.offline else "looked"))
+
+WIKIBASE_FETCHER = CachingSiteFetcher

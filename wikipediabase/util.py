@@ -3,6 +3,7 @@ from itertools import islice, takewhile, dropwhile
 import os
 import urllib
 import re
+import collections
 
 from bs4 import BeautifulSoup
 
@@ -64,6 +65,19 @@ def get_article(symbol, fetcher=None):
 
     return _get_context(symbol, "article", Article)
 
+def markup_categories(wiki_markup):
+    """
+    return the names of the categories.
+    """
+
+    # It is slightly faster like this because we are nto creating
+    # a lambda obj each time.
+    def first_part(s):
+        return s.split(']]', 1)[0]
+
+    return map(first_part, txt.split("[[Category:")[1:])
+
+
 def _get_context(symbol, domain, cls, fetcher=None):
     global _CONTEXT
 
@@ -107,3 +121,24 @@ def first_paren(text):
 
         elif c == "." and depth == 0:
             return None
+
+# This is for printing out stuff only. It is too slow to use for too
+# much data.
+import datetime
+
+def time_interval(key="default"):
+    """
+    Give me the interval from the last time I called you.
+    """
+
+    if not hasattr(time_interval, 'time_dict'):
+        time_interval.time_dict = collections.defaultdict(datetime.datetime.now)
+
+    now = datetime.datetime.now()
+    ret = now - time_interval.time_dict[key]
+    time_interval.time_dict[key] = now
+
+    return ret
+
+def sublcasses(cls):
+    retirn [c for c in cls.subclasses if not c.__name__.startswith("_")]

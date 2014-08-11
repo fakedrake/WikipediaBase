@@ -10,5 +10,5 @@ from resolvers import StaticResolver
 from frontend import TelnetFrontend
 
 def wikipediabase():
-    fe = TelnetFrontend(knowledgebase=KnowledgeBase(resolvers=[StaticResolver()]))
+    fe = TelnetFrontend(knowledgebase=KnowledgeBase())
     fe.start()

@@ -1,36 +1,32 @@
-from provider import Acquirer, Provider, provide
-from fetcher import CachingSiteFetcher
+from provider import Provider, provide
+from fetcher import WIKIBASE_FETCHER
 from infobox import Infobox
 from enchantments import enchant
-from resolvers import StaticResolver, InfoboxResolver
+from resolvers import WIKIBASE_RESOLVERS
 
 import re
 
-
-DEFAULT_RESOLVERS = [StaticResolver, InfoboxResolver]
-
-
 class KnowledgeBase(Provider):
 
-    def __init__(self, frontend=None, resolvers=None, fetcher=None, *args, **kwargs):
-        super(KnowledgeBase, self).__init__(*args, **kwargs)
-        self.frontend = frontend
-
-        if frontend:
-            self.provide_to(frontend)
-
-        self.fetcher = fetcher or CachingSiteFetcher()
-        self.resolvers_acquirer = Acquirer(providers=resolvers or
-                                           [R(self.fetcher) for R in
-                                            DEFAULT_RESOLVERS])
-
-    def resolvers(self):
+    def __init__(self, *args, **kw):
         """
-        The resolvers the the knowledgebase uses. This is a thin wapper
-        around the stock `Acquirer' functionality.
+        Accepted parapameters are:
+
+        - frontend
+        - fetcher
+        - resolvers
+        - classifiers
         """
 
-        return self.resolvers_acquirer._providers
+        super(KnowledgeBase, self).__init__(*args, **kw)
+        self.frontend = self.kw.get('frontend')
+
+        if self.frontend:
+            self.provide_to(self.frontend)
+
+        self.fetcher =  self.kw.get('fetcher', WIKIBASE_FETCHER)
+        self.resolvers = self.kw.get('resolvers', WIKIBASE_RESOLVERS)
+        self.classifiers = self.kw.get('classifiers', WIKIBASE_CLASSIFIERS)
 
     @provide()
     def get(self, v1, v2, v3=None):
@@ -56,22 +52,21 @@ class KnowledgeBase(Provider):
         answer.
         """
 
-        self.log().info("Get article: '%s', attribute: '%s'" % (article, attr))
-
         # Attribute is wrapped into a dict just until we retrieve the
         # keys.
-
-        for ar in self.resolvers():
+        for ar in self.resolvers:
             res = ar.resolve(article, attr)
             if res:
                 return res
 
-
     @provide(name="get-classes")
     def get_classes(self, symbol):
-        ibox = Infobox(symbol, self.fetcher)
-        types = ibox.types().union({'wikipedia-term'})
-        return enchant(None, types)
+        """
+        Get a symbol classes.
+        """
+
+        return chain.from_iterable((c(symbol) for
+                                    c in self.classifiers()))
 
     @provide(name="get-attributes")
     def get_attributes(self, wb_class,  symbol=None):
@@ -83,11 +78,15 @@ class KnowledgeBase(Provider):
         return self._get_attrs(wb_class)
 
     def _get_attrs(self, symbol):
+        """
+        Get all attributes of a symbol you cna find.
+        """
+
         ibox = Infobox(symbol, self.fetcher)
 
         ret = []
         for k,v in ibox.markup_parsed_iter():
-            tmp = enchant(None, dict(code= k.upper(),
+            tmp = enchant(None, dict(code=k.upper(),
                                      rendered=ibox.rendered_key(k)))
 
             ret.append(str(tmp))
