@@ -1,9 +1,10 @@
 import re
-import bs4
+import lxml.etree as ET
 
-from log import Logging
-from article import Article
-from fetcher import WIKIBASE_FETCHER
+from .util import totext, tostring, fromstring
+from .log import Logging
+from .article import Article
+from .fetcher import WIKIBASE_FETCHER
 
 INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
 
@@ -138,21 +139,19 @@ class Infobox(Logging):
 
     def html_source(self):
         """
-        Get the infobox source as a soup.
+        A div with all the infoboxes in it.
         """
 
         html = self.fetcher.download(self.title)
-        ret = bs4.BeautifulSoup()
-        bs = bs4.BeautifulSoup(html)
-
-        for i in bs.select('table.infobox'):
-            ret.append(i)
+        bs = fromstring(html)
+        ret = ET.Element('div')
+        ret.extend([t for t in bs.findall(".//table")
+                    if 'infobox' in t.get('class', '')])
 
         return ret
 
     def rendered(self):
-        return self.html_source().text
-
+        return totext(self.html_source())
 
     def html_parsed(self):
         """
@@ -160,42 +159,39 @@ class Infobox(Logging):
         pairs.
         """
 
+        def escape_lists(val):
+            if not val:
+                return ""
+
+            return re.sub(r"<\s*(/?\s*(br\s*/?|/?ul|/?li))\s*>", "&lt;\\1&gt;", val)
+
+        def unescape_lists(val):
+            if not val:
+                return ""
+
+            return re.sub(r"&lt;(/?\s*(br\s*/?|ul|li))&gt;", "<\\1>", val)
+
         soup = self.html_source()
         # Render all tags except <ul> and <li>. Escape them in some way and then reparse
 
-
         tpairs = []
 
-        for val in soup.select('tr > td'):
-            if val.find_previous_sibling('th'):
-                key = val.parent.th.text
-                # self._unwrapper(val)
-                # val = str(val).replace("<td>", "").replace("</td>", "")
+        for row in soup.findall('.//tr'):
+            e_key = row.find('.//th')
+            e_val = row.find('.//td')
 
-                val = bs4.BeautifulSoup(self._escape_list(str(val)),
-                                        "html.parser").text
+            if e_key is not None and e_val is not None:
+                key = totext(e_key).strip()
+                val = escape_lists(tostring(e_val))
+                # Extract text
+                val = fromstring(val)
+                val = totext(val)
+
+                val = unescape_lists(val.strip())
+
                 tpairs.append((key, val))
 
         return tpairs
-
-    def _escape_list(self, val):
-        """
-        We dont want to render lists because then we have no way of
-        knowing they were lists.
-        """
-
-        if not val:
-            val = ""
-
-        return re.sub(r"<(br\s*/?|/?ul|/?li)>", "&lt;\\1&gt;", val)
-
-
-    def _unwrapper(self, val):
-        for tag in val:
-            if isinstance(tag, bs4.Tag):
-                self._unwrapper(tag)
-                if tag.name not in {'ul','li'}:
-                    tag.unwrap()
 
     def _braces_markup(self, txt):
         """

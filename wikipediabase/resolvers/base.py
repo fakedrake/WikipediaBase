@@ -1,4 +1,4 @@
-from wikipediabase.enchanted import Enchanted
+from wikipediabase.enchantments import Enchanted
 from wikipediabase.fetcher import CachingSiteFetcher
 from wikipediabase.provider import Provider
 
@@ -22,7 +22,6 @@ class BaseResolver(Provider):
         Use your resources to resolve. Use provided methods if available
         or return None.
         """
-
         if isinstance(attribute, Enchanted):
             attr = attribute.val
         else:

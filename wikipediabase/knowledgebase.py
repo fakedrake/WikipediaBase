@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from itertools import chain
 
 from .provider import Provider, provide
@@ -15,10 +17,10 @@ class KnowledgeBase(Provider):
         """
         Accepted parapameters are:
 
-        - frontend
-        - fetcher
-        - resolvers
-        - classifiers
+        - frontend (default: None)
+        - fetcher (default: WIKIBASE_FETCHER)
+        - resolvers (default: WIKIBASE_RESOLVERS)
+        - classifiers (default: WIKIBASE_CLASSIFIERS)
         """
 
         super(KnowledgeBase, self).__init__(*args, **kw)
@@ -46,7 +48,7 @@ class KnowledgeBase(Provider):
 
         txt = self._get(article, attr, compat=bool(v3))
 
-        return u"(%s)" % txt
+        return u"(%s)" % txt if txt else None
 
     def _get(self, article, attr, compat):
         """

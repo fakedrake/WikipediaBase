@@ -45,5 +45,5 @@ class LifespanPragraphResolver(BaseResolver):
         art = get_article(article)
 
         # The frst paragraph
-        text = next(art.paragraphs())
+        text = art.paragraphs()[0]
         paren = first_paren(text)

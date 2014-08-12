@@ -35,14 +35,6 @@ class TestUtil(unittest.TestCase):
         self.assertIs(Article, type(util.get_article(self.symbol)))
         self.assertIs(Article, type(util.get_article(art)))
 
-    def test_paren(self):
-        txt = "Hello (dr. hello 2000-2012) I like bananas. Of couse i do (they are the begist)"
-
-        # First paren will stop at the first sentence.
-        txt_none = "Hello. My name is Bond (James Bond)"
-        self.assertEqual(util.first_paren(txt), "dr. hello 2000-2012")
-        self.assertIs(util.first_paren(txt_none), None)
-
     def test_interval(self):
         class DateTime(datetime.datetime):
             x = 0
@@ -58,6 +50,12 @@ class TestUtil(unittest.TestCase):
             # Increment time between calls
             DateTime.x += 1
             self.assertEqual(util.time_interval("now"), 1)
+
+    def test_html(self):
+        html = "<html> <body><p>yes</p> <p> hi</p> <img/> </body> </html>"
+        el = util.fromstring(html)
+        self.assertEqual("yes  hi", util.totext(el).strip())
+        self.assertIn("<p>", util.tostring(el))
 
     def tearDown(self):
         pass

@@ -34,10 +34,8 @@ class Enchanted(Logging):
         self.kind = kind
 
         if self.should_parse():
-            self.log().info("Enchanting (:%s %s)" % (tag, val))
             self.val = self.parse_val(val)
         else:
-            self.log().info("Not enchanting (:%s %s)" % (tag, val))
             self.val = None
 
     def should_parse(self):

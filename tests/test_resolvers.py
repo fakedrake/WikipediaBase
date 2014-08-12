@@ -54,9 +54,12 @@ class TestResolvers(unittest.TestCase):
                          100)
 
     def test_random_attributes(self):
-        self.fe.kb.resolvers
-        self.assertEqual(self.fe.eval("(get \"doctor ninja batman\" \"word-count\")"), '(3)')
-        self.assertEqual(self.fe.eval("(get \"doctor ninja batman\n\" (:code \"word-count\"))"), '(3)')
+        self.fe.knowledgebase.resolvers.reverse()
+        self.assertEqual(self.fe.eval("(get \"Batman\" (:code \"word-count\"))"), '(68159)')
+
+        self.assertEqual(self.fe.eval("(get \"Batman\" \"word-count\")"), '(68159)')
+        self.fe.knowledgebase.resolvers.reverse()
+
 
     def test_infobox(self):
         # Disable compatibility mode: no extra tag info on result.
@@ -92,6 +95,13 @@ class TestResolvers(unittest.TestCase):
     def test_first_paren(self):
         query = "I (Joe (sir) doe) am here (an0other paren here) and text"
         self.assertEqual(first_paren(query), "Joe (sir) doe")
+
+        txt = "Hello (dr. hello 2000-2012) I like bananas. Of couse i do (they are the begist)"
+        # First paren will stop at the first sentence.
+        txt_none = "Hello. My name is Bond (James Bond)"
+        self.assertEqual(first_paren(txt), "dr. hello 2000-2012")
+        self.assertIs(first_paren(txt_none), None)
+
 
     def _ans_match(self, lst):
         """

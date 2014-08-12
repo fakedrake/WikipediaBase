@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 try:
     from urllib2 import urlopen
 except:
@@ -7,13 +9,12 @@ from urllib import urlencode
 import re
 import json
 
-import bs4
+import lxml.etree as ET
 
 from .log import Logging
-from .util import subclasses
+from .util import subclasses, fromstring
 
 
-WIKISOURCE_TAG_ID = "wpTextbox1"
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
 OFFLINE_PAGES = "/tmp/pages.json"
 
@@ -46,7 +47,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         """
         Get the source from an html soup of the edit page.
         """
-        tag = soup.find_all(attrs={"id": WIKISOURCE_TAG_ID})
+        tag = "".join(soup.find(".//*[@id='wpTextbox1']").itertext())
 
         return tag
 
@@ -75,13 +76,13 @@ class WikipediaSiteFetcher(BaseFetcher):
         Get the full wiki markup of the symbol.
         """
 
-        self.log().info("Looking for article source: %s." % symbol)
         # <textarea tabindex="1" accesskey="," id="wpTextbox1" cols="80" rows="25" style="" lang="en" dir="ltr" name="wpTextbox1">
         html = self.download(symbol=symbol, get=get_request)
-        soup = bs4.BeautifulSoup(html)
+        soup = fromstring(html)
+
 
         try:
-            src = self.get_wikisource(soup)[0].text.encode("utf8", "ignore")
+            src = self.get_wikisource(soup).encode("utf-8", "ignore")
         except IndexError:
             raise ValueError("Got invalid source page for article '%s'." %
                               symbol)

@@ -5,7 +5,8 @@ import urllib
 import re
 import collections
 
-from bs4 import BeautifulSoup
+import lxml.etree as ET
+from lxml import html
 
 _CONTEXT = dict()
 
@@ -39,21 +40,6 @@ def memoize(f):
             return ret
 
     return memodict(f)
-
-# Wikipedia
-def soup_factory(soup_or_article):
-    """
-    Return a soup from html. If already a soup dont bother.
-    """
-
-    if not isinstance(soup_or_article, BeautifulSoup):
-        return BeautifulSoup(soup_or_article)
-    else:
-        return soup_or_article
-
-def tag_depth(tag):
-    return len(list(tag.parents))
-
 
 def get_infobox(symbol, fetcher=None):
     from infobox import Infobox
@@ -102,7 +88,7 @@ def _get_context(symbol, domain, cls, fetcher=None):
 # much data.
 import datetime
 
-def time_interval(key="default"):
+def time_interval(key="default", update=True):
     """
     Give me the interval from the last time I called you.
     """
@@ -112,7 +98,9 @@ def time_interval(key="default"):
 
     now = datetime.datetime.now()
     ret = now - time_interval.time_dict[key]
-    time_interval.time_dict[key] = now
+
+    if update:
+        time_interval.time_dict[key] = now
 
     return ret
 
@@ -129,3 +117,15 @@ def subclasses(cls, instantiate=True, **kw):
 
     return [C(**kw) for C in clss
             if not C.__name__.startswith("_")]
+
+def totext(et):
+    return html.HtmlElement(et).text_content()
+
+def tostring(et):
+    return ET.tostring(et, method='html', encoding='utf-8')
+
+def fromstring(txt):
+    try:
+        return html.fromstring(txt)
+    except:
+        import pdb; pdb.set_trace()

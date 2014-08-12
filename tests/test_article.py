@@ -34,34 +34,16 @@ class TestArticle(unittest.TestCase):
     def test_headings(self):
         self.assertEqual(len(list(self.rtcl.headings())), 5)
         self.assertIn("Appearances in literature",
-                         map(lambda x: x.name(), self.rtcl.headings()))
+                      self.rtcl.headings())
 
     def test_complex(self):
         rtcl = Article("Baal", self.ftchr)
+        self.assertEqual(rtcl.headings()[-1], "External links")
         self.assertEqual(len(list(rtcl.headings())), 15)
+
 
     def tearDown(self):
         pass
-
-class TestHeading(unittest.TestCase):
-
-    def setUp(self):
-        ftchr = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
-        rtcl = Article("Led Zeppelin", ftchr)
-        self.h = rtcl._primary_heading()
-
-    def test_subheadings(self):
-        topmost = [h.tag.text for h in self.h.subheadings()]
-        self.assertIn("History", topmost)
-        self.assertNotIn("Post-breakup", topmost)
-        self.assertEqual(len(list(self.h.subheadings())), 9)
-        self.assertIn("Formation", [h.name() for h in
-                                    list(self.h.subheadings())[0].subheadings()])
-
-    def test_paragraphs(self):
-        self.assertIn("Led Zeppelin were an English rock band",
-                      self.h.paragraphs()[0].text)
-
 
 if __name__ == '__main__':
     unittest.main()
