@@ -42,7 +42,7 @@ class InfoboxResolver(BaseResolver):
             if ret:
                 self.log().info("Found infobox attribute '%s'" % attr)
                 return enchant(key, ret, result_from=attr,
-                               gcompat=self.compat, log=self.log())
+                               log=self.log())
 
             self.log().warning("Could nont find infobox attribute '%s'" \
                                % attr)

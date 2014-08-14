@@ -84,6 +84,7 @@ class EnchantedString(Enchanted):
         return u"\"%s\"" % re.sub(r"[[\]]" , "", self.val)
 
 
+
 class EnchantedList(Enchanted):
     """
     This is coordinates and other things like that
@@ -133,6 +134,14 @@ class EnchantedDate(Enchanted):
         return tuple(int((i+j)/2) for i,j in zip(d1, d2))
 
     def parse_val(self, txt):
+        if not isinstance(txt, basestring):
+            return txt
+
+        try:
+            u'7 B.C.' in txt
+        except:
+            import pdb; pdb.set_trace()
+
         dor = overlay_parse.dates.just_props(txt, {'date'}, {'range'})
 
         if dor:
@@ -216,7 +225,7 @@ class EnchantedStringDict(Enchanted):
 
 WIKIBASE_ENCHANTMENTS = subclasses(Enchanted, instantiate=False)
 
-def enchant(tag, obj, result_from=None, compat=True, **kw):
+def enchant(tag, obj, result_from=None, **kw):
     """
     Return an appropriate enchanted object. reslut is true when we are
     enchanting a result. Sometimes tags mean different thigs in

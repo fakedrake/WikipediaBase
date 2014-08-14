@@ -41,6 +41,7 @@ class KnowledgeBase(Provider):
         obsolete.
         """
 
+
         if v3 is not None:
             article, attr = v2, v3
         else:
@@ -59,6 +60,7 @@ class KnowledgeBase(Provider):
 
         # Attribute is wrapped into a dict just until we retrieve the
         # keys.
+
         for ar in self.resolvers:
             res = ar.resolve(article, attr)
             if res:

@@ -1,4 +1,5 @@
 import os
+from wikipediabase.fetcher import CachingSiteFetcher
 
 ALL_TEST_PAGES= [
 ]
@@ -13,4 +14,6 @@ def download_all(pages=ALL_TEST_PAGES):
         f.download(p)
         f.source(p)
 
-TEST_FETCHER_SETUP=dict(offline=False, fname=data("pages.json"))
+TEST_FETCHER_SETUP = dict(offline=True, fname=data("pages.json"))
+def get_fetcher():
+    return CachingSiteFetcher(**TEST_FETCHER_SETUP)

@@ -72,21 +72,23 @@ class Infobox(Logging):
 
         # Look into html first. The results here are much more
         # readable.
-        html_key = key.lower().replace("-", " ")
-        markup_key = key.lower().replace("-", "_")
+        html_key = key.lower().replace(u"-", u" ")
+        markup_key = key.lower().replace(u"-", u"_")
         rendered_key = self.rendered_key(markup_key)
 
         if source is None or source == 'html':
             for k, v in self.html_parsed():
-                if k.lower().replace(".", "") == html_key or \
+                if k.lower().replace(u".", u"") == html_key or \
                    k == rendered_key:
                     return v
 
         # Then look into the markup
-        markup_key = key.lower().replace("-", "_")
-        for k, v in self.markup_parsed_iter():
-            if k.replace("-", "_") == markup_key:
-                return v
+        markup_key = key.lower().replace(u"-", u"_")
+        ret = u"\n".join([v.decode('utf-8') for k, v in self.markup_parsed_iter()
+                         if re.sub(r"[0-9]+$", "",
+                                   k.replace("-", "_"),) == markup_key])
+
+        return ret or None
 
     def rendered_key(self, mkey):
         """
@@ -120,6 +122,7 @@ class Infobox(Logging):
             val = m.group("val")
 
             yield key, val
+
 
     def markup_parsed(self):
         """
@@ -228,5 +231,4 @@ class Infobox(Logging):
         for s,e in rngs:
             ret += txt[s:e]
 
-        if ret:
-            return ret
+        return ret

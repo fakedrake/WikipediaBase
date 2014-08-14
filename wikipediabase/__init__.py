@@ -7,8 +7,12 @@ __version__ = '0.0.1'
 
 from knowledgebase import KnowledgeBase
 from resolvers import StaticResolver
-from frontend import TelnetFrontend
+from frontend import TelnetFrontend, Frontend
 
-def wikipediabase():
-    fe = TelnetFrontend(knowledgebase=KnowledgeBase())
-    fe.start()
+def wikipediabase(cmd=None, **kw):
+    if cmd is None:
+        fe = TelnetFrontend(knowledgebase=KnowledgeBase())
+        fe.run()
+        return None
+
+    return Frontend(**kw).eval(cmd)

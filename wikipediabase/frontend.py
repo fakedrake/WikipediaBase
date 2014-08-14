@@ -17,7 +17,9 @@ class Frontend(Acquirer):
         super(Frontend, self).__init__(*args, **kwargs)
 
         if 'providers' not in kwargs:
-            self.knowledgebase = knowledgebase or KnowledgeBase(frontend=self)
+            self.knowledgebase = knowledgebase \
+                                 or KnowledgeBase(frontend=self,
+                                                  fetcher=kwargs.get('fetcher'))
 
 
         logging.getLogger("edn_format").setLevel(logging.WARNING)

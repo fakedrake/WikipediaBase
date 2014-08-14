@@ -2,10 +2,9 @@ from itertools import chain
 
 import mysql.connector as mdb
 
-from wikipediabase.fetcher import BaseFetcher
 from wikipediabase.util import time_interval
 
-class DBFetcher(BaseFetcher):
+class DBFetcher(object):
     _default_conn = {
         'user': "csail",
         'passwd': "pass",
@@ -22,26 +21,26 @@ class DBFetcher(BaseFetcher):
         self.db._raw = True
         self.cur = self.db.cursor()
 
-    def _query_one_raw(self, cmd):
-        self.cur.execute(cmd)
+    def _query_one_raw(self, cmd=None):
+        self.cur.execute(self.cmd)
         return self.cur.fetchone()
 
-    def _query_raw_iter(self, cmd, size=None):
-        self.cur.execute(cmd)
+    def _query_raw_iter(self, cmd=None, size=None):
+        self.cur.execute(self.cmd)
         if size is None:
             return iter(self.cur.fetchone, None)
 
         return iter(lambda :self.cur.fetchmany(size), None)
 
-    def _query_raw(self, cmd):
-        self.cur.execute(cmd)
+    def _query_raw(self, cmd=None):
+        self.cur.execute(self.cmd)
         return self.cur.fetchall()
 
-    def _query_single(self, cmd):
-        return self._query_one_raw(cmd)[0]
+    def _query_single(self, cmd=None):
+        return self._query_one_raw(self.cmd)[0]
 
-    def _query_single_list(self, cmd):
-        return (i[0] for i in self._query_raw(cmd))
+    def _query_single_list(self, cmd=None):
+        return (i[0] for i in self._query_raw(self.cmd))
 
     def tables(self):
         return list(self._query_single_list("show tables;"))
@@ -50,31 +49,37 @@ class DBFetcher(BaseFetcher):
         return list(self._query_single_list("show columns from %s;" % table))
 
     def n_categories(self):
-        cmd = "select count(*) from page where page_namespace = 14;"
-        return int(self._query_single(cmd))
+        self.cmd = "select count(*) from page where page_namespace = 14;"
+        return int(self._query_single())
 
     def categories(self):
-        cmd = "select page_id, page_title from page where page_namespace = 14;"
-        return ({'id': id, 'name': title} for id, title
-                in self._query_raw(cmd))
+        self.cmd = "select page_id, page_title from page where page_namespace = 14;"
+        return self._query_raw_iter()
 
     def article_id(self, title):
-        cmd = "select page_id from page where page_title = '%s'" % title
-        return int(self._query_single(cmd))
+        self.cmd = "select page_id from page where page_title = '%s'" % title
+        return int(self._query_single())
 
     def article_title(self, id):
-        cmd = "select page_title from page where page_id = '%s'" % id
-        return self._query_single(cmd)
+        self.cmd = "select page_title from page where page_id = '%s'" % id
+        return self._query_single()
 
-    def all_articles(self, limit=None):
+    def article_ns(self, id):
+        self.cmd = "select page_namespace from page where page_id = '%s'" % id
+        return int(self._query_single())
+
+    def all_articles(self, limit=None, ns=0):
         """
         Get an iterator over of tuples (page_id, page_text)
         """
 
-        cmd = "select rev_page, old_text from revision " \
-              "inner join text on old_id = rev_text_id " \
-              "%s;" % ("limit %d" % limit if limit is not None else "")
-        return self._query_raw_iter(cmd)
+        where = ("where page_namespace=%d" % ns if ns is not None else "")
+        lmt = ("limit %d" % limit if limit is not None else "")
+        self.cmd = "select rev_page, old_text from revision " \
+                   "inner join text on old_id = rev_text_id " \
+                   "inner join page on page_id = old_id " \
+                   "%s %s;" % (where, lmt)
+        return self._query_raw_iter()
 
     # XXX: there is no obvious way to just get the category ids
     # traight from the data base so you might want to do you training
@@ -86,9 +91,22 @@ class DBFetcher(BaseFetcher):
 
         return self._categories(self.article_text(article))
 
-    def all_article_categories(self, limit=None, threads=None):
-        return chain.from_iterable((((id, cat) for cat in self._categories(txt) )
-                                    for id, txt in self.all_articles(limit)))
+    def all_article_categories(self, limit=None, namespace=0):
+        return chain.from_iterable((((id, cat.replace(" ", "_"))
+                                     for cat in self._categories(txt))
+                                    for id, txt in self.all_articles(limit, namespace)))
+
+    def _categories(self, txt):
+        """
+        return the names of the categories.
+        """
+
+        # It is slightly faster like this because we are nto creating
+        # a lambda obj each time.
+        def first_part(s):
+            return s.split(']]', 1)[0].split('|')[0]
+
+        return map(first_part, txt.split("[[Category:")[1:])
 
     def article_text(self, article):
         """
@@ -96,17 +114,17 @@ class DBFetcher(BaseFetcher):
         """
 
         if isinstance(article, str):
-            cmd = "select old_text from page " \
-                  "inner join revision on rev_page = page_id " \
-                  "inner join text on old_id = rev_text_id " \
-                  "where page_title = '%s';" % article
+            self.cmd = "select old_text from page " \
+                       "inner join revision on rev_page = page_id " \
+                       "inner join text on old_id = rev_text_id " \
+                       "where page_title = '%s';" % article
 
         else:                   # Assume it's an id
-            cmd = "select old_text from revision " \
-                  "inner join text on old_id = rev_text_id " \
-                  "where rev_page = '%d';" % article
+            self.cmd = "select old_text from revision " \
+                       "inner join text on old_id = rev_text_id " \
+                       "where rev_page = '%d';" % article
 
-        return self._query_single(cmd)
+        return self._query_single()
 
 
 def get_dbfetcher(new=False, **kw):
@@ -119,20 +137,74 @@ def get_dbfetcher(new=False, **kw):
     get_dbfetcher._fetcher = DBFetcher(**kw)
     return get_dbfetcher(**kw)
 
-
-OUTPUT_SPARSITY = 1000
+OUTPUT_SPARSITY = 100
 def _main():
+    """
+    dbfetcher.py {category_map, category_fix} [in file] [out file]
+
+    Create a category map or fix the names of the catgories replacing
+    spaces with _. Input and output files default to stdin and stdout.
+    """
+
     import sys
-    fetcher = get_dbfetcher()
+    import string
 
-    for counter, (id, cat) in enumerate(fetcher.all_article_categories()):
-        if counter == 0:
-            sys.stderr.write("[ <time interval> ] Start...\n")
+    try:
+        fi = open(sys.argv[2]) if sys.argv[2] != '-' \
+             else sys.stdin
+    except IndexError:
+        fi = sys.stdin
 
-        sys.stdout.write("%s %s\n" % (id, cat))
-        if counter % OUTPUT_SPARSITY == 0:
-            sys.stderr.write("[ %s ] %d categories parsed...\n" % \
-                             (time_interval(), counter))
+    try:
+        fo = open(sys.argv[3], 'w') if sys.argv[2] != '-' \
+             else sys.stdout
+    except IndexError:
+        fo = sys.stdout
+
+    err = sys.stderr
+
+    if sys.argv[1] == "category_map":
+
+        fetcher = get_dbfetcher()
+        gen = fetcher.all_article_categories()
+
+        err.write("SQL: %s\n" % fetcher.cmd)
+        for counter, (id, cat) in enumerate(gen):
+
+            if counter == 0:
+                sys.stderr.write("[ <time interval> ] Start...\n")
+
+            fo.write("%s %s\n" % (id, cat))
+            if counter % OUTPUT_SPARSITY == 0:
+                sys.stderr.write("[ %s ] %d categories parsed...\n" % \
+                                 (time_interval(), counter))
+
+    elif sys.argv[1] == "category_fix":
+        for i, l in enumerate(fi):
+            lstr = l.strip()
+
+            if len(lstr):
+                car, cdr = string.split(lstr, " ", 1)
+                fo.write("%s %s\n" % (car, string.replace(cdr, " ", "_")))
+
+    elif sys.argv[1] == 'dump_categories':
+        fetcher = get_dbfetcher()
+
+        for i, (id, cat) in enumerate(fetcher.categories()):
+            fo.write("%s %s\n" % (id, cat))
+
+            if i == 0:
+                err.write("SQL: %s\n", fetcher.cmd)
+
+            if i % OUTPUT_SPARSITY == 0:
+                err.write("[ %s ] %d categories dumped (current: %s)\n" % \
+                          (time_interval(), i, cat))
+
+    else:
+        sys.stderr.write(_main.__doc__.strip() + "\n")
+
+
+dbf = lambda : get_dbfetcher(new=True)
 
 if __name__ == "__main__":
     _main()

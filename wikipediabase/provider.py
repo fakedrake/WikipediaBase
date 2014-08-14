@@ -4,7 +4,7 @@ from log import Logging
 
 class Acquirer(Logging):
 
-    def __init__(self, providers=None):
+    def __init__(self, providers=None, *arg, **kw):
         self._providers = providers or []
 
     def iter_resources(self):

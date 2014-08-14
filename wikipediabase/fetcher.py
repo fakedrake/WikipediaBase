@@ -127,15 +127,24 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
             self.data = dict()
 
         dkey = "%s;%s" % (symbol, get)
-        if dkey in self.data:
-            return self.data[dkey]
+        ret = None
 
-        if not self.offline:
+        if dkey in self.data:
+            ret = self.data[dkey]
+
+
+        if not self.offline and not ret:
             pg = super(CachingSiteFetcher, self).download(symbol, get=get)
             if pg:
                 self.data[dkey] = pg
                 json.dump(self.data, open(self._fname, "w"))
-                return pg
+                ret = pg
+
+        if ret is not None:
+            if isinstance(ret, unicode):
+                return ret
+            else:
+                return ret.decode('utf-8')
 
         raise LookupError("Failed to find page '%s' (%s online)." %
                           (symbol, "didnt look" if self.offline else "looked"))

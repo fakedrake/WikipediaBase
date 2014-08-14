@@ -55,9 +55,9 @@ class TestResolvers(unittest.TestCase):
 
     def test_random_attributes(self):
         self.fe.knowledgebase.resolvers.reverse()
-        self.assertEqual(self.fe.eval("(get \"Batman\" (:code \"word-count\"))"), '(68159)')
+        self.assertEqual(self.fe.eval("(get \"Batman\" (:code \"word-count\"))"), '(68352)')
 
-        self.assertEqual(self.fe.eval("(get \"Batman\" \"word-count\")"), '(68159)')
+        self.assertEqual(self.fe.eval("(get \"Batman\" \"word-count\")"), '(68352)')
         self.fe.knowledgebase.resolvers.reverse()
 
 
