@@ -47,7 +47,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         """
         Get the source from an html soup of the edit page.
         """
-        tag = "".join(soup.find(".//*[@id='wpTextbox1']").itertext())
+        tag = u"".join(soup.find(".//*[@id='wpTextbox1']").itertext())
 
         return tag
 
@@ -82,7 +82,7 @@ class WikipediaSiteFetcher(BaseFetcher):
 
 
         try:
-            src = self.get_wikisource(soup).encode("utf-8", "ignore")
+            src = self.get_wikisource(soup)
         except IndexError:
             raise ValueError("Got invalid source page for article '%s'." %
                               symbol)
