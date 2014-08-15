@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 try:
-    from urllib2 import urlopen
+    from urllib2 import urlopen, HTTPError
 except:
-    from urllib import urlopen
+    from urllib import urlopen, HTTPError
 
 from urllib import urlencode
 import re
@@ -68,8 +68,10 @@ class WikipediaSiteFetcher(BaseFetcher):
 
         url = "%s/%s?%s" % (self.url, self.base,
                             urlencode(get))
-        self.log().info("Fetching url: " + url)
-        return urlopen(url).read()
+        try:
+            return urlopen(url).read()
+        except HTTPError:
+            raise LookupError("404 - Not found: " + url)
 
     def source(self, symbol, get_request=dict(action="edit"), redirect=True):
         """

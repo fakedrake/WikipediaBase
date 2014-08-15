@@ -1,13 +1,15 @@
+import string
 import re
 import lxml.etree as ET
+from collections import defaultdict
 
 from .util import totext, tostring, fromstring
 from .log import Logging
 from .article import Article
 from .fetcher import WIKIBASE_FETCHER
+from .infobox_tree import ibx_type_superclasses
 
 INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
-
 
 class Infobox(Logging):
     """
@@ -28,40 +30,51 @@ class Infobox(Logging):
     def __nonzero__(self):
         return bool(self.fetcher.download(self.title))
 
-    def _to_start_type(self, ibx, do_it=True):
-        """
-        Turn an infobox into a strart type. If do_it is False then just
-        return ibx. This is for convenience.
-        """
+    @staticmethod
+    def __tt(tmpl):
+        return "wikipedia-" + \
+            tmpl.lower().replace(" ", "-").replace("_", "-").replace("template:infobox-","")
 
-        if not do_it:
-            return ibx
-
-        ret = ibx.lower().replace("template:", "")
-        return ret.replace(" ","-").replace("infobox", "wikipedia")
-
-    def types(self, extend=True, to_start=True):
+    def types(self, extend=True):
         """
         The infobox type. Extend means search inn other places except here
         (ie find equivalent ones, parent ones etc)
         to_start will make the types into start classes.
         """
 
-        ret = set()
+        types = []
         ibox_source = self.markup_source()
         if ibox_source:
+            # XXX: includ taxoboes
             for m in re.finditer(r'{{\s*(?P<type>[Ii]nfobox\s+[\w ]*)',
                                  ibox_source):
                 # The direct ibox
-                primary = m.group('type')
-                ret.add(self._to_start_type(primary, to_start))
+                dominant = "Template:" + m.group('type')
+                types.append(dominant)
 
                 if extend:
-                    # The ibox redirect
-                    title = Article("Template:"+primary, self.fetcher).title()
-                    ret.add(self._to_start_type(title, to_start))
+                    title = Article(dominant,
+                                    self.fetcher).title()
+                    if self.__tt(dominant) != self.__tt(title):
+                        types.append(title)
 
-        return ret
+        return types
+
+    def start_types(self):
+        types = self.types(extend=True)
+        ret = types[:]
+
+        if not hasattr(self, "_sc"):
+            self._sc = ibx_type_superclasses()
+
+        for t in types:
+            try:
+                # In case of redirections this may fail
+                ret.extend(self._sc[t.replace("Template:Infobox ", "")])
+            except KeyError:
+                pass
+
+        return map(self.__tt, ret)
 
 
     def get(self, key, source=None):
@@ -84,9 +97,10 @@ class Infobox(Logging):
 
         # Then look into the markup
         markup_key = key.lower().replace(u"-", u"_")
-        ret = u"\n".join([v.decode('utf-8') for k, v in self.markup_parsed_iter()
-                         if re.sub(r"[0-9]+$", "",
-                                   k.replace("-", "_"),) == markup_key])
+        ret = u"\n".join([v for k, v in self.markup_parsed_iter()
+                          if re.sub(ur"[0-9]+$", "",
+                                    k.replace("-", "_"),) == markup_key])
+
 
         return ret or None
 
@@ -100,9 +114,8 @@ class Infobox(Logging):
         if ret is not False:
             return ret
 
-        for t in self.types(extend=False, to_start=False):
-
-            tibox = Infobox("Template:"+t)
+        for t in self.types(extend=False):
+            tibox = Infobox(t)
             for k,v in tibox.html_parsed():
                 if v == '{{{%s}}}' % mkey or v == mkey + " text":
                     self._rendered_keys[mkey] = k

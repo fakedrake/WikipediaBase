@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+ #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -40,11 +40,11 @@ class TestInfobox(unittest.TestCase):
         self.assertEqual(self.ibox.get("origin"), "London, England")
 
     def test_types(self):
-        self.assertEqual(self.ibox.types(), {'wikipedia-musical-artist'})
+        self.assertEqual(self.ibox.start_types(), ['wikipedia-musical-artist'])
 
     def test_types_redirect(self):
         clinton = Infobox("Bill Clinton", self.fetcher)
-        self.assertIn('wikipedia-president', clinton.types())
+        self.assertIn('wikipedia-president', clinton.start_types())
 
     def test_html_keys(self):
         bbc = Infobox("BBC News", self.fetcher)
