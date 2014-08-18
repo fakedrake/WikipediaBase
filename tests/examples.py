@@ -134,6 +134,8 @@ DEGENERATE_EXAMPLES = [
     # tests for 'get' -- special attributes
     # =====================================
 
+    ('(get "wikipedia-term" "Bill Clinton" (:code "IMAGE-DATA"))',
+     '((0 "Bill_Clinton.jpg"'),
     ('(get "wikipedia-term" "Sium sisarum" (:code "IMAGE-DATA")',
      '((0 "illustration_Sium_sisarum0.jpg" "<i>Sium sisarum</i>"))'),
     ('(get "wikipedia-term" "Yuri I. Manin" (:CODE "IMAGE-DATA")',
@@ -319,11 +321,8 @@ WIKI_EXAMPLES_RX = [
      r'Russian literature'),
     ('(get "wikipedia-term" "North America" "SHORT-ARTICLE")',
      r'It is bordered to the north'),
-    ('(get "wikipedia-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))'
+    ('(get "wikipedia-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))',
      r'influence of mothers in society'),
-
-    ('(get "wikipedia-term" "Bill Clinton" (:code "IMAGE-DATA")',
-     '((0 "Bill_Clinton.jpg"'),
 ]
 
 WIKI_EXAMPLES_NOT_RX =[

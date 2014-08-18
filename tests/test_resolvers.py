@@ -74,6 +74,12 @@ class TestResolvers(unittest.TestCase):
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES):
             self.assertEqual(ans, rx, msg=msg)
 
+    def test_strageness(self):
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
+
+        for ans, rx, msg in self._ans_match(DEGENERATE_EXAMPLES):
+            self.assertEqual(ans, rx, msg=msg)
+
     def test_compat_not(self):
         self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
 

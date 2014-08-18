@@ -70,7 +70,7 @@ class WikipediaSiteFetcher(BaseFetcher):
                             urlencode(get))
         try:
             return urlopen(url).read()
-        except HTTPError:
+        except HTTPErrort:
             raise LookupError("404 - Not found: " + url)
 
     def source(self, symbol, get_request=dict(action="edit"), redirect=True):

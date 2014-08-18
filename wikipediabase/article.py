@@ -68,7 +68,8 @@ class Article(Logging):
         Generate paragraphs.
         """
 
-        return ["".join(p.itertext()) for p in self._soup().findall(".//*[@id='mw-content-text']/p")
+        return ["".join(p.itertext()) for p in
+                self._soup().findall(".//*[@id='mw-content-text']/p")
                 if "".join(p.itertext())]
 
     def headings(self):

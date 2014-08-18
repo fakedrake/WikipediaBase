@@ -32,7 +32,7 @@ def first_paren(text):
         return text[s:e]
 
 
-class LifespanPragraphResolver(BaseResolver):
+class LifespanParagraphResolver(BaseResolver):
     """
     Resolve paragraph related stuff.
     """
@@ -41,7 +41,7 @@ class LifespanPragraphResolver(BaseResolver):
 
     def __init__(self, *args, **kwargs):
 
-        super(LifespanPragraphResolver, self).__init__(*args, **kwargs)
+        super(LifespanParagraphResolver, self).__init__(*args, **kwargs)
 
     def resolve(self, article, attribute, **kw):
         """
@@ -52,6 +52,9 @@ class LifespanPragraphResolver(BaseResolver):
             attr = attribute.val.lower()
         else:
             attr = attribute.lower()
+
+        if attr == 'short-article':
+            return get_article(article).paragraphs()[0]
 
         if attr not in ("birth-date", "death-date"):
             return None
@@ -68,3 +71,7 @@ class LifespanPragraphResolver(BaseResolver):
                     return enchant('yyyymmdd' , ovl[0])
                 elif attr == 'death-date':
                     return enchant('yyyymmdd' , ovl[1])
+
+            if attr == 'birth-date':
+                for ovl in overlay_parse.dates.just_dates(paren):
+                    return enchant('yyyymmdd', ovl)

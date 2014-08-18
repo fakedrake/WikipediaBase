@@ -1,3 +1,7 @@
+import sys
+import threading
+import datetime
+
 from itertools import chain
 
 import mysql.connector as mdb
@@ -10,15 +14,21 @@ class DBFetcher(object):
         'passwd': "pass",
         'port': 3307,
         'db': "bitnami_mediawiki",
-        'host': 'futuna.csail.mit.edu',
+        'host': 'ashmore.csail.mit.edu',
     }
+    msg = "<No message emited>"
+
+    def message(self, msg):
+        self.msg = "[ %s ] %s" % (datetime.datetime.now(), msg)
 
     def __init__(self, **kw):
         self._setup(**kw)
 
     def _setup(self, **kw):
-        self.db = mdb.connect(**dict(self._default_conn, **kw))
+        self.db = mdb.MySQLConnection()
         self.db._raw = True
+        self.db._connection_timeout = 30
+        self.db.connect(**dict(self._default_conn, **kw))
         self.cur = self.db.cursor()
 
     def _query_one_raw(self, cmd=None):
@@ -27,10 +37,16 @@ class DBFetcher(object):
 
     def _query_raw_iter(self, cmd=None, size=None):
         self.cur.execute(self.cmd)
-        if size is None:
-            return iter(self.cur.fetchone, None)
 
-        return iter(lambda :self.cur.fetchmany(size), None)
+        if size is None:
+            ret = iter(self.cur.fetchone, None)
+        else:
+            ret = iter(lambda :self.cur.fetchmany(size), None)
+
+        for i in ret:
+            self.message("Just got %s\n" % i[0])
+            yield i
+            self.message("Getting after %s\n" % i[0])
 
     def _query_raw(self, cmd=None):
         self.cur.execute(self.cmd)
@@ -89,9 +105,16 @@ class DBFetcher(object):
         Find in the article text [[Category:.*]]
         """
 
-        return self._categories(self.article_text(article))
+        self.message("Parsing: %s" % article)
+        ret = self._categories(self.article_text(article))
+        self.message("Finished: %s" % article)
+        return ret
 
     def all_article_categories(self, limit=None, namespace=0):
+        """
+        Stream (article_id, category) tuples.
+        """
+
         return chain.from_iterable((((id, cat.replace(" ", "_"))
                                      for cat in self._categories(txt))
                                     for id, txt in self.all_articles(limit, namespace)))
@@ -144,9 +167,14 @@ def _main():
 
     Create a category map or fix the names of the catgories replacing
     spaces with _. Input and output files default to stdin and stdout.
-    """
 
-    import sys
+    Note that there are about 1M categories and 11M (namespace 0)
+    articles.
+
+    Examples:
+
+    dbfetcher.py category_map > category-map.txt
+    """
     import string
 
     try:
@@ -206,5 +234,35 @@ def _main():
 
 dbf = lambda : get_dbfetcher(new=True)
 
+
+def monitor(timeout=10, dbf=None, fd=None, conf=None):
+    event = threading.Event()
+    fd = fd or sys.stderr
+    dbf = dbf or get_dbfetcher(new=False)
+    conf = dict(event=event, timeout=timeout, dbf=dbf, fd=fd)
+    fd.write("Starting monitor at timeout %d\n" % timeout)
+    def callback():
+        while not conf['event'].is_set():
+            conf['fd'].write("Monitor: %s\n" % conf['dbf'].msg)
+            sys.stdout.flush()
+            event.wait(conf['timeout'])
+
+    conf['thread'] = threading.Thread(target=callback)
+    conf['thread'].start()
+
+    return conf
+
+def exit_thread(conf):
+    cnf['event'].set()
+    sys.stderr.write("Waiting for thread to yield...")
+    cnf['thread'].join()
+    sys.stderr.write("OK\n")
+
+
 if __name__ == "__main__":
-    _main()
+
+    cnf = monitor(timeout=60)
+    try:
+        _main()
+    except:
+        exit_thread(cnf)
