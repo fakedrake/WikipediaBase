@@ -38,6 +38,9 @@ century,[4] and possibly even in the 12th century (Heian or early
 Kamakura era).[5][6]"""
 
 DISABLE_ALL_EXCEPT_JUST = False
+class All(object):
+    def __contains__(self, _):
+        return True
 
 class TestResolvers(unittest.TestCase):
 
