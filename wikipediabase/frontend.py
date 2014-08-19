@@ -53,16 +53,21 @@ class Frontend(Acquirer):
         return ret
 
     def eval(self, string):
-        ls = loads(string)
+        try:
+            ls = loads(string)
+        except SyntaxError, e:
+            return '(error "%s")' % e.msg
 
         return unicode(self._eval(ls))
 
 
 class TelnetFrontend(Frontend):
 
+    def eval(self, *args, **kw):
+        return super(TelnetFrontend, self).eval(*args, **kwargs) + "\n"
+
     def __init__(self, *args, **kwargs):
-        self.srv = TelnetServer(answer = lambda msg:
-                                str(self.eval(msg))+"\n",
+        self.srv = TelnetServer(answer = self.eval,
                                 safeword="quit")
 
         super(TelnetFrontend, self).__init__(*args, **kwargs)
