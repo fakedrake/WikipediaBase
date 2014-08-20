@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from common import TEST_FETCHER_SETUP
+from .common import TEST_FETCHER_SETUP
 
 from wikipediabase import fetcher
 
