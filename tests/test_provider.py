@@ -23,11 +23,13 @@ class TestProvider(unittest.TestCase):
         self.aq = Acquirer()
         self.double = lambda x: 2 * x
         self.prov = Provider(
-            resources={"string": "Just a string", "func": self.double}, acquirer=self.aq)
+            resources={"string": "Just a string", "func": self.double},
+            acquirer=self.aq)
 
     def test_provision(self):
         self.assertEqual(
-            self.aq.resources(), {"string": "Just a string", "func": self.double})
+            self.aq.resources(),
+            {"string": "Just a string", "func": self.double})
 
     def tearDown(self):
         pass

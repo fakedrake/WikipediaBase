@@ -77,12 +77,16 @@ class WikipediaSiteFetcher(BaseFetcher):
                             urlencode(get))
         return urlopen(url)
 
-    def source(self, symbol, get_request=dict(action="edit"), redirect=True):
+    def source(self, symbol, get_request=None, redirect=True):
         """
         Get the full wiki markup of the symbol.
         """
 
-        # <textarea tabindex="1" accesskey="," id="wpTextbox1" cols="80" rows="25" style="" lang="en" dir="ltr" name="wpTextbox1">
+        # Edit tag:
+        # <textarea tabindex="1" accesskey="," id="wpTextbox1"
+        # cols="80" rows="25" style="" lang="en" dir="ltr"
+        # name="wpTextbox1">
+        get_request = get_request or dict(action="edit")
         html = self.download(symbol=symbol, get=get_request)
         soup = fromstring(html)
 

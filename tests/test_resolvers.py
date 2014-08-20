@@ -117,7 +117,8 @@ class TestResolvers(unittest.TestCase):
         query = "I (Joe (sir) doe) am here (an0other paren here) and text"
         self.assertEqual(first_paren(query), "Joe (sir) doe")
 
-        txt = "Hello (dr. hello 2000-2012) I like bananas. Of couse i do (they are the begist)"
+        txt = "Hello (dr. hello 2000-2012) I like bananas." \
+              "Of couse i do (they are the begist)"
         # First paren will stop at the first sentence.
         txt_none = "Hello. My name is Bond (James Bond)"
         self.assertEqual(first_paren(txt), "dr. hello 2000-2012")

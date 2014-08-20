@@ -12,6 +12,7 @@ import sys
 
 from wikipediabase.fetcher import WikipediaSiteFetcher as Fetcher
 
+
 def main(argv):
     f = Fetcher()
 
@@ -22,12 +23,9 @@ def main(argv):
     src = f.source(argv[1])
 
     print "Writing source in %s.wiki..." % fname
-    open(fname+".wiki", "w").write(src)
+    open(fname + ".wiki", "w").write(src)
     print "Writing html in %s.html..." % fname
-    open(fname+".html", "w").write(html)
-
-    import ipdb; ipdb.set_trace()
-
+    open(fname + ".html", "w").write(html)
 
 if __name__ == '__main__':
     main(sys.argv)

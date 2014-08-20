@@ -7,7 +7,7 @@ import select
 import threading
 import time
 
-from log import Logging
+from .log import Logging
 
 
 class TelnetServer(Logging):
@@ -16,7 +16,8 @@ class TelnetServer(Logging):
     The telnet server.
     """
 
-    def __init__(self, answer=None, ip="0.0.0.0", port=1984, channel=10, safeword=None):
+    def __init__(self, answer=None, ip="0.0.0.0", port=1984,
+                 channel=10, safeword=None):
         """
         Safeword is sent and stiops the server.
         """

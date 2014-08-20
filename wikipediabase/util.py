@@ -77,7 +77,7 @@ def _get_context(symbol, domain, cls, fetcher=None):
     if isinstance(symbol, cls):
         return symbol
 
-    if not domain in _CONTEXT:
+    if domain not in _CONTEXT:
         _CONTEXT[domain] = dict()
 
     ret = _CONTEXT[domain].get(symbol, None)

@@ -246,7 +246,8 @@ class EnchantedStringDict(Enchanted):
             pairs = reversed(self.val.items())
 
         # XXX: NastyHack(TM). Replace the nonbreaking space with a space.
-        return '(%s)' % " ".join([kv_pair(k, "\"" + v.replace(unichr(160), " ") + "\"")
+        return '(%s)' % " ".join([kv_pair(k, '"%s"' %
+                                          v.replace(unichr(160), " "))
                                   for k, v in pairs
                                   if v is not None])
 

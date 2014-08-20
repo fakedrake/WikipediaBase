@@ -91,7 +91,8 @@ class DBFetcher(object):
         return int(self._query_single())
 
     def categories(self):
-        self.cmd = "select page_id, page_title from page where page_namespace = 14;"
+        self.cmd = "select page_id, page_title from page where \
+        page_namespace = 14;"
         return self._query_raw_iter()
 
     def article_id(self, title):
@@ -137,9 +138,10 @@ class DBFetcher(object):
         Stream (article_id, category) tuples.
         """
 
-        return chain.from_iterable((((id, cat.replace(" ", "_"))
-                                     for cat in self._categories(txt))
-                                    for id, txt in self.all_articles(limit, namespace)))
+        id_cat = (((id, cat.replace(" ", "_"))
+                   for cat in self._categories(txt))
+                  for id, txt in self.all_articles(limit, namespace))
+        return chain.from_iterable(id_cat)
 
     def _categories(self, txt):
         """
@@ -203,14 +205,12 @@ def _main():
     import string
 
     try:
-        fi = open(sys.argv[2]) if sys.argv[2] != '-' \
-            else sys.stdin
+        fi = open(sys.argv[2]) if sys.argv[2] != '-' else sys.stdin
     except IndexError:
         fi = sys.stdin
 
     try:
-        fo = open(sys.argv[3], 'w') if sys.argv[2] != '-' \
-            else sys.stdout
+        fo = open(sys.argv[3], 'w') if sys.argv[2] != '-' else sys.stdout
     except IndexError:
         fo = sys.stdout
 

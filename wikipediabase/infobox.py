@@ -9,7 +9,8 @@ from .article import Article
 from .fetcher import WIKIBASE_FETCHER
 from .infobox_tree import ibx_type_superclasses
 
-INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
+INFOBOX_ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_]*)\s*=" \
+                          "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
 
 
 class Infobox(Logging):
@@ -18,6 +19,10 @@ class Infobox(Logging):
     The interface with attributes accepts and provides attributes with
     - instead of _.
     """
+
+    # Various names under which you may find an infobox
+    infobox_tags = ["infobox", "Infobox"]
+
 
     def __init__(self, title, fetcher=WIKIBASE_FETCHER):
         """
@@ -130,7 +135,7 @@ class Infobox(Logging):
         """
 
         mu = self.markup_source()
-        for m in re.finditer(INFOBOX_ATTRIBUTE_REGEX % "(?P<key>[a-z\-_]*)", mu,
+        for m in re.finditer(INFOBOX_ATTRIBUTE_REGEX, mu,
                              flags=re.IGNORECASE | re.DOTALL):
             key = m.group("key").replace("_", "-").lower()
             val = m.group("val")
@@ -178,7 +183,8 @@ class Infobox(Logging):
             if not val:
                 return ""
 
-            return re.sub(r"<\s*(/?\s*(br\s*/?|/?ul|/?li))\s*>", "&lt;\\1&gt;", val)
+            return re.sub(
+                r"<\s*(/?\s*(br\s*/?|/?ul|/?li))\s*>", "&lt;\\1&gt;", val)
 
         def unescape_lists(val):
             if not val:
@@ -219,7 +225,8 @@ class Infobox(Logging):
         braces = 0
         rngs = []
 
-        for m in re.finditer("((?P<open>{{)\s*(?P<ibox>\w*)|(?P<close>}}))", txt):
+        for m in re.finditer("((?P<open>{{)\s*(?P<ibox>\w*)|(?P<close>}}))",
+                             txt):
 
             if m.group('open'):
                 # If we are counting just continue
@@ -229,7 +236,7 @@ class Infobox(Logging):
 
                 # If we are not counting we better start and mark our
                 # position
-                if m.group('ibox') in ["infobox", "Infobox"]:
+                if m.group('ibox') in self.infobox_tags:
                     braces = 1
                     ibs = m.start('open')
 
