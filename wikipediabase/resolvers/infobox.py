@@ -3,12 +3,15 @@ from ..util import get_infobox
 from ..enchantments import enchant, Enchanted
 from ..fetcher import WIKIBASE_FETCHER
 
+
 class InfoboxResolver(BaseResolver):
+
     """
     Use this to resolve based on the resolver.
     """
 
     priority = 10
+
     def __init__(self, *args, **kwargs):
         """
         Provide a way to fetch articles. If no fetcher is provider
@@ -44,8 +47,8 @@ class InfoboxResolver(BaseResolver):
                 return enchant(key, ret, result_from=attr,
                                log=self.log())
 
-            self.log().warning("Could nont find infobox attribute '%s'" \
+            self.log().warning("Could nont find infobox attribute '%s'"
                                % attr)
         else:
-            self.log().warning("Could nont find infobox for article '%s'" \
+            self.log().warning("Could nont find infobox for article '%s'"
                                % article)

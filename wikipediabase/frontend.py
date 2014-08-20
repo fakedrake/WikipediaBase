@@ -18,12 +18,10 @@ class Frontend(Acquirer):
 
         if 'providers' not in kwargs:
             self.knowledgebase = knowledgebase \
-                                 or KnowledgeBase(frontend=self,
-                                                  fetcher=kwargs.get('fetcher'))
-
+                or KnowledgeBase(frontend=self,
+                                 fetcher=kwargs.get('fetcher'))
 
         logging.getLogger("edn_format").setLevel(logging.WARNING)
-
 
     def get_callable(self, symbol):
         """
@@ -37,9 +35,8 @@ class Frontend(Acquirer):
         if isinstance(symbol, Keyword):
             return lambda *args: enchant(symbol._name, *args)
 
-        raise TypeError("Could not resolve function %s (type %s)." \
+        raise TypeError("Could not resolve function %s (type %s)."
                         % (symbol, str(type(symbol))))
-
 
     def _eval(self, ls):
         # Are we facing a standalone literal
@@ -67,7 +64,7 @@ class TelnetFrontend(Frontend):
         return super(TelnetFrontend, self).eval(*args, **kwargs) + "\n"
 
     def __init__(self, *args, **kwargs):
-        self.srv = TelnetServer(answer = self.eval,
+        self.srv = TelnetServer(answer=self.eval,
                                 safeword="quit")
 
         super(TelnetFrontend, self).__init__(*args, **kwargs)

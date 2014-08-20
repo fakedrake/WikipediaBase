@@ -19,8 +19,8 @@ from wikipediabase.knowledgebase import KnowledgeBase
 from wikipediabase.provider import Acquirer, Provider
 
 CLINTON_ATTRS = \
-re.sub("\s+", " ",
-       """(:code "NAME") (:code "IMAGE") (:code "ORDER") (:code "OFFICE")
+    re.sub("\s+", " ",
+           """(:code "NAME") (:code "IMAGE") (:code "ORDER") (:code "OFFICE")
 (:code "VICEPRESIDENT") (:code "TERM-START") (:code "TERM-END") (:code
 "PREDECESSOR") (:code "SUCCESSOR") (:code "BIRTH-NAME") (:code
 "BIRTH-DATE") (:code "BIRTH-PLACE") (:code "DEATH-DATE") (:code
@@ -38,6 +38,7 @@ def _as(atrrs_string):
 
 
 class TestKnowledgebase(unittest.TestCase):
+
     def setUp(self):
         self.fe = Acquirer()     # A dumb frontend
         self.kb = KnowledgeBase(frontend=self.fe)
@@ -51,7 +52,8 @@ class TestKnowledgebase(unittest.TestCase):
                                                             "Bill Clinton"))
 
     def test_attributes_format(self):
-        result_attrs = _as(self.fe.resources()['get-attributes']("Bill Clinton"))
+        result_attrs = _as(
+            self.fe.resources()['get-attributes']("Bill Clinton"))
 
         for a in _as(CLINTON_ATTRS):
             self.assertIn(a, result_attrs)
@@ -59,7 +61,6 @@ class TestKnowledgebase(unittest.TestCase):
     def test_classes(self):
         self.assertIn("wikipedia-president",
                       str(self.fe.resources()['get-classes']("Bill Clinton")))
-
 
     def tearDown(self):
         pass

@@ -1,4 +1,4 @@
- #!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -17,6 +17,7 @@ from common import TEST_FETCHER_SETUP
 
 from wikipediabase.infobox import Infobox
 from wikipediabase import fetcher
+
 
 class TestInfobox(unittest.TestCase):
 

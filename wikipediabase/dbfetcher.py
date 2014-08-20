@@ -8,6 +8,7 @@ import mysql.connector as mdb
 
 from wikipediabase.util import time_interval
 
+
 class DBFetcher(object):
     _default_conn = {
         'user': "csail",
@@ -52,7 +53,7 @@ class DBFetcher(object):
                 if size is None:
                     ret = iter(self.cur.fetchone, None)
                 else:
-                    ret = iter(lambda :self.cur.fetchmany(size), None)
+                    ret = iter(lambda: self.cur.fetchmany(size), None)
 
                 for i in ret:
                     self.message("Just got %s\n" % i[0])
@@ -62,7 +63,8 @@ class DBFetcher(object):
             except mdb.errors.OperationalError:
                 retries -= 1
                 sys.stderr.write("Connection timed out. Retrying...\n")
-                import pdb; pdb.set_trace()
+                import pdb
+                pdb.set_trace()
 
                 self._setup
             else:
@@ -182,6 +184,8 @@ def get_dbfetcher(new=False, **kw):
     return get_dbfetcher(**kw)
 
 OUTPUT_SPARSITY = 100
+
+
 def _main():
     """
     dbfetcher.py {category_map, category_fix} [in file] [out file]
@@ -200,13 +204,13 @@ def _main():
 
     try:
         fi = open(sys.argv[2]) if sys.argv[2] != '-' \
-             else sys.stdin
+            else sys.stdin
     except IndexError:
         fi = sys.stdin
 
     try:
         fo = open(sys.argv[3], 'w') if sys.argv[2] != '-' \
-             else sys.stdout
+            else sys.stdout
     except IndexError:
         fo = sys.stdout
 
@@ -225,7 +229,7 @@ def _main():
 
             fo.write("%s %s\n" % (id, cat))
             if counter % OUTPUT_SPARSITY == 0:
-                sys.stderr.write("[ %s ] %d categories parsed...\n" % \
+                sys.stderr.write("[ %s ] %d categories parsed...\n" %
                                  (time_interval(), counter))
 
     elif sys.argv[1] == "category_fix":
@@ -246,14 +250,14 @@ def _main():
                 err.write("SQL: %s\n", fetcher.cmd)
 
             if i % OUTPUT_SPARSITY == 0:
-                err.write("[ %s ] %d categories dumped (current: %s)\n" % \
+                err.write("[ %s ] %d categories dumped (current: %s)\n" %
                           (time_interval(), i, cat))
 
     else:
         sys.stderr.write(_main.__doc__.strip() + "\n")
 
 
-dbf = lambda : get_dbfetcher(new=True)
+dbf = lambda: get_dbfetcher(new=True)
 
 
 def monitor(timeout=10, dbf=None, fd=None, conf=None):
@@ -262,6 +266,7 @@ def monitor(timeout=10, dbf=None, fd=None, conf=None):
     dbf = dbf or get_dbfetcher(new=False)
     conf = dict(event=event, timeout=timeout, dbf=dbf, fd=fd)
     fd.write("Starting monitor at timeout %d\n" % timeout)
+
     def callback():
         while not conf['event'].is_set():
             conf['fd'].write("Monitor: %s\n" % conf['dbf'].msg)
@@ -272,6 +277,7 @@ def monitor(timeout=10, dbf=None, fd=None, conf=None):
     conf['thread'].start()
 
     return conf
+
 
 def exit_thread(conf):
     cnf['event'].set()

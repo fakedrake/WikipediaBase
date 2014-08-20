@@ -18,11 +18,11 @@ from .common import get_fetcher
 from wikipediabase import wikipediabase
 from wikipediabase.frontend import Frontend
 
+
 class TestParagraph(unittest.TestCase):
 
     def setUp(self):
         pass
-
 
     def test_first_paren(self):
         self.assertEqual(wikipediabase('(get "Mary Shakespeare" "birth-date")',

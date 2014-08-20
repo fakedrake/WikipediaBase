@@ -20,6 +20,7 @@ from wikipediabase import util
 from wikipediabase.infobox import Infobox
 from wikipediabase.article import Article
 
+
 class TestUtil(unittest.TestCase):
 
     def setUp(self):
@@ -46,7 +47,7 @@ class TestUtil(unittest.TestCase):
         datetime.datetime = DateTime
 
         util.time_interval("now")
-        for i in  xrange(20):
+        for i in xrange(20):
             # Increment time between calls
             DateTime.x += 1
             self.assertEqual(util.time_interval("now"), 1)

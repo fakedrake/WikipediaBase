@@ -10,8 +10,10 @@ MW_HEADING_RX = map(re.compile, [
     ur"\s*====([\w\s]+)====",
     ur"\* \[\[Template:Infobox ([\w\s]*)\]\]",
     ur"\*\* \[\[Template:Infobox ([\w\s]*)\]\]",
-    ur"\*\*\* \[\[Template:Infobox ([\w\s]*)\]\]", # Not there but just in case
+    # Not there but just in case
+    ur"\*\*\* \[\[Template:Infobox ([\w\s]*)\]\]",
 ])
+
 
 def ibx_tree(src, prefix=None, form=None):
     """
@@ -25,7 +27,7 @@ def ibx_tree(src, prefix=None, form=None):
     You also have the chance to change the form of the category
     """
 
-    stack = (prefix or []) +  ([None]  * len(MW_HEADING_RX))
+    stack = (prefix or []) + ([None] * len(MW_HEADING_RX))
     queue = []
     offset = len(prefix or [])
 
@@ -38,7 +40,7 @@ def ibx_tree(src, prefix=None, form=None):
                     it = form(m.group(1), l)
                 else:
                     it = m.group(1)
-                for i,_ in enumerate(stack[d:], d):
+                for i, _ in enumerate(stack[d:], d):
                     stack[i] = None
 
                 stack[d] = it
@@ -59,7 +61,7 @@ def ibx_type_tree(fetcher=None, form=None):
         fetcher = WIKIBASE_FETCHER
 
     src = fetcher.source("Wikipedia:List_of_infoboxes")
-    titles = map(lambda x: x.split("}}",1)[0],
+    titles = map(lambda x: x.split("}}", 1)[0],
                  src.split(u"{{Wikipedia:List of infoboxes/")[1:])
     symbols = (u"Wikipedia:List_of_infoboxes/" + i
                for i in titles)

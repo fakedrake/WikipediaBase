@@ -11,6 +11,7 @@ from .classifiers import WIKIBASE_CLASSIFIERS
 
 import re
 
+
 class KnowledgeBase(Provider):
 
     def __init__(self, *args, **kw):
@@ -29,7 +30,7 @@ class KnowledgeBase(Provider):
         if self.frontend:
             self.provide_to(self.frontend)
 
-        self.fetcher =  kw.get('fetcher', WIKIBASE_FETCHER)
+        self.fetcher = kw.get('fetcher', WIKIBASE_FETCHER)
         self.resolvers = kw.get('resolvers', WIKIBASE_RESOLVERS)
         self.classifiers = kw.get('classifiers', WIKIBASE_CLASSIFIERS)
 
@@ -40,7 +41,6 @@ class KnowledgeBase(Provider):
         in the question which would be v2 if all 3 args are present is
         obsolete.
         """
-
 
         if v3 is not None:
             article, attr = v2, v3
@@ -73,7 +73,8 @@ class KnowledgeBase(Provider):
         Get a symbol classes.
         """
 
-        it = chain.from_iterable((c.classify(symbol) for c in self.classifiers))
+        it = chain.from_iterable((c.classify(symbol)
+                                  for c in self.classifiers))
 
         return enchant(None, it)
 
@@ -94,7 +95,7 @@ class KnowledgeBase(Provider):
         ibox = Infobox(symbol, self.fetcher)
 
         ret = []
-        for k,v in ibox.markup_parsed_iter():
+        for k, v in ibox.markup_parsed_iter():
             tmp = enchant(None, dict(code=k.upper(),
                                      rendered=ibox.rendered_key(k)))
 

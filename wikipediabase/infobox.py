@@ -11,7 +11,9 @@ from .infobox_tree import ibx_type_superclasses
 
 INFOBOX_ATTRIBUTE_REGEX = r"\|\s*%s\s*=[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
 
+
 class Infobox(Logging):
+
     """
     The interface with attributes accepts and provides attributes with
     - instead of _.
@@ -33,7 +35,8 @@ class Infobox(Logging):
     @staticmethod
     def __tt(tmpl):
         return "wikipedia-" + \
-            tmpl.lower().replace(" ", "-").replace("_", "-").replace("template:infobox-","")
+            tmpl.lower().replace(
+                " ", "-").replace("_", "-").replace("template:infobox-", "")
 
     def types(self, extend=True):
         """
@@ -76,7 +79,6 @@ class Infobox(Logging):
 
         return map(self.__tt, ret)
 
-
     def get(self, key, source=None):
         """
         Get a specific infobox field. SOURCE tells us where to look. If it
@@ -101,7 +103,6 @@ class Infobox(Logging):
                           if re.sub(ur"[0-9]+$", "",
                                     k.replace("-", "_"),) == markup_key])
 
-
         return ret or None
 
     def rendered_key(self, mkey):
@@ -109,14 +110,14 @@ class Infobox(Logging):
         Get the corresponding rendered key to the markup key if you can.
         """
 
-        mkey = mkey.lower().replace("-","_")
+        mkey = mkey.lower().replace("-", "_")
         ret = self._rendered_keys.get(mkey, False)
         if ret is not False:
             return ret
 
         for t in self.types(extend=False):
             tibox = Infobox(t)
-            for k,v in tibox.html_parsed():
+            for k, v in tibox.html_parsed():
                 if v == '{{{%s}}}' % mkey or v == mkey + " text":
                     self._rendered_keys[mkey] = k
                     return k
@@ -130,12 +131,11 @@ class Infobox(Logging):
 
         mu = self.markup_source()
         for m in re.finditer(INFOBOX_ATTRIBUTE_REGEX % "(?P<key>[a-z\-_]*)", mu,
-                             flags=re.IGNORECASE|re.DOTALL):
+                             flags=re.IGNORECASE | re.DOTALL):
             key = m.group("key").replace("_", "-").lower()
             val = m.group("val")
 
             yield key, val
-
 
     def markup_parsed(self):
         """
@@ -151,7 +151,6 @@ class Infobox(Logging):
 
         txt = self.fetcher.source(self.title)
         return self._braces_markup(txt)
-
 
     def html_source(self):
         """
@@ -188,7 +187,8 @@ class Infobox(Logging):
             return re.sub(r"&lt;(/?\s*(br\s*/?|ul|li))&gt;", "<\\1>", val)
 
         soup = self.html_source()
-        # Render all tags except <ul> and <li>. Escape them in some way and then reparse
+        # Render all tags except <ul> and <li>. Escape them in some way and
+        # then reparse
 
         tpairs = []
 
@@ -241,7 +241,7 @@ class Infobox(Logging):
                     rngs.append((ibs, ibe))
 
         # There may be more than one infoboxes, concaenate them.
-        for s,e in rngs:
+        for s, e in rngs:
             ret += txt[s:e]
 
         return ret

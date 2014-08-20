@@ -2,6 +2,7 @@ from itertools import chain
 
 from log import Logging
 
+
 class Acquirer(Logging):
 
     def __init__(self, providers=None, *arg, **kw):
@@ -26,6 +27,7 @@ class Acquirer(Logging):
 
         self._providers.append(provider)
 
+
 def provide(name=None):
     """
     Decorator for methods of providers to be automagically provided.
@@ -38,8 +40,8 @@ def provide(name=None):
     return wrap
 
 
-
 class ProviderMeta(type):
+
     def __new__(meta, clsname, bases, clsDict):
         """
         Create pw_<name> for each resource that is to be provided. 'pw' is
@@ -49,7 +51,7 @@ class ProviderMeta(type):
         provided = []
         newDict = clsDict.copy()
 
-        for k,v in clsDict.iteritems():
+        for k, v in clsDict.iteritems():
             if hasattr(v, "_provided"):
                 provided.append((v._provided or k, k))
 
@@ -57,8 +59,8 @@ class ProviderMeta(type):
         return type.__new__(meta, clsname, bases, newDict)
 
 
-
 class Provider(Logging):
+
     """
     Can provide a dictionary of resources managed by name. Resources
     can be anything but most of the time they will be callables.
@@ -69,7 +71,7 @@ class Provider(Logging):
     def __init__(self, resources={}, acquirer=None, *args, **kwargs):
         self._resources = {}
 
-        for k,f in self.meta_resources:
+        for k, f in self.meta_resources:
             self._resources[k] = getattr(self, f)
 
         self._resources.update(resources)

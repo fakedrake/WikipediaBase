@@ -10,6 +10,7 @@ from .fetcher import WIKIBASE_FETCHER
 
 # XXX: also support images.
 class Article(Logging):
+
     """
     This is meant to be a wrapper around a fetcher. I do not use
     articles as a very persistent resource so this is only an
@@ -50,7 +51,8 @@ class Article(Logging):
         # fetcher to resolve redirects and a cirular recursion will
         # occur
 
-        return "".join(self._soup().find(".//*[@id='firstHeading']/span").itertext())
+        return "".join(
+            self._soup().find(".//*[@id='firstHeading']/span").itertext())
 
     def markup_source(self):
         """
@@ -84,5 +86,6 @@ class Article(Logging):
 
         return ["".join(h.itertext())[:-len("[edit]")]
                 for h in
-                s.findall(".//*[@id='mw-content-text']//span[@class='mw-headline']/..")
+                s.findall(
+                    ".//*[@id='mw-content-text']//span[@class='mw-headline']/..")
                 if "".join(h.itertext())]

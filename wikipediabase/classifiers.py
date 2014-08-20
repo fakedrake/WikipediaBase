@@ -5,7 +5,9 @@ from .util import get_infobox, get_article, subclasses
 from .log import Logging
 from .enchantments import enchant
 
+
 class BaseClassifier(Logging):
+
     """
     Given a symbol provide some classes for it.
     """
@@ -18,11 +20,15 @@ class BaseClassifier(Logging):
     def __call__(self, symbol, *av, **kw):
         return self.classify(symbol, *av, **kw)
 
+
 class StaticClassifier(BaseClassifier):
+
     def classify(self, symbol, fetcher=None):
         return ['wikipedia-term']
 
+
 class InfoboxClassifier(BaseClassifier):
+
     def classify(self, symbol, fetcher=None):
         ibox = get_infobox(symbol, fetcher)
         types = ibox.start_types()
@@ -31,9 +37,11 @@ class InfoboxClassifier(BaseClassifier):
 
 
 class CategoryClassifier(BaseClassifier):
+
     def classify(self, symbol, fetcher=None):
         article = get_article(symbol, fetcher)
         return article.categories()
+
 
 class PersonClassifier(BaseClassifier):
 

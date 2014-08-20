@@ -2,11 +2,16 @@
 A telnet 'chatroom' server.
 """
 
-import socket, select, threading, time
+import socket
+import select
+import threading
+import time
 
 from log import Logging
 
+
 class TelnetServer(Logging):
+
     """
     The telnet server.
     """
@@ -21,7 +26,8 @@ class TelnetServer(Logging):
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((ip, port))
         self.sock.listen(channel)
-        self.log().info("Opened socket at %s:%d, channel: %d" % (ip, port, channel))
+        self.log().info("Opened socket at %s:%d, channel: %d" %
+                        (ip, port, channel))
         self.connection_list = [self.sock]
 
         self.safeword = safeword
@@ -47,7 +53,6 @@ class TelnetServer(Logging):
         else:
             self._running = False
 
-
     def start(self, thread=True, bufsize=4096, timeout=1):
         """
         Run in a separate thread and with message buffer size
@@ -64,7 +69,6 @@ class TelnetServer(Logging):
         else:
             self.log().info("Threading disabled.")
             return self._start(bufsize, None)
-
 
     def _start(self, bufsize=4096, select_timeout=1):
         """
@@ -111,5 +115,6 @@ class TelnetServer(Logging):
             return None
 
 if __name__ == '__main__':
-    srv = TelnetServer(answer=lambda x: "You said '%s'\n" % x, safeword="quit", log=log.Logger())
+    srv = TelnetServer(answer=lambda x: "You said '%s'\n" %
+                       x, safeword="quit", log=log.Logger())
     srv.start(thread=True)

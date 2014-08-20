@@ -17,6 +17,7 @@ from common import TEST_FETCHER_SETUP
 
 from wikipediabase import fetcher
 
+
 class TestFetcher(unittest.TestCase):
 
     def setUp(self):

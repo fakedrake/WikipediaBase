@@ -2,9 +2,11 @@ from wikipediabase.enchantments import Enchanted
 from wikipediabase.fetcher import CachingSiteFetcher
 from wikipediabase.provider import Provider
 
+
 class BaseResolver(Provider):
 
     priority = 0
+
     def __init__(self, fetcher=None, compat=True, *args, **kwargs):
         """
         Provide a way to fetch articles. If no fetcher is provider
@@ -19,6 +21,7 @@ class BaseResolver(Provider):
 
     def resolve(self, article, attribute, **kw):
         """
+
         Use your resources to resolve. Use provided methods if available
         or return None.
         """

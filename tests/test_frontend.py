@@ -20,6 +20,7 @@ from wikipediabase.frontend import Frontend
 def get_attribute(x, y):
     return "%s of %s" % (repr(y), repr(x))
 
+
 class TestFrontend(unittest.TestCase):
 
     def setUp(self):
@@ -32,7 +33,8 @@ class TestFrontend(unittest.TestCase):
                          "Symbol(words) of 'article'")
 
     def test_unicode(self):
-        date = self.fe.eval('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))')
+        date = self.fe.eval(
+            '(get "wikipedia-military-conflict" "World War I" (:code "DATE"))')
         self.assertEqual(date, '((:yyyymmdd 19140728))')
 
     def tearDown(self):

@@ -4,6 +4,7 @@ from .base import BaseResolver
 from ..util import get_article
 from ..enchantments import enchant, Enchanted
 
+
 def iter_paren(text, delim=None):
     """
     Iterate over the top level parnetheses of the text.
@@ -16,7 +17,7 @@ def iter_paren(text, delim=None):
         if c == "(":
             depth += 1
             if depth == 1:
-                first_paren = i+1
+                first_paren = i + 1
 
         elif c == ")" and depth > 0:
             if depth == 1:
@@ -27,12 +28,14 @@ def iter_paren(text, delim=None):
         if depth == 0 and text[i:].startswith(delim):
             break
 
+
 def first_paren(text):
-    for s,e in iter_paren(text, "."):
+    for s, e in iter_paren(text, "."):
         return text[s:e]
 
 
 class LifespanParagraphResolver(BaseResolver):
+
     """
     Resolve paragraph related stuff.
     """
@@ -63,14 +66,14 @@ class LifespanParagraphResolver(BaseResolver):
 
         # The frst paragraph
         text = art.paragraphs()[0]
-        for s,e in iter_paren(text, "."):
+        for s, e in iter_paren(text, "."):
             paren = text[s:e]
 
             for ovl in overlay_parse.dates.just_ranges(paren):
                 if attr == 'birth-date':
-                    return enchant('yyyymmdd' , ovl[0])
+                    return enchant('yyyymmdd', ovl[0])
                 elif attr == 'death-date':
-                    return enchant('yyyymmdd' , ovl[1])
+                    return enchant('yyyymmdd', ovl[1])
 
             # If there is just one date and we need a birth date, get
             # that.

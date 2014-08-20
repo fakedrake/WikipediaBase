@@ -7,12 +7,15 @@ from .base import BaseResolver
 from ..enchantments import enchant
 from .. util import get_infobox, get_article, totext
 
+
 class StaticResolver(BaseResolver):
+
     """
     A resolver that can resolve a fixed set of simple attributes.
     """
 
     priority = 11
+
     def _words(self, article):
         return re.findall('\w+', article.lower())
 
@@ -44,13 +47,13 @@ class StaticResolver(BaseResolver):
         ret = d = int(ls.pop(0))
         if len(ls):
             m = float(ls.pop(0))
-            ret += m/60
+            ret += m / 60
 
         if len(ls):
             s = float(ls.pop(0))
-            ret += s/3600
+            ret += s / 3600
 
-        return sig*(ret if isinstance(ret, int) else round(ret, 4))
+        return sig * (ret if isinstance(ret, int) else round(ret, 4))
 
     @provide(name="coordinates")
     def coordinates(self, article, _):
@@ -111,7 +114,7 @@ class StaticResolver(BaseResolver):
         # Blindly copied by the ruby version
         a = re.sub(r"\s*\(.*\)\s*", "", article.replace("_", " "))
         txt = totext(get_article(article).html_source())
-        ret = (txt.count(a.lower()) - txt.count(". " + a.lower()) < \
+        ret = (txt.count(a.lower()) - txt.count(". " + a.lower()) <
                txt.count(a))
 
         return enchant(None, ret)

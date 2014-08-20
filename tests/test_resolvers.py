@@ -15,7 +15,8 @@ except ImportError:
 
 from common import data, TEST_FETCHER_SETUP
 
-import re, logging
+import re
+import logging
 
 from wikipediabase import resolvers
 from wikipediabase import fetcher
@@ -38,15 +39,20 @@ century,[4] and possibly even in the 12th century (Heian or early
 Kamakura era).[5][6]"""
 
 DISABLE_ALL_EXCEPT_JUST = False
+
+
 class All(object):
+
     def __contains__(self, _):
         return True
+
 
 class TestResolvers(unittest.TestCase):
 
     def setUp(self):
         self.log = logging.getLogger("resolver-testing")
-        self.simple_resolver = resolvers.StaticResolver(fetcher=fetcher.BaseFetcher())
+        self.simple_resolver = resolvers.StaticResolver(
+            fetcher=fetcher.BaseFetcher())
         self.ibresolver = resolvers.InfoboxResolver(
             fetcher=fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP))
 
@@ -54,7 +60,7 @@ class TestResolvers(unittest.TestCase):
         self.kb = KnowledgeBase(frontend=self.fe)
 
     def test_resolver(self):
-        self.assertEqual(self.simple_resolver.resolve(ARTICLE, "word-count"), \
+        self.assertEqual(self.simple_resolver.resolve(ARTICLE, "word-count"),
                          100)
 
     def test_random_attributes(self):
@@ -65,7 +71,6 @@ class TestResolvers(unittest.TestCase):
 
         self.fe.knowledgebase.resolvers.reverse()
 
-
     def test_infobox(self):
         # Disable compatibility mode: no extra tag info on result.
         self.ibresolver.compat = False
@@ -74,31 +79,36 @@ class TestResolvers(unittest.TestCase):
         self.assertEqual(band_name, '((:html "The Def Leppard E.P."))')
 
     def test_compat(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(
+            **TEST_FETCHER_SETUP)
 
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES):
             self.assertEqual(ans, rx, msg=msg)
 
     def test_strageness(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(
+            **TEST_FETCHER_SETUP)
 
         for ans, rx, msg in self._ans_match(DEGENERATE_EXAMPLES, All()):
             self.assertEqual(ans, rx, msg=msg)
 
     def test_compat_not(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(
+            **TEST_FETCHER_SETUP)
 
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT):
             self.assertNotEqual(ans, rx, msg=msg)
 
     def test_compat_rx(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(
+            **TEST_FETCHER_SETUP)
 
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_RX):
             self.assertRegexpMatches(ans, rx, msg=msg)
 
     def test_compat_not_rx(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
+        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(
+            **TEST_FETCHER_SETUP)
 
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT_RX):
             self.assertNotRegexpMatches(ans, rx, msg=msg)
@@ -112,7 +122,6 @@ class TestResolvers(unittest.TestCase):
         txt_none = "Hello. My name is Bond (James Bond)"
         self.assertEqual(first_paren(txt), "dr. hello 2000-2012")
         self.assertIs(first_paren(txt_none), None)
-
 
     def _ans_match(self, lst, just=None):
         """
@@ -134,13 +143,13 @@ class TestResolvers(unittest.TestCase):
                 except ValueError:
                     q, m, msg = entry
 
-                self.log.info("\n\tQuery: '%s'\n\tMatcher: '%s'\n\tComp: %d\%d" \
-                              % (q, m, completion+1, full))
+                self.log.info("\n\tQuery: '%s'\n\tMatcher: '%s'\n\tComp: %d\%d"
+                              % (q, m, completion + 1, full))
 
                 ans = self.fe.eval(q) or ""
 
                 msg += "\n\tQuery: '%s'\n\tAnswer: '%s'\n\tMatcher: '%s'\n\tCompletion: %d\%d" \
-                          % (q, ans, m, completion+1, full)
+                    % (q, ans, m, completion + 1, full)
 
                 yield ans, m, msg
 

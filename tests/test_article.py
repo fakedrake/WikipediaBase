@@ -18,6 +18,7 @@ from common import TEST_FETCHER_SETUP
 from wikipediabase.article import Article
 from wikipediabase import fetcher
 
+
 class TestArticle(unittest.TestCase):
 
     def setUp(self):
@@ -40,7 +41,6 @@ class TestArticle(unittest.TestCase):
         rtcl = Article("Baal", self.ftchr)
         self.assertEqual(rtcl.headings()[-1], "External links")
         self.assertEqual(len(list(rtcl.headings())), 15)
-
 
     def tearDown(self):
         pass

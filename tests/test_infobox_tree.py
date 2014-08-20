@@ -28,6 +28,7 @@ MU = """
 ** [[Template:Infobox Hong Kong Film Awards]] ([http://toolserver.org/~jarry/templatecount/index.php?lang=en&name=Infobox_Hong_Kong_Film_Awards&namespace=10 Transclusion count]: 29)
 """
 
+
 class TestInfoboxTree(unittest.TestCase):
 
     def setUp(self):
@@ -40,13 +41,12 @@ class TestInfoboxTree(unittest.TestCase):
         self.assertEqual(len(tree[1][1]), 4, msg=tree[0])
         self.assertEqual(len(tree[0][1]), 3, msg=",".join(tree[0][1]))
 
-
     def test_ibx_type_tree(self):
         tree = infobox_tree.ibx_type_tree()
         self.assertEqual(len(tree['California State Legislature']),
                          3, msg=repr(tree['California State Legislature']))
         self.assertNotIn("party", tree["state gun laws"])
-        self.assertIn( u'Other politics and government', tree["state gun laws"])
+        self.assertIn(u'Other politics and government', tree["state gun laws"])
 
     def tearDown(self):
         pass

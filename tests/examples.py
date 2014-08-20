@@ -39,10 +39,10 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "Stephen Gray (scientist)" "DEATH-DATE")',
      '((:yyyymmdd 17360207))'),
     ('(get "wikipedia-person" "Jesus" "BIRTH-DATE")',
-     '((:yyyymmdd -00050000))'), # Used to be 4BC but the correct
+     '((:yyyymmdd -00050000))'),  # Used to be 4BC but the correct
     # answer would be a range 7-2BC amyway
     ('(get "wikipedia-person" "Jesus" "DEATH-DATE")',
-     '((:yyyymmdd 00310000))'), # Used to be '((:yyyymmdd
+     '((:yyyymmdd 00310000))'),  # Used to be '((:yyyymmdd
     # 00300000))'), But both are equally correct i think. For the same
     # reasons: range I choose 31 instead of 33
     ('(get "wikipedia-person" "Albert Einstein" "BIRTH-DATE")',
@@ -80,18 +80,18 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "Samantha Cristoforetti" "BIRTH-DATE")',
      '((:yyyymmdd 19770426))'),
     ('(get "wikipedia-person" "William Shakespeare" "BIRTH-DATE")',
-     '((:yyyymmdd 15640426))'), # '((:yyyymmdd 15640400))'), XXX this
+     '((:yyyymmdd 15640426))'),  # '((:yyyymmdd 15640400))'), XXX this
     # is not correct either but it is the
     # only date provided
     # ('(get "wikipedia-person" "William Shakesppeare" "BIRTH-DATE")',
-    #  '#f'), XXX: you cant get both right...
+    # '#f'), XXX: you cant get both right...
     ('(get "wikipedia-person" "Violet Markham" "BIRTH-DATE")',
      '((:yyyymmdd 18720000))'),
     ('(get "wikipedia-person" "Violet Markham" "DEATH-DATE")',
-     '((:yyyymmdd 19590000))'), # Infobox prescedes.
+     '((:yyyymmdd 19590000))'),  # Infobox prescedes.
     # Text sais ((:yyyymmdd 19590202))
     ('(get "wikipedia-person" "Stephen Gray (scientist)" "BIRTH-DATE")',
-     '((:yyyymmdd 16661200))'), # '((:yyyymmdd 16660000))'), xxx it
+     '((:yyyymmdd 16661200))'),  # '((:yyyymmdd 16660000))'), xxx it
     # actually sais december of 1666
 ]
 
@@ -195,7 +195,7 @@ DEGENERATE_EXAMPLES = [
     #  '(((error attribute-value-not-found :reply "Currently alive")))'),
 ]
 
-WIKI_EXAMPLES_NOT =[
+WIKI_EXAMPLES_NOT = [
 
     # =====================================
     # tests for 'get' -- special attributes
@@ -338,7 +338,7 @@ WIKI_EXAMPLES_RX = [
      r'influence of mothers in society'),
 ]
 
-WIKI_EXAMPLES_NOT_RX =[
+WIKI_EXAMPLES_NOT_RX = [
 
     # ========================
     # tests for get-attributes

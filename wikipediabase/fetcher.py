@@ -20,6 +20,7 @@ OFFLINE_PAGES = "/tmp/pages.json"
 
 
 class BaseFetcher(Logging):
+
     """
     The base fetcher does not really fetch an article, it just assumes
     that an article was given to it. Subclass this to make more
@@ -85,12 +86,11 @@ class WikipediaSiteFetcher(BaseFetcher):
         html = self.download(symbol=symbol, get=get_request)
         soup = fromstring(html)
 
-
         try:
             src = self.get_wikisource(soup)
         except IndexError:
             raise ValueError("Got invalid source page for article '%s'." %
-                              symbol)
+                             symbol)
 
         # Handle redirecions silently
         redirect_match = re.search(REDIRECT_REGEX, src)
@@ -104,6 +104,7 @@ class WikipediaSiteFetcher(BaseFetcher):
 
 
 class CachingSiteFetcher(WikipediaSiteFetcher):
+
     """
     Caches pages in a json file and reads from there.
     """
@@ -122,7 +123,6 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
 
         super(CachingSiteFetcher, self).__init__(*args, **kw)
 
-
     def download(self, symbol, get=None):
         try:
             if not hasattr(self, 'data'):
@@ -136,7 +136,6 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
 
         if dkey in self.data:
             ret = self.data[dkey]
-
 
         if not self.offline and not ret:
             pg = super(CachingSiteFetcher, self).download(symbol, get=get)

@@ -13,11 +13,13 @@ import overlay_parse
 from .log import Logging
 from .util import subclasses
 
+
 def kv_pair(k, v):
     if isinstance(k, basestring):
         return ":%s %s" % (k, v)
 
     return "%s %s" % (k, v)
+
 
 def erepr(v):
     if isinstance(v, basestring):
@@ -27,7 +29,9 @@ def erepr(v):
 
 MAX_PRIORITY = 15
 
+
 class Enchanted(Logging):
+
     """
     An enchanted object's string representation is something that
     START understands. Also its `val` attribute is something that
@@ -71,7 +75,8 @@ class Enchanted(Logging):
         return val
 
     def __repr__(self):
-        return u"<%s object (%s)>" % (self.__class__, kv_pair(self.tag_str(), self.val_str()))
+        return u"<%s object (%s)>" % (
+            self.__class__, kv_pair(self.tag_str(), self.val_str()))
 
     def __str__(self):
         if self.literal:
@@ -97,6 +102,7 @@ class Enchanted(Logging):
 
 class EnchantedString(Enchanted):
     priority = 1
+
     def tag_str(self):
         if self.tag == "code" or self.tag is None:
             return "html"
@@ -104,9 +110,11 @@ class EnchantedString(Enchanted):
         return self.tag
 
     def val_str(self):
-        return u"\"%s\"" % re.sub(r"[[\]]" , "", self.val)
+        return u"\"%s\"" % re.sub(r"[[\]]", "", self.val)
+
 
 class EnchantedList(Enchanted):
+
     """
     This is coordinates and other things like that
     """
@@ -130,6 +138,7 @@ class EnchantedList(Enchanted):
 
 
 class EnchantedDate(Enchanted):
+
     """
     Date enchantment but using the overlay framework.
     """
@@ -138,7 +147,7 @@ class EnchantedDate(Enchanted):
 
     def val_str(self):
         d, m, y = self.val
-        return "%s%04d%02d%02d" % ("-" if y<0 else "" ,abs(y), m, d)
+        return "%s%04d%02d%02d" % ("-" if y < 0 else "", abs(y), m, d)
 
     def tag_str(self):
         return "yyyymmdd"
@@ -149,19 +158,15 @@ class EnchantedDate(Enchanted):
 
         return self.tag == "yyyymmdd"
 
-    def _range_middle(self, (d1, d2)):
+    def _range_middle(self, date):
         # Very impercise
 
-        return tuple(int((i+j)/2) for i,j in zip(d1, d2))
+        (d1, d2) = date
+        return tuple(int((i + j) / 2) for i, j in zip(d1, d2))
 
     def parse_val(self, txt):
         if not isinstance(txt, basestring):
             return txt
-
-        try:
-            u'7 B.C.' in txt
-        except:
-            import pdb; pdb.set_trace()
 
         dor = overlay_parse.dates.just_props(txt, {'date'}, {'range'})
 
@@ -200,7 +205,7 @@ class _EnchantedDateVoting(EnchantedDate):
                 if self._in_range(d, r):
                     score += 1
 
-            scores[d] = score+1
+            scores[d] = score + 1
 
         try:
             return max(dates, key=lambda d: scores[d])
@@ -215,14 +220,16 @@ class _EnchantedDateVoting(EnchantedDate):
 
         for c, rs, re in reversed(zip(date, sd, ed)):
             # If all are defined and c is between [grs, re)
-            if c*rs*re != 0 and c >= rs and c < re:
+            if c * rs * re != 0 and c >= rs and c < re:
                 return True
 
         return False
 
 EnchantedDateVoting = _EnchantedDateVoting
 
+
 class EnchantedStringDict(Enchanted):
+
     """
     Get a lispy dictionary of non-None items.
     """
@@ -232,25 +239,29 @@ class EnchantedStringDict(Enchanted):
     priority = 10
 
     def should_parse(self):
-        return type(self.val) is dict
+        return isinstance(self.val, dict)
 
     def _str(self):
         if self.reverse:
-            pairs =reversed(self.val.items())
+            pairs = reversed(self.val.items())
 
         # XXX: NastyHack(TM). Replace the nonbreaking space with a space.
-        return '(%s)' % " ".join([kv_pair(k, "\""+v.replace(unichr(160), " ") + "\"")
-                                  for k,v in pairs
+        return '(%s)' % " ".join([kv_pair(k, "\"" + v.replace(unichr(160), " ") + "\"")
+                                  for k, v in pairs
                                   if v is not None])
 
+
 class _EnchantedLiteral(Enchanted):
+
     """
     Enchanted literals. These are not.
     """
     priority = MAX_PRIORITY
     literal = True
 
+
 class EnchantKeyword(_EnchantedLiteral):
+
     """
     Just a keyword. No content.
     """
@@ -262,20 +273,26 @@ class EnchantKeyword(_EnchantedLiteral):
     def _str(self):
         return self.tag
 
+
 class EnchantBool(_EnchantedLiteral):
+
     """
     Enchant a boolean value
     """
+
     def should_parse(self):
         return isinstance(self.val, bool)
 
     def _str(self):
         return "#t" if self.val else "#f"
 
+
 class EnchantNone(_EnchantedLiteral):
+
     """
     Enchanted none object
     """
+
     def should_parse(self):
         return self.val is None and \
             self.tag is None
@@ -283,7 +300,9 @@ class EnchantNone(_EnchantedLiteral):
     def _str(self):
         return 'nil'
 
+
 class EnchantNumber(_EnchantedLiteral):
+
     def should_parse(self):
         return isinstance(self.val, Number) and \
             self.tag is None
@@ -293,6 +312,7 @@ class EnchantNumber(_EnchantedLiteral):
 
 
 WIKIBASE_ENCHANTMENTS = subclasses(Enchanted, instantiate=False)
+
 
 def enchant(tag, obj, result_from=None, **kw):
     """
@@ -309,6 +329,7 @@ def enchant(tag, obj, result_from=None, **kw):
         if ret:
             return ret
 
-    raise NotImplementedError("Implement enchatment tag: %s, val: %s" % (tag, obj))
+    raise NotImplementedError(
+        "Implement enchatment tag: %s, val: %s" % (tag, obj))
 
 __all__ = ['enchant']

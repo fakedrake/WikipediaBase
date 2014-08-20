@@ -17,14 +17,17 @@ from wikipediabase.provider import Acquirer, Provider
 
 
 class TestProvider(unittest.TestCase):
+
     def setUp(self):
         # WTF: how does knowledge base get in here??
         self.aq = Acquirer()
-        self.double = lambda x: 2*x
-        self.prov = Provider(resources={"string":"Just a string", "func": self.double}, acquirer=self.aq)
+        self.double = lambda x: 2 * x
+        self.prov = Provider(
+            resources={"string": "Just a string", "func": self.double}, acquirer=self.aq)
 
     def test_provision(self):
-        self.assertEqual(self.aq.resources(), {"string":"Just a string", "func": self.double})
+        self.assertEqual(
+            self.aq.resources(), {"string": "Just a string", "func": self.double})
 
     def tearDown(self):
         pass

@@ -17,8 +17,10 @@ from wikipediabase import telnet
 
 import telnetlib
 
+
 def answer(msg):
     return "You said '%s'" % msg
+
 
 class TestTelnet(unittest.TestCase):
 
