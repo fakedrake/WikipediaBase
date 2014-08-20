@@ -33,8 +33,14 @@ class TestEnchantments(unittest.TestCase):
         ed = enchantments.EnchantedDate("yyyymmdd", "2010 8.9.1991 - 2012 on August the 8th 1991")
         self.assertEqual(ed.val, (0,0,2010))
 
-    def test_uniode(self):
-        pass
+    def test_bool(self):
+        self.assertEqual(str(enchantments.enchant(None, True)), '#t')
+        self.assertEqual(str(enchantments.enchant(None, False)), '#f')
+        self.assertEqual(str(enchantments.enchant('dont matter', False)), '#f')
+
+    def test_keyword(self):
+        ret = str(enchantments.enchant(":key", None))
+        self.assertEqual(ret, ":key")
 
     def tearDown(self):
         pass

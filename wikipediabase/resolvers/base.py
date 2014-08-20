@@ -27,5 +27,6 @@ class BaseResolver(Provider):
         else:
             attr = attribute
 
+        attr = attr.lower()
         if attr in self._resources:
             return self._resources[attr](article, attribute)

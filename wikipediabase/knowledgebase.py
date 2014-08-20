@@ -47,9 +47,10 @@ class KnowledgeBase(Provider):
         else:
             article, attr = v1, v2
 
-        txt = self._get(article, attr, compat=bool(v3))
+        ret = self._get(article, attr, compat=bool(v3))
 
-        return u"(%s)" % txt if txt else None
+        # It probably is enchated but give it a chance.
+        return enchant(None, ret)
 
     def _get(self, article, attr, compat):
         """
@@ -74,7 +75,7 @@ class KnowledgeBase(Provider):
 
         it = chain.from_iterable((c.classify(symbol) for c in self.classifiers))
 
-        return EnchantedList(None, it)
+        return enchant(None, it)
 
     @provide(name="get-attributes")
     def get_attributes(self, wb_class,  symbol=None):
@@ -97,7 +98,7 @@ class KnowledgeBase(Provider):
             tmp = enchant(None, dict(code=k.upper(),
                                      rendered=ibox.rendered_key(k)))
 
-            ret.append(str(tmp))
+            ret.append(tmp._str())
 
         return " ".join(ret)
 

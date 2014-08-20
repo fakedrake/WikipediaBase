@@ -57,12 +57,13 @@ class TestResolvers(unittest.TestCase):
         self.assertEqual(self.simple_resolver.resolve(ARTICLE, "word-count"), \
                          100)
 
-    # def test_random_attributes(self):
-    #     self.fe.knowledgebase.resolvers.reverse()
-    #     self.assertEqual(self.fe.eval("(get \"Batman\" (:code \"word-count\"))"), '(68415)')
+    def test_random_attributes(self):
+        self.fe.knowledgebase.resolvers.reverse()
+        wc = self.fe.eval("(get \"Batman\" (:code \"word-count\"))")
+        self.assertRegexpMatches(wc, '([0-9]+)')
+        self.assertEqual(self.fe.eval("(get \"Batman\" \"word-count\")"), wc)
 
-    #     self.assertEqual(self.fe.eval("(get \"Batman\" \"word-count\")"), '(68352)')
-    #     self.fe.knowledgebase.resolvers.reverse()
+        self.fe.knowledgebase.resolvers.reverse()
 
 
     def test_infobox(self):
@@ -81,7 +82,7 @@ class TestResolvers(unittest.TestCase):
     def test_strageness(self):
         self.ibresolver.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
 
-        for ans, rx, msg in self._ans_match(DEGENERATE_EXAMPLES):
+        for ans, rx, msg in self._ans_match(DEGENERATE_EXAMPLES, All()):
             self.assertEqual(ans, rx, msg=msg)
 
     def test_compat_not(self):

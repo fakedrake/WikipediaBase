@@ -48,7 +48,7 @@ class Frontend(Acquirer):
 
         fn = self.get_callable(self._eval(ls[0]))
         args = [self._eval(a) for a in ls[1:]]
-        ret = fn(*args) or "nil"
+        ret = fn(*args)
 
         return ret
 

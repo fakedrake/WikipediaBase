@@ -22,12 +22,20 @@ class DBFetcher(object):
         self.msg = "[ %s ] %s" % (datetime.datetime.now(), msg)
 
     def __init__(self, **kw):
+        self.retries = 10
+        self.conn_props = kw
         self._setup(**kw)
 
     def _setup(self, **kw):
+        if kw:
+            self.conn_props = kw
+        else:
+            kw = self.conn_props
+
         self.db = mdb.MySQLConnection()
         self.db._raw = True
-        self.db._connection_timeout = 30
+        # self.db._connection_timeout = 30
+        # self.db.raise_on_warnings = True
         self.db.connect(**dict(self._default_conn, **kw))
         self.cur = self.db.cursor()
 
@@ -37,16 +45,28 @@ class DBFetcher(object):
 
     def _query_raw_iter(self, cmd=None, size=None):
         self.cur.execute(self.cmd)
+        retries = self.retries
+        while retries > 0:
+            try:
 
-        if size is None:
-            ret = iter(self.cur.fetchone, None)
-        else:
-            ret = iter(lambda :self.cur.fetchmany(size), None)
+                if size is None:
+                    ret = iter(self.cur.fetchone, None)
+                else:
+                    ret = iter(lambda :self.cur.fetchmany(size), None)
 
-        for i in ret:
-            self.message("Just got %s\n" % i[0])
-            yield i
-            self.message("Getting after %s\n" % i[0])
+                for i in ret:
+                    self.message("Just got %s\n" % i[0])
+                    yield i
+                    self.message("Getting after %s\n" % i[0])
+
+            except mdb.errors.OperationalError:
+                retries -= 1
+                sys.stderr.write("Connection timed out. Retrying...\n")
+                import pdb; pdb.set_trace()
+
+                self._setup
+            else:
+                break
 
     def _query_raw(self, cmd=None):
         self.cur.execute(self.cmd)
@@ -91,9 +111,9 @@ class DBFetcher(object):
 
         where = ("where page_namespace=%d" % ns if ns is not None else "")
         lmt = ("limit %d" % limit if limit is not None else "")
-        self.cmd = "select rev_page, old_text from revision " \
-                   "inner join text on old_id = rev_text_id " \
-                   "inner join page on page_id = old_id " \
+        self.cmd = "select page_title, old_text from text " \
+                   "join revision on rev_text_id = old_id " \
+                   "join page on page_id = rev_page " \
                    "%s %s;" % (where, lmt)
         return self._query_raw_iter()
 
@@ -129,7 +149,8 @@ class DBFetcher(object):
         def first_part(s):
             return s.split(']]', 1)[0].split('|')[0]
 
-        return map(first_part, txt.split("[[Category:")[1:])
+        return map(first_part, txt.split("[[Category:")[1:]) + \
+            ["wikipedia-article"]
 
     def article_text(self, article):
         """
@@ -261,8 +282,10 @@ def exit_thread(conf):
 
 if __name__ == "__main__":
 
-    cnf = monitor(timeout=60)
-    try:
-        _main()
-    except:
-        exit_thread(cnf)
+    _main()
+    # cnf = monitor(timeout=60)
+    # try:
+    #     _main()
+    # except BaseException, e:
+    #     exit_thread(cnf)
+    #     raise e

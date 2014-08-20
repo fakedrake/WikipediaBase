@@ -6,10 +6,26 @@ with them.
 """
 
 import re
+from numbers import Number
+
 import overlay_parse
 
 from .log import Logging
 from .util import subclasses
+
+def kv_pair(k, v):
+    if isinstance(k, basestring):
+        return ":%s %s" % (k, v)
+
+    return "%s %s" % (k, v)
+
+def erepr(v):
+    if isinstance(v, basestring):
+        return '"%s"' % v
+
+    return repr(v)
+
+MAX_PRIORITY = 15
 
 class Enchanted(Logging):
     """
@@ -22,8 +38,9 @@ class Enchanted(Logging):
 
     force_tag = None
     priority = 0
+    literal = False
 
-    def __init__(self, tag, val, question=None, kind=None, **kw):
+    def __init__(self, tag, val, question=None, **kw):
         """
         Enchant a piece of data. Throws EnchantError on failure.
         """
@@ -31,10 +48,11 @@ class Enchanted(Logging):
         self.tag = tag
         self.question = question
         self.val = val
-        self.kind = kind
+        self.valid = False
 
         if self.should_parse():
             self.val = self.parse_val(val)
+            self.valid = True
         else:
             self.val = None
 
@@ -53,37 +71,40 @@ class Enchanted(Logging):
         return val
 
     def __repr__(self):
-        return u"<%s object (:%s %s)>" % (self.__class__, self.tag, self.val)
+        return u"<%s object (%s)>" % (self.__class__, kv_pair(self.tag_str(), self.val_str()))
 
     def __str__(self):
-        if self:
-            return u"(:%s %s)" % (self.tag_str(), self.val_str())
+        if self.literal:
+            return self._str()
 
-        return 'none-object'
+        return u"(%s)" % self._str()
+
+    def _str(self):
+        if self:
+            return u"(%s)" % kv_pair(self.tag_str(), self.val_str())
+
+        return ''
 
     def val_str(self):
-        return str(self.val)
+        return unicode(self.val)
 
     def tag_str(self):
         return self.tag or "html"
 
     def __nonzero__(self):
-        return self.val is not None
+        return self.valid
 
 
 class EnchantedString(Enchanted):
-    priority = 3
+    priority = 1
     def tag_str(self):
-        if (self.tag == "code" or not self.tag) and \
-           self.kind != "attribute":
+        if self.tag == "code" or self.tag is None:
             return "html"
 
         return self.tag
 
     def val_str(self):
         return u"\"%s\"" % re.sub(r"[[\]]" , "", self.val)
-
-
 
 class EnchantedList(Enchanted):
     """
@@ -95,14 +116,14 @@ class EnchantedList(Enchanted):
     def should_parse(self):
         return hasattr(self.val, '__iter__')
 
-    def __str__(self):
-        if self.tag:
-            return super(EnchantedList, self).__str__()
-
-        return '(%s)' % self.val_str()
+    def _str(self):
+        if self.tag is None:
+            return '(%s)' % self.val_str()
+        else:
+            return '(:%s %s)' % (self.tag_str(), self.val_str())
 
     def val_str(self):
-        return " ".join(["\"%s\"" % str(v) for v in self.val])
+        return " ".join([erepr(v) for v in self.val])
 
     def __iter__(self):
         return iter(self.val)
@@ -213,15 +234,63 @@ class EnchantedStringDict(Enchanted):
     def should_parse(self):
         return type(self.val) is dict
 
-    def __str__(self):
-
+    def _str(self):
         if self.reverse:
             pairs =reversed(self.val.items())
 
         # XXX: NastyHack(TM). Replace the nonbreaking space with a space.
-        return '(%s)' % " ".join([':%s "%s"' % (k, v.replace(unichr(160), " "))
+        return '(%s)' % " ".join([kv_pair(k, "\""+v.replace(unichr(160), " ") + "\"")
                                   for k,v in pairs
                                   if v is not None])
+
+class _EnchantedLiteral(Enchanted):
+    """
+    Enchanted literals. These are not.
+    """
+    priority = MAX_PRIORITY
+    literal = True
+
+class EnchantKeyword(_EnchantedLiteral):
+    """
+    Just a keyword. No content.
+    """
+
+    def should_parse(self):
+        return isinstance(self.tag, basestring) and \
+            self.val is None
+
+    def _str(self):
+        return self.tag
+
+class EnchantBool(_EnchantedLiteral):
+    """
+    Enchant a boolean value
+    """
+    def should_parse(self):
+        return isinstance(self.val, bool)
+
+    def _str(self):
+        return "#t" if self.val else "#f"
+
+class EnchantNone(_EnchantedLiteral):
+    """
+    Enchanted none object
+    """
+    def should_parse(self):
+        return self.val is None and \
+            self.tag is None
+
+    def _str(self):
+        return 'nil'
+
+class EnchantNumber(_EnchantedLiteral):
+    def should_parse(self):
+        return isinstance(self.val, Number) and \
+            self.tag is None
+
+    def _str(self):
+        return str(self.val)
+
 
 WIKIBASE_ENCHANTMENTS = subclasses(Enchanted, instantiate=False)
 
@@ -232,7 +301,14 @@ def enchant(tag, obj, result_from=None, **kw):
     results. Also for now you always want to be enchanting.
     """
 
+    if isinstance(obj, Enchanted):
+        return obj
+
     for E in WIKIBASE_ENCHANTMENTS:
         ret = E(tag, obj, question=result_from, **kw)
         if ret:
             return ret
+
+    raise NotImplementedError("Implement enchatment tag: %s, val: %s" % (tag, obj))
+
+__all__ = ['enchant']

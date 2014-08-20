@@ -21,6 +21,9 @@ class Article(Logging):
         self.fetcher = fetcher
         self.ibox = None
 
+    def url(self):
+        return self.fetcher.urlopen(self._title).geturl()
+
     def _soup(self):
         if not hasattr(self, '__soup'):
             self.__soup = fromstring(self.html_source())

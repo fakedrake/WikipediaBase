@@ -32,7 +32,7 @@ def provide(name=None):
     """
 
     def wrap(fn):
-        fn._provided = name
+        fn._provided = name.lower() if name else name
         return fn
 
     return wrap

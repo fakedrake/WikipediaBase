@@ -1,4 +1,4 @@
-from itertools import islice, takewhile, dropwhile
+from itertools import islice, takewhile, dropwhile, chain
 
 import os
 import urllib
@@ -110,7 +110,10 @@ def subclasses(cls, instantiate=True, **kw):
     return just the classes with instantiate=False.
     """
 
-    clss = sorted(cls.__subclasses__(), key=lambda c: c.priority, reverse=True)
+    lcls = cls.__subclasses__()
+    rcls = lcls + list(chain.from_iterable([c.__subclasses__() for c in  lcls]))
+    clss = sorted(rcls, key=lambda c: c.priority, reverse=True)
+
     if not instantiate:
         return [C for C in clss
                 if not C.__name__.startswith("_")]
@@ -119,7 +122,7 @@ def subclasses(cls, instantiate=True, **kw):
             if not C.__name__.startswith("_")]
 
 def totext(et):
-    return html.HtmlElement(et).text_content()
+    return html.HtmlElement(et).text_content( )
 
 def tostring(et):
     return ET.tostring(et, method='html', encoding='utf-8')

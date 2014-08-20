@@ -51,7 +51,13 @@ class WikipediaSiteFetcher(BaseFetcher):
 
         return tag
 
-    def download(self, symbol, get=None):
+    def download(self, *args, **kwargs):
+        try:
+            return self.urlopen(*args, **kwargs).read()
+        except HTTPError:
+            raise LookupError("404 - Not found: " + url)
+
+    def urlopen(self, symbol, get=None):
         """
         Download a wikipedia article.
 
@@ -68,10 +74,7 @@ class WikipediaSiteFetcher(BaseFetcher):
 
         url = "%s/%s?%s" % (self.url, self.base,
                             urlencode(get))
-        try:
-            return urlopen(url).read()
-        except HTTPErrort:
-            raise LookupError("404 - Not found: " + url)
+        return urlopen(url)
 
     def source(self, symbol, get_request=dict(action="edit"), redirect=True):
         """

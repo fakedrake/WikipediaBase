@@ -40,7 +40,7 @@ WIKI_EXAMPLES = [
      '((:yyyymmdd 17360207))'),
     ('(get "wikipedia-person" "Jesus" "BIRTH-DATE")',
      '((:yyyymmdd -00050000))'), # Used to be 4BC but the correct
-     # answer would be a range 7-2BC amyway
+    # answer would be a range 7-2BC amyway
     ('(get "wikipedia-person" "Jesus" "DEATH-DATE")',
      '((:yyyymmdd 00310000))'), # Used to be '((:yyyymmdd
     # 00300000))'), But both are equally correct i think. For the same
@@ -53,12 +53,12 @@ WIKI_EXAMPLES = [
      '((:yyyymmdd 19610804))'),
     ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
      'nil'),
-     # '(((error attribute-value-not-found :reply "Currently alive")))'),
+    # '(((error attribute-value-not-found :reply "Currently alive")))'),
     ('(get "wikipedia-person" "Jamie Glover" "BIRTH-DATE")',
      '((:yyyymmdd 19690710))'),
     ('(get "wikipedia-person" "Jamie Glover" "DEATH-DATE")',
      'nil'),
-     # '(((error attribute-value-not-found :reply "Currently alive")))'),
+    # '(((error attribute-value-not-found :reply "Currently alive")))'),
     ('(get "wikipedia-person" "John Lennon" "BIRTH-DATE")',
      '((:yyyymmdd 19401009))'),
     ('(get "wikipedia-person" "John Lennon" "DEATH-DATE")',
@@ -81,15 +81,18 @@ WIKI_EXAMPLES = [
      '((:yyyymmdd 19770426))'),
     ('(get "wikipedia-person" "William Shakespeare" "BIRTH-DATE")',
      '((:yyyymmdd 15640426))'), # '((:yyyymmdd 15640400))'), XXX this
-                                # is not correct either but it is the
-                                # only date provided
+    # is not correct either but it is the
+    # only date provided
     # ('(get "wikipedia-person" "William Shakesppeare" "BIRTH-DATE")',
     #  '#f'), XXX: you cant get both right...
     ('(get "wikipedia-person" "Violet Markham" "BIRTH-DATE")',
      '((:yyyymmdd 18720000))'),
+    ('(get "wikipedia-person" "Violet Markham" "DEATH-DATE")',
+     '((:yyyymmdd 19590000))'), # Infobox prescedes.
+    # Text sais ((:yyyymmdd 19590202))
     ('(get "wikipedia-person" "Stephen Gray (scientist)" "BIRTH-DATE")',
      '((:yyyymmdd 16661200))'), # '((:yyyymmdd 16660000))'), xxx it
-                                # actually sais december of 1666
+    # actually sais december of 1666
 ]
 
 DEGENERATE_EXAMPLES = [
@@ -104,8 +107,6 @@ DEGENERATE_EXAMPLES = [
     ('(get "wikipedia-person" "Mary Shakespeare" "BIRTH-DATE")',
      '((:yyyymmdd 15370000))',
      'Person without infobox -- get birth date from first paragraph'),
-    ('(get "wikipedia-person" "Violet Markham" "DEATH-DATE")',
-     '((:yyyymmdd 19590202))'),
     ('(get "wikipedia-person" "Manno Wolf-Ferrari" "BIRTH-DATE")',
      '((:yyyymmdd 19110000))'),
     ('(get "wikipedia-person" "Manno Wolf-Ferrari" "DEATH-DATE")',
@@ -119,27 +120,25 @@ DEGENERATE_EXAMPLES = [
     ('(get "wikipedia-person" "Edward Michael S." "DEATH-DATE")',
      '((:yyyymmdd 20060000))'),
 
-    # Tests that infobox attributes that aren't dates but may contain
-    # dates aren't returned in yyyymmdd format
-    ('(get "wikipedia-military-conflict" "2006 Lebanon War" (:code "RESULT"))',
-     '((:yyyymmdd 20060814))',
-     '2006 Lebanon War RESULT is not just a date'),
-
     # Dates can now be evaluated
     ('(get "wikipedia-person" "Plato" "BIRTH-DATE")',
      # '((:html "ca. 428 BC/427 BC"))'  XXX: Wikipedia was updated it seems
-     '((:html "428/427 or 424/423 BC"))'),
+     # '((:html "428/427 or 424/423 BC"))'
+     '((:yyyymmdd -04260000))'),
 
     # =====================================
     # tests for 'get' -- special attributes
     # =====================================
 
+    ('(get "wikipedia-term" "Bill Clinton"  "image-data")',
+     '((0 "Bill_Clinton.jpg"))'),
     ('(get "wikipedia-term" "Bill Clinton" (:code "IMAGE-DATA"))',
-     '((0 "Bill_Clinton.jpg"'),
-    ('(get "wikipedia-term" "Sium sisarum" (:code "IMAGE-DATA")',
-     '((0 "illustration_Sium_sisarum0.jpg" "<i>Sium sisarum</i>"))'),
-    ('(get "wikipedia-term" "Yuri I. Manin" (:CODE "IMAGE-DATA")',
+     '((0 "Bill_Clinton.jpg"))'),
+    ('(get "wikipedia-term" "Yuri I. Manin" (:CODE "IMAGE-DATA"))',
      '((0 "Juri_Manin,_Ksenia_Semenova.jpeg" "Yuri Manin with his wife Ksenia Semenova at the ICM 2006 in Madrid"))'),
+    ('(get "wikipedia-term" "Sium sisarum" (:code "IMAGE-DATA"))',
+     # '((0 "illustration_Sium_sisarum0.jpg" "<i>Sium sisarum</i>"))'
+     '((0 "Illustration_Sium_sisarum0.jpg"))'),
 
     # Next three tests copied from old tests that asserted that each
     # coordinate was within a small delta (.1) of the tested value, to
@@ -147,22 +146,33 @@ DEGENERATE_EXAMPLES = [
     ('(get "wikipedia-term" "Black Sea" "COORDINATES")',
      '((:coordinates 44 35))'),
     ('(get "wikipedia-term" "Eiffel Tower" "COORDINATES")',
-     '((:coordinates 48.8583, 2.2945))'),
+     # '((:coordinates 48.8583, 2.2945))'
+     '((:coordinates 48.8582 2.2945))'),
     ('(get "wikipedia-term" "Caracas" "COORDINATES")',
-     '((:coordinates 10.5, -66.916664))'),
+     # '((:coordinates 10.5, -66.916664))'
+     '((:coordinates 10.5 -66.9167))'),
     # XXX: according to wikipedia not so
 
     ('(get "wikipedia-person" "Bill Clinton" (:code "URL"))',
      '((:url "http://en.wikipedia.org/wiki/Bill_Clinton"))'),
 
+    # Lower case is less shouty
+    # ('(get "wikipedia-person" "Bill Clinton" (:code "GENDER"))',
+    #  ':MASCULINE'),
+    # ('(get "wikipedia-person" "William Shakespeare" "GENDER")',
+    #  ':MASCULINE'),
+    # ('(get "wikipedia-person" "Sacagawea" "GENDER")',
+    #  ':FEMININE'),
+    # ('(get "wikipedia-person" "Mary Shakespeare" (:calculated "GENDER"))',
+    #  ':FEMININE'),
     ('(get "wikipedia-person" "Bill Clinton" (:code "GENDER"))',
-     ':MASCULINE'),
+     ':masculine'),
     ('(get "wikipedia-person" "William Shakespeare" "GENDER")',
-     ':MASCULINE'),
+     ':masculine'),
     ('(get "wikipedia-person" "Sacagawea" "GENDER")',
-     ':FEMININE'),
+     ':feminine'),
     ('(get "wikipedia-person" "Mary Shakespeare" (:calculated "GENDER"))',
-     ':FEMININE'),
+     ':feminine'),
 
     ('(get "wikipedia-term" "Bill Clinton" (:calculated "PROPER"))',
      '#t'),
@@ -170,16 +180,19 @@ DEGENERATE_EXAMPLES = [
      '#t'),
     ('(get "wikipedia-term" "Purchasing power parity" (:calculated "PROPER"))',
      '#f'),
+    ('(get "Lamb of God (band)" "PROPER")',
+     '#t'),
+    ('(get "Board game" "PROPER")',
+     '#f'),
 
-    # XXX: What is this?
     ('(get "wikipedia-term" "Bill Clinton" (:calculated "NUMBER"))',
      '#f'),
     ('(get "wikipedia-term" "The Beatles" (:calculated "NUMBER"))',
      '#t'),
 
-    # Nobody can actually apss this
-    ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
-     '(((error attribute-value-not-found :reply "Currently alive")))'),
+    # Nobody can actually pass this
+    # ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
+    #  '(((error attribute-value-not-found :reply "Currently alive")))'),
 ]
 
 WIKI_EXAMPLES_NOT =[
@@ -297,7 +310,7 @@ WIKI_EXAMPLES_RX = [
     ('(get "wikipedia-military-conflict" "American Civil War" (:code "RESULT"))',
      re.compile(r'Union victory.*Slavery abolished.*Territorial integrity.*Lincoln assassinated.*Reconstruction', re.DOTALL)),
     ('(get "wikipedia-weapon" "M1 Abrams" (:code "WARS"))',
-     r'Persian',
+     r'Gulf War',
      'Returns link text, not link target'),
 
     # ===============================================================
@@ -336,6 +349,14 @@ WIKI_EXAMPLES_NOT_RX =[
     ('(get-attributes "wikipedia-military-conflict" "2006 Lebanon War")',
      r'result[^)]*yyyymmdd',
      "2006 Lebanon War RESULT attribute is not yyyymmdd"),
+
+
+    # Tests that infobox attributes that aren't dates but may contain
+    # dates aren't returned in yyyymmdd format
+    ('(get "wikipedia-military-conflict" "2006 Lebanon War" (:code "RESULT"))',
+     '((:yyyymmdd 20060814))',
+     '2006 Lebanon War RESULT is not just a date'),
+
 
     # =====================================
     # tests for 'get' -- special attributes
