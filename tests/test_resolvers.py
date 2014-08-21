@@ -21,7 +21,8 @@ import logging
 from wikipediabase import resolvers
 from wikipediabase import fetcher
 from wikipediabase.frontend import Frontend
-from wikipediabase.knowledgebase import KnowledgeBase
+
+from wikipediabase.util import get_knowledgebase
 
 from wikipediabase.resolvers.paragraph import first_paren
 
@@ -57,19 +58,11 @@ class TestResolvers(unittest.TestCase):
             fetcher=fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP))
 
         self.fe = Frontend()
-        self.kb = KnowledgeBase(frontend=self.fe)
+        self.kb = get_knowledgebase()
 
     def test_resolver(self):
         self.assertEqual(self.simple_resolver.resolve(ARTICLE, "word-count"),
                          100)
-
-    def test_random_attributes(self):
-        self.fe.knowledgebase.resolvers.reverse()
-        wc = self.fe.eval("(get \"Batman\" (:code \"word-count\"))")
-        self.assertRegexpMatches(wc, '([0-9]+)')
-        self.assertEqual(self.fe.eval("(get \"Batman\" \"word-count\")"), wc)
-
-        self.fe.knowledgebase.resolvers.reverse()
 
     def test_infobox(self):
         # Disable compatibility mode: no extra tag info on result.
@@ -123,6 +116,13 @@ class TestResolvers(unittest.TestCase):
         txt_none = "Hello. My name is Bond (James Bond)"
         self.assertEqual(first_paren(txt), "dr. hello 2000-2012")
         self.assertIs(first_paren(txt_none), None)
+
+    def test_error_resolver(self):
+        err = self.kb.get('Bill Clinton', 'death-date')
+        err = self.kb.get('wikipedia-person', 'Barack Obama', 'death-date')
+        self.assertEqual(str(err),
+                      '(((error attribute-value-not-found :reply '
+                      '"Currently alive")))')
 
     def _ans_match(self, lst, just=None):
         """

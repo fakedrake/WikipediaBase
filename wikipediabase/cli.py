@@ -30,5 +30,6 @@ def main():
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     log.debug('arguments: %s', arguments)
 
-    fe = TelnetFrontend(knowledgebase=KnowledgeBase())
+    fe = TelnetFrontend()
+
     fe.run()

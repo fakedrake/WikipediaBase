@@ -3,31 +3,6 @@ from itertools import chain
 from log import Logging
 
 
-class Acquirer(Logging):
-
-    def __init__(self, providers=None, *arg, **kw):
-        self._providers = providers or []
-
-    def iter_resources(self):
-        for p in self._providers:
-            for r in p.iter_resources():
-                yield r
-
-    def resources(self):
-        """
-        Get a dict of all the resources from all providers.
-        """
-
-        return dict(chain(*[p._resources.items() for p in self._providers]))
-
-    def acquire_from(self, provider, name=None):
-        """
-        Register 'provider' as provider of resources under 'name'.
-        """
-
-        self._providers.append(provider)
-
-
 def provide(name=None):
     """
     Decorator for methods of providers to be automagically provided.
@@ -51,9 +26,16 @@ class ProviderMeta(type):
         provided = []
         newDict = clsDict.copy()
 
+        # Look for your marked resources
         for k, v in clsDict.iteritems():
             if hasattr(v, "_provided"):
+                # pair: resource_name, python_name
                 provided.append((v._provided or k, k))
+
+        # Inherit resources from parent
+        for b in bases:
+            if hasattr(b, 'meta_resources'):
+                provided.extend(b.meta_resources)
 
         newDict["meta_resources"] = provided
         return type.__new__(meta, clsname, bases, newDict)
@@ -88,3 +70,34 @@ class Provider(Logging):
 
     def provide_to(self, acquirer):
         return acquirer.acquire_from(self)
+
+
+class Acquirer(Provider):
+    """
+    An aquirer is also a provder by default to itself. Any methods an
+    acquirer privides are available to itself.
+    """
+
+
+    def __init__(self, providers=None, *arg, **kw):
+        super(Acquirer, self).__init__(*arg, **kw)
+        self._providers = (providers or []) + [self]
+
+    def iter_resources(self):
+        for p in self._providers:
+            for r in p.iter_resources():
+                yield r
+
+    def resources(self):
+        """
+        Get a dict of all the resources from all providers.
+        """
+
+        return dict(chain(*[p._resources.items() for p in self._providers]))
+
+    def acquire_from(self, provider, name=None):
+        """
+        Register 'provider' as provider of resources under 'name'.
+        """
+
+        self._providers.append(provider)

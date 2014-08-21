@@ -27,6 +27,7 @@ def erepr(v):
 
     return repr(v)
 
+# For fully deterministic enchantments use this prioroty.
 MAX_PRIORITY = 15
 
 
@@ -236,7 +237,7 @@ class EnchantedStringDict(Enchanted):
 
     # Just so the test regexes match.
     reverse = True
-    priority = 10
+    priority = 7
 
     def should_parse(self):
         return isinstance(self.val, dict)
@@ -245,11 +246,64 @@ class EnchantedStringDict(Enchanted):
         if self.reverse:
             pairs = reversed(self.val.items())
 
-        # XXX: NastyHack(TM). Replace the nonbreaking space with a space.
-        return '(%s)' % " ".join([kv_pair(k, '"%s"' %
-                                          v.replace(unichr(160), " "))
-                                  for k, v in pairs
-                                  if v is not None])
+        return '(%s)' % self._plist(pairs)
+
+    def _plist(self, pairs):
+        """
+        A lispy plist without the parens.
+        """
+
+        return " ".join(list(self._paren_content_iter(pairs)))
+
+
+    @staticmethod
+    def _paren_content_iter(pairs):
+        for k, v in pairs:
+            if v is not None:
+                # XXX: NastyHack(TM). Replace the nonbreaking space
+                # with a space.
+                yield kv_pair(k, u'"%s"' % v)
+
+
+class EnchantedError(EnchantedStringDict):
+    """
+    An error with a reply and a symbol. The expected value should be a
+    dict-like object with the keys 'kw' and 'symbol' and the the tag
+    should be 'error'. Alternatively you can pass as value an
+    exception and I will try to deal with it.
+    """
+
+    priority = MAX_PRIORITY
+    # Here you can translate python exception names to wikibase error
+    # symbols
+    lookup = dict()
+
+    def should_parse(self):
+        return self.tag == 'error' or \
+            isinstance(self.val, BaseException)
+
+    def _str(self):
+        if isinstance(self.val, BaseException):
+            self.val = dict(
+                symbol=self.lookup.get(type(self.val).__name__) or \
+                type(self.val).__name__,
+                kw={'reply': self.val.message}
+            )
+
+        # Useless 3ple parens needed.
+        return "((error {symbol} {keys}))".format(
+            symbol=self.val['symbol'],
+            keys=self._plist(self.val['kw'].iteritems()))
+
+    def __nonzero__(self):
+        """
+        Errors should count as zeros so that you can check for an answer with
+
+        if potential_error_or_none:
+            # do stuff
+        """
+
+        return False
 
 
 class _EnchantedLiteral(Enchanted):
@@ -315,7 +369,7 @@ class EnchantNumber(_EnchantedLiteral):
 WIKIBASE_ENCHANTMENTS = subclasses(Enchanted, instantiate=False)
 
 
-def enchant(tag, obj, result_from=None, **kw):
+def enchant(tag, obj, result_from=None, fallback=None, **kw):
     """
     Return an appropriate enchanted object. reslut is true when we are
     enchanting a result. Sometimes tags mean different thigs in
@@ -327,10 +381,14 @@ def enchant(tag, obj, result_from=None, **kw):
 
     for E in WIKIBASE_ENCHANTMENTS:
         ret = E(tag, obj, question=result_from, **kw)
-        if ret:
+        if ret.valid:
             return ret
 
+    if fallback:
+        return EnchantedError('error', fallback)
+
     raise NotImplementedError(
-        "Implement enchatment tag: %s, val: %s" % (tag, obj))
+        "Implement enchatment tag: %s, val: %s or"
+        "provide fallback error." % (tag, obj))
 
 __all__ = ['enchant']

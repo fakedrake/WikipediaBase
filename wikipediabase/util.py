@@ -47,16 +47,29 @@ def memoize(f):
 
 
 def get_infobox(symbol, fetcher=None):
-    from infobox import Infobox
+    from .infobox import Infobox
 
-    return _get_context(symbol, "infobox", Infobox, fetcher=fetcher)
+    return _get_context(symbol, "infobox", Infobox, fetcher)
 
 
 def get_article(symbol, fetcher=None):
-    from article import Article
+    from .article import Article
 
-    return _get_context(symbol, "article", Article)
+    return _get_context(symbol, "article", Article, fetcher)
 
+
+def get_knowledgebase(**kw):
+    from .knowledgebase import KnowledgeBase
+
+    ret = _get_context(None, "knowledgebase", KnowledgeBase, **kw)
+
+    # It is important to have the correnct frontend or the fronted
+    # will fail to find methods.
+    if kw.get('frontend') is not None and \
+       kw.get('frontend') is not ret.frontend:
+        return _get_context(None, "knowledgebase", KnowledgeBase, new=True, **kw)
+
+    return ret
 
 def markup_categories(wiki_markup):
     """
@@ -71,7 +84,7 @@ def markup_categories(wiki_markup):
     return map(first_part, wiki_markup.split("[[Category:")[1:])
 
 
-def _get_context(symbol, domain, cls, fetcher=None):
+def _get_context(symbol, domain, cls, fetcher=None, new=False, **kwargs):
     global _CONTEXT
 
     if isinstance(symbol, cls):
@@ -80,12 +93,17 @@ def _get_context(symbol, domain, cls, fetcher=None):
     if domain not in _CONTEXT:
         _CONTEXT[domain] = dict()
 
-    ret = _CONTEXT[domain].get(symbol, None)
-    if ret:
-        return ret
+    if not new:
+        ret = _CONTEXT[domain].get(symbol, None)
+        if ret is not None:
+            return ret
 
-    kw = dict(fetcher=fetcher) if fetcher else dict()
-    ret = cls(symbol, **kw)
+    kwargs.update((dict(fetcher=fetcher) if fetcher else dict()))
+    if symbol:
+        ret = cls(symbol, **kwargs)
+    else:
+        ret = cls(**kwargs)
+
     _CONTEXT[domain][symbol] = ret
 
     return ret

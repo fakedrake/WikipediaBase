@@ -63,8 +63,6 @@ class DBFetcher(object):
             except mdb.errors.OperationalError:
                 retries -= 1
                 sys.stderr.write("Connection timed out. Retrying...\n")
-                import pdb
-                pdb.set_trace()
 
                 self._setup
             else:

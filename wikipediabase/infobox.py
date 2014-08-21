@@ -21,17 +21,17 @@ class Infobox(Logging):
     """
 
     # Various names under which you may find an infobox
-    infobox_tags = ["infobox", "Infobox"]
+    infobox_tags = ["infobox", "Infobox", 'taxobox', 'Taxobox']
 
 
-    def __init__(self, title, fetcher=WIKIBASE_FETCHER):
+    def __init__(self, title, fetcher=None):
         """
         It is a good idea to provide a fetcher as caching will be done
         much better.
         """
 
         self.title = title
-        self.fetcher = fetcher
+        self.fetcher = fetcher or WIKIBASE_FETCHER
         self._rendered_keys = dict()
 
     def __nonzero__(self):
@@ -199,8 +199,10 @@ class Infobox(Logging):
         tpairs = []
 
         for row in soup.findall('.//tr'):
-            e_key = row.find('.//th')
-            e_val = row.find('.//td')
+            try:
+                e_key, e_val = row.findall('./*')[:2]
+            except ValueError:
+                continue
 
             if e_key is not None and e_val is not None:
                 key = totext(e_key).strip()

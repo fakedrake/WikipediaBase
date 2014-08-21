@@ -64,8 +64,10 @@ class KnowledgeBase(Provider):
 
         for ar in self.resolvers:
             res = ar.resolve(article, attr)
-            if res:
+            # Errors enchantments should get returned.
+            if res is not None:
                 return res
+
 
     @provide(name="get-classes")
     def get_classes(self, symbol):

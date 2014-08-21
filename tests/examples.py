@@ -52,13 +52,13 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "Barack Obama" "BIRTH-DATE")',
      '((:yyyymmdd 19610804))'),
     ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
-     'nil'),
-    # '(((error attribute-value-not-found :reply "Currently alive")))'),
+     # 'nil'),
+     '(((error attribute-value-not-found :reply "Currently alive")))'),
     ('(get "wikipedia-person" "Jamie Glover" "BIRTH-DATE")',
      '((:yyyymmdd 19690710))'),
     ('(get "wikipedia-person" "Jamie Glover" "DEATH-DATE")',
-     'nil'),
-    # '(((error attribute-value-not-found :reply "Currently alive")))'),
+     #  'nil'),
+     '(((error attribute-value-not-found :reply "Currently alive")))'),
     ('(get "wikipedia-person" "John Lennon" "BIRTH-DATE")',
      '((:yyyymmdd 19401009))'),
     ('(get "wikipedia-person" "John Lennon" "DEATH-DATE")',
@@ -190,9 +190,8 @@ DEGENERATE_EXAMPLES = [
     ('(get "wikipedia-term" "The Beatles" (:calculated "NUMBER"))',
      '#t'),
 
-    # Nobody can actually pass this
-    # ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
-    #  '(((error attribute-value-not-found :reply "Currently alive")))'),
+    ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
+     '(((error attribute-value-not-found :reply "Currently alive")))'),
 ]
 
 WIKI_EXAMPLES_NOT = [
@@ -222,6 +221,14 @@ WIKI_EXAMPLES_NOT = [
 ]
 
 WIKI_EXAMPLES_RX = [
+    ('(get "wikipedia-country" "United States" (:CODE "NATIONAL-ANTHEM"))',
+     r'Star\-Spangled Banner'),
+    ('(get "wikipedia-taxobox" "Birch" (:RENDERED "Family:"))',
+     r'Betulaceae'),
+    ('(get "wikipedia-writer" "Alexander Pushkin" (:CODE "LANGUAGE"))',
+     r'Russian, French'),
+    ('(get "wikipedia-language" "Persian language" (:CODE "STATES"))',
+     r'Iran.*Afghanistan'),
 
     # =====================
     # tests for get-classes
@@ -232,11 +239,11 @@ WIKI_EXAMPLES_RX = [
     ('(get-classes \"Bill Clinton\")',
      r'wikipedia-president',
      'All Wikipedia symbols have calculated class wikipedia-term'),
-    # ('(get-classes \"Bill Clinton\")',
-    #  r'wikipedia-president',
-    #  'All Wikipedia symbols have calculated class wikipedia-paragraphs'),
-    # ('(get-classes \"Bill Clinton\")',
-    #  r'wikipedia-president'),
+    ('(get-classes \"Bill Clinton\")',
+     r'wikipedia-president',
+     'All Wikipedia symbols have calculated class wikipedia-paragraphs'),
+    ('(get-classes \"Bill Clinton\")',
+     r'wikipedia-president'),
     ('(get-classes \"Ada (programming language)\")',
      r'wikipedia-programming-language'),
 
@@ -336,6 +343,7 @@ WIKI_EXAMPLES_RX = [
      r'It is bordered to the north'),
     ('(get "wikipedia-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))',
      r'influence of mothers in society'),
+
 ]
 
 WIKI_EXAMPLES_NOT_RX = [

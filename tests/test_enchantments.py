@@ -45,6 +45,11 @@ class TestEnchantments(unittest.TestCase):
         ret = str(enchantments.enchant(":key", None))
         self.assertEqual(ret, ":key")
 
+    def test_error(self):
+        ret = str(enchantments.enchant(
+            "error", {'symbol': 'sym', 'kw': dict(a=1, b=2, c='ha')}))
+        self.assertEqual(ret, '(((error sym :a "1" :c "ha" :b "2")))')
+
     def tearDown(self):
         pass
 
