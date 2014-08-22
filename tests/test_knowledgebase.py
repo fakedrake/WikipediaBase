@@ -17,10 +17,11 @@ import re
 
 from wikipediabase.knowledgebase import KnowledgeBase
 from wikipediabase.provider import Acquirer, Provider
+from wikipediabase.enchantments import EnchantedList
 
 CLINTON_ATTRS = \
-    re.sub("\s+", " ",
-           """(:code "NAME") (:code "IMAGE") (:code "ORDER") (:code "OFFICE")
+                re.sub("\s+", " ",
+                       """(:code "NAME") (:code "IMAGE") (:code "ORDER") (:code "OFFICE")
 (:code "VICEPRESIDENT") (:code "TERM-START") (:code "TERM-END") (:code
 "PREDECESSOR") (:code "SUCCESSOR") (:code "BIRTH-NAME") (:code
 "BIRTH-DATE") (:code "BIRTH-PLACE") (:code "DEATH-DATE") (:code
@@ -61,6 +62,11 @@ class TestKnowledgebase(unittest.TestCase):
     def test_classes(self):
         self.assertIn("wikipedia-president",
                       str(self.fe.resources()['get-classes']("Bill Clinton")))
+
+    def test_sort_symbols(self):
+        ench = self.fe.resources()['sort-symbols']("Mary Shakespeare", "Batman")
+        self.assertIs(type(ench), EnchantedList)
+        self.assertEqual(ench.val, ["Batman", "Mary Shakespeare"])
 
     def tearDown(self):
         pass

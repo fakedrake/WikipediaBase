@@ -8,6 +8,7 @@ from .infobox import Infobox
 from .enchantments import enchant, EnchantedList
 from .resolvers import WIKIBASE_RESOLVERS
 from .classifiers import WIKIBASE_CLASSIFIERS
+from .util import get_article
 
 import re
 
@@ -37,7 +38,7 @@ class KnowledgeBase(Provider):
     @provide(name='sort-symbols')
     def sort_symbols(self, *args):
         key = lambda a: len(' '.join(get_article(a).paragraphs()))
-        return enchant(sorted(args, reverse=True, key=key))
+        return enchant(None, sorted(args, reverse=True, key=key))
 
     @provide()
     def get(self, v1, v2, v3=None):

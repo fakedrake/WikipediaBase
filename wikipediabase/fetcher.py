@@ -56,7 +56,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         try:
             return self.urlopen(*args, **kwargs).read()
         except HTTPError:
-            raise LookupError("404 - Not found: " + url)
+            raise LookupError("404 - Uropen args: %s" % repr(args))
 
     def urlopen(self, symbol, get=None):
         """
