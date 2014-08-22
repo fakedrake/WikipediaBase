@@ -11,3 +11,6 @@ notifications:
   email:
     - sfelshin@csail.mit.edu
     - cperivol@csail.mit.edu
+
+  on_success: always
+  on_failure: always
