@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 A telnet 'chatroom' server.
 """
@@ -15,6 +17,8 @@ class TelnetServer(Logging):
     """
     The telnet server.
     """
+
+    prompt = u"\n> "
 
     def __init__(self, answer=None, ip="0.0.0.0", port=1984,
                  channel=10, safeword=None):
@@ -99,7 +103,9 @@ class TelnetServer(Logging):
                     ans = self.answer(data)
                     if ans:
                         self.log().info("Answering '%s'" % ans)
-                        sock.send(ans)
+
+                        sock.send(ans.encode('utf-8'))
+                        sock.send(self.prompt)
 
             self.lock.acquire()
 

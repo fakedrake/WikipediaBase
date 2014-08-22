@@ -36,7 +36,7 @@ class InfoboxClassifier(BaseClassifier):
         return enchant(None, types)
 
 
-class CategoryClassifier(BaseClassifier):
+class _CategoryClassifier(BaseClassifier):
 
     def classify(self, symbol, fetcher=None):
         article = get_article(symbol, fetcher)

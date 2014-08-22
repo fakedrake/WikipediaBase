@@ -34,6 +34,11 @@ class KnowledgeBase(Provider):
         self.resolvers = kw.get('resolvers', WIKIBASE_RESOLVERS)
         self.classifiers = kw.get('classifiers', WIKIBASE_CLASSIFIERS)
 
+    @provide(name='sort-symbols')
+    def sort_symbols(self, *args):
+        key = lambda a: len(' '.join(get_article(a).paragraphs()))
+        return enchant(sorted(args, reverse=True, key=key))
+
     @provide()
     def get(self, v1, v2, v3=None):
         """

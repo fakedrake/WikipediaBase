@@ -12,6 +12,35 @@ _CONTEXT = dict()
 
 # General tools
 
+# XXX: Plug in here for permanent memoization. You may need to do some
+# garbage collectio here.
+def memoized(fn):
+    def wrap(*args, **kw):
+
+        try:
+            kwkey = hash(kw.items())
+            argkey = hash(args)
+            key = hash((kwkey, argkey))
+        except TypeError:
+            return fn(*args, **kw)
+
+        ret = fn.memoized.get(key, None)
+
+        if ret is not None:
+            return ret
+
+        ret = fn(*args, **kw)
+        fn.memoized[key] = ret
+        return ret
+
+    # I dont worry too much about the rest of the signature but I
+    # really need the name.
+    if hasattr(fn, '_provided'):
+        wrap.__name__ = fn.__name__
+        wrap._provided = fn._provided
+
+    return wrap
+
 
 def iwindow(seq, n):
     """
@@ -27,23 +56,6 @@ def iwindow(seq, n):
     for elem in it:
         result = result[1:] + (elem,)
         yield result
-
-
-def memoize(f):
-    """ Memoization decorator for functions taking one or more arguments. """
-    class memodict(dict):
-
-        def __init__(self, f):
-            self.f = f
-
-        def __call__(self, *args, **kwargs):
-            return self[(args, kwargs)]
-
-        def __missing__(self, key):
-            ret = self[key] = self.f(*key)
-            return ret
-
-    return memodict(f)
 
 
 def get_infobox(symbol, fetcher=None):
@@ -140,6 +152,10 @@ def subclasses(cls, instantiate=True, **kw):
 
     lcls = cls.__subclasses__()
     rcls = lcls + list(chain.from_iterable([c.__subclasses__() for c in lcls]))
+    for c in rcls:
+        assert isinstance(c.priority, int), \
+        "type(%s . priority) = %s != int" % (repr(c), type(c.priority.name))
+
     clss = sorted(rcls, key=lambda c: c.priority, reverse=True)
 
     if not instantiate:
@@ -158,5 +174,6 @@ def tostring(et):
     return ET.tostring(et, method='html', encoding='utf-8')
 
 
+@memoized
 def fromstring(txt):
     return html.fromstring(txt)

@@ -14,6 +14,10 @@ from .log import Logging
 from .util import subclasses
 
 
+# For fully deterministic enchantments use this prioroty.
+MIN_PRIORITY = 0
+MAX_PRIORITY = 15
+
 def kv_pair(k, v):
     if isinstance(k, basestring):
         return ":%s %s" % (k, v)
@@ -27,9 +31,19 @@ def erepr(v):
 
     return repr(v)
 
-# For fully deterministic enchantments use this prioroty.
-MAX_PRIORITY = 15
+def mid_priority():
+    """
+    Just count. Later classes override previous ones.
+    """
 
+    for i in xrange(MIN_PRIORITY + 1, MAX_PRIORITY):
+        yield i
+
+    while True:
+        warnings.warn("Increase MAX_PRIORITY")
+        yield i
+
+MID_PRIORITY = mid_priority()
 
 class Enchanted(Logging):
 
@@ -39,9 +53,14 @@ class Enchanted(Logging):
     makes sense to python.
 
     Note that not only answers but also questions are enchanted.
+
+    To use this subclass it and provide any of the following:
+
+    - _str: string representation
+    - should_parse
+    - parse_val
     """
 
-    force_tag = None
     priority = 0
     literal = False
 
@@ -77,7 +96,7 @@ class Enchanted(Logging):
 
     def __repr__(self):
         return u"<%s object (%s)>" % (
-            self.__class__, kv_pair(self.tag_str(), self.val_str()))
+            self.__class__.__name__, kv_pair(self.tag_str(), self.val_str()))
 
     def __str__(self):
         if self.literal:
@@ -102,7 +121,10 @@ class Enchanted(Logging):
 
 
 class EnchantedString(Enchanted):
-    priority = 1
+    priority = next(MID_PRIORITY)
+
+    def should_parse(self):
+        return isinstance(self.val, basestring)
 
     def tag_str(self):
         if self.tag == "code" or self.tag is None:
@@ -120,7 +142,7 @@ class EnchantedList(Enchanted):
     This is coordinates and other things like that
     """
 
-    priority = 4
+    priority = next(MID_PRIORITY)
 
     def should_parse(self):
         return hasattr(self.val, '__iter__')
@@ -143,8 +165,8 @@ class EnchantedDate(Enchanted):
     """
     Date enchantment but using the overlay framework.
     """
-    force_tag = "yyyymmdd"
-    priority = 5
+
+    priority = next(MID_PRIORITY)
 
     def val_str(self):
         d, m, y = self.val
@@ -166,6 +188,7 @@ class EnchantedDate(Enchanted):
         return tuple(int((i + j) / 2) for i, j in zip(d1, d2))
 
     def parse_val(self, txt):
+        # Might be already parsed
         if not isinstance(txt, basestring):
             return txt
 
@@ -179,7 +202,7 @@ class EnchantedDate(Enchanted):
 
 
 class _EnchantedDateVoting(EnchantedDate):
-    priority = 5
+    priority = next(MID_PRIORITY)
 
     def parse_val(self, txt):
         """
@@ -228,7 +251,6 @@ class _EnchantedDateVoting(EnchantedDate):
 
 EnchantedDateVoting = _EnchantedDateVoting
 
-
 class EnchantedStringDict(Enchanted):
 
     """
@@ -237,7 +259,7 @@ class EnchantedStringDict(Enchanted):
 
     # Just so the test regexes match.
     reverse = True
-    priority = 7
+    priority = next(MID_PRIORITY)
 
     def should_parse(self):
         return isinstance(self.val, dict)

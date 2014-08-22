@@ -31,7 +31,7 @@ class TestTelnet(unittest.TestCase):
     def test_threaded(self):
         self.srv.start(thread=True)
         self.cli.write("Awesome!!\n")
-        self.assertEqual(self.cli.read_some(), "You said 'Awesome!!'")
+        self.assertIn( "You said 'Awesome!!", self.cli.read_some())
 
     def tearDown(self):
         self.srv.stop()

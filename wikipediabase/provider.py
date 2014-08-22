@@ -1,18 +1,24 @@
 from itertools import chain
 
 from log import Logging
+from .util import memoized
 
 
-def provide(name=None):
+def provide(name=None, memoize=True):
     """
-    Decorator for methods of providers to be automagically provided.
+    Argumented decorator for methods of providers to be automagically
+    provided. It also may provide memoization. The returned functions
+    are unbound.
     """
 
-    def wrap(fn):
+    def decorator(fn):
         fn._provided = name.lower() if name else name
-        return fn
+        if memoize:
+            return memoized(fn)
+        else:
+            return fn
 
-    return wrap
+    return decorator
 
 
 class ProviderMeta(type):
