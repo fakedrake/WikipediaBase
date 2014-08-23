@@ -19,15 +19,14 @@ from wikipediabase.knowledgebase import KnowledgeBase
 from wikipediabase.provider import Acquirer, Provider
 from wikipediabase.enchantments import EnchantedList
 
-CLINTON_ATTRS = \
-                re.sub("\s+", " ",
-                       """(:code "NAME") (:code "IMAGE") (:code "ORDER") (:code "OFFICE")
-(:code "VICEPRESIDENT") (:code "TERM-START") (:code "TERM-END") (:code
-"PREDECESSOR") (:code "SUCCESSOR") (:code "BIRTH-NAME") (:code
-"BIRTH-DATE") (:code "BIRTH-PLACE") (:code "DEATH-DATE") (:code
-"DEATH-PLACE") (:code "PARTY") (:code "SPOUSE") (:code "CHILDREN")
-(:code "ALMA-MATER") (:code "RELIGION") (:code "SIGNATURE") (:code
-"SIGNATURE-ALT")""")
+CLINTON_ATTRS = (
+    '(:code "NAME") (:code "IMAGE") (:code "ORDER") (:code "OFFICE") '
+    '(:code "VICEPRESIDENT") (:code "TERM-START") (:code "TERM-END") (:code '
+    '"PREDECESSOR") (:code "SUCCESSOR") (:code "BIRTH-NAME") (:code '
+    '"BIRTH-DATE") (:code "BIRTH-PLACE") (:code "DEATH-DATE") (:code '
+    '"DEATH-PLACE") (:code "PARTY") (:code "SPOUSE") (:code "CHILDREN") '
+    '(:code "ALMA-MATER") (:code "RELIGION") (:code "SIGNATURE") (:code '
+    '"SIGNATURE-ALT")' )
 
 
 def _as(atrrs_string):
