@@ -36,6 +36,19 @@ class TestUtil(unittest.TestCase):
         self.assertIs(Article, type(util.get_article(self.symbol)))
         self.assertIs(Article, type(util.get_article(art)))
 
+    side = 1
+    def test_memoized(self):
+        @util.memoized
+        def side_effect(dc):
+            self.side += 1
+            return self.side + 2
+
+        self.assertEqual(side_effect(1), 4)
+        # Should have been 5 if not memoized
+        self.assertEqual(side_effect(1), 4)
+        # Also nothng was called so side should remain the same
+        self.assertEqual(self.side, 2)
+
     def test_interval(self):
         class DateTime(datetime.datetime):
             x = 0

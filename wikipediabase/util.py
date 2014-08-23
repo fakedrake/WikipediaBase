@@ -4,35 +4,43 @@ import os
 import urllib
 import re
 import collections
+import functools
 
 import lxml.etree as ET
+import copy
 from lxml import html
 
 _CONTEXT = dict()
 
 # General tools
-
 # XXX: Plug in here for permanent memoization. You may need to do some
-# garbage collectio here.
-def memoized(fn):
-    def wrap(*args, **kw):
+# garbage collection here.
 
+# XXX: I deepcopy objects. If you disable that be very
+# careful. However use this only on out facing functions.
+DEEPCOPY = True
+def memoized(fn):
+    @functools.wraps(fn)
+    def wrap(*args, **kw):
         try:
-            kwkey = hash(kw.items())
+            kwkey = hash(tuple(kw.items()))
             argkey = hash(args)
             key = hash((kwkey, argkey))
         except TypeError:
-            return fn(*args, **kw)
+            return wrap(*args, **kw)
 
-        ret = fn.memoized.get(key, None)
 
-        if ret is not None:
-            return ret
+        if key in wrap.memoized:
+            if DEEPCOPY:
+                return copy.deepcopy(wrap.memoized[key])
+            else:
+                return wrap.memoized[key]
 
         ret = fn(*args, **kw)
-        fn.memoized[key] = ret
+        wrap.memoized[key] = copy.deepcopy(ret)
         return ret
 
+    wrap.memoized = dict()
     # I dont worry too much about the rest of the signature but I
     # really need the name.
     if hasattr(fn, '_provided'):
@@ -40,7 +48,6 @@ def memoized(fn):
         wrap._provided = fn._provided
 
     return wrap
-
 
 def iwindow(seq, n):
     """
@@ -173,7 +180,16 @@ def totext(et):
 def tostring(et):
     return ET.tostring(et, method='html', encoding='utf-8')
 
-
-@memoized
+# A memoization
 def fromstring(txt):
-    return html.fromstring(txt)
+    if not hasattr(fromstring, 'memoized'):
+        fromstring.memoized = dict()
+
+    if txt in fromstring.memoized:
+        ret = copy.deepcopy(fromstring.memoized[txt])
+    else:
+        ret = html.fromstring(txt)
+        # Keep a separate copy in the cache
+        fromstring.memoized[txt] = copy.deepcopy(ret)
+
+    return ret

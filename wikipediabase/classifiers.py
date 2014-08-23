@@ -5,7 +5,7 @@ from .util import get_infobox, get_article, subclasses
 from .log import Logging
 from .enchantments import enchant
 
-
+# Return a LIST of classes
 class BaseClassifier(Logging):
 
     """
@@ -33,7 +33,7 @@ class InfoboxClassifier(BaseClassifier):
         ibox = get_infobox(symbol, fetcher)
         types = ibox.start_types()
 
-        return enchant(None, types)
+        return types
 
 
 class _CategoryClassifier(BaseClassifier):

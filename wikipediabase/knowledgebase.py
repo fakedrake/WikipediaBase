@@ -5,7 +5,7 @@ from itertools import chain
 from .provider import Provider, provide
 from .fetcher import WIKIBASE_FETCHER
 from .infobox import Infobox
-from .enchantments import enchant, EnchantedList
+from .enchantments import enchant
 from .resolvers import WIKIBASE_RESOLVERS
 from .classifiers import WIKIBASE_CLASSIFIERS
 from .util import get_article
@@ -84,7 +84,7 @@ class KnowledgeBase(Provider):
         it = chain.from_iterable((c.classify(symbol)
                                   for c in self.classifiers))
 
-        return enchant(None, it)
+        return enchant(None, list(it))
 
     @provide(name="get-attributes")
     def get_attributes(self, wb_class,  symbol=None):

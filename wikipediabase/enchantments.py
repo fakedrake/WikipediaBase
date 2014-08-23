@@ -156,8 +156,8 @@ class EnchantedList(Enchanted):
     def val_str(self):
         return " ".join([erepr(v) for v in self.val])
 
-    def __iter__(self):
-        return iter(self.val)
+    def __contains__(self, val):
+        return val in self.val
 
 
 class EnchantedDate(Enchanted):

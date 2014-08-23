@@ -61,6 +61,11 @@ class TestKnowledgebase(unittest.TestCase):
     def test_classes(self):
         self.assertIn("wikipedia-president",
                       str(self.fe.resources()['get-classes']("Bill Clinton")))
+        # The list gets iterated and memoization fails.
+        self.assertIn("wikipedia-president",
+                      str(self.fe.resources()['get-classes']("Bill Clinton")),
+                      "Secnd time failed. Memoization problem")
+
 
     def test_sort_symbols(self):
         ench = self.fe.resources()['sort-symbols']("Mary Shakespeare", "Batman")
