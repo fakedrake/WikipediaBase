@@ -25,11 +25,45 @@ class TestUtil(unittest.TestCase):
 
     def setUp(self):
         self.symbol = "Led Zeppelin"
+        self.side = 0
+
 
     def test_infobox(self):
         ibx = Infobox(self.symbol)
         self.assertIs(Infobox, type(util.get_infobox(self.symbol)))
         self.assertIs(Infobox, type(util.get_infobox(ibx)))
+
+    def test_memoizer(self):
+        @util.memoized
+        def side_effect(a, b=1):
+            self.side += 1
+            return a*b
+
+        side_effect(1)
+        self.assertEqual(self.side, 1)
+        side_effect(1)
+        self.assertEqual(self.side, 1)
+        side_effect(2)
+        self.assertEqual(self.side, 2)
+        self.assertEqual(side_effect(1), 1)
+        self.assertEqual(side_effect(2), 2)
+        self.assertEqual(side_effect(2, b=2), 4)
+        self.assertEqual(side_effect(2, 3), 6)
+
+    def test_memoized_method(self):
+        class A(object):
+            def __init__(self, a):
+                self.a = a
+
+            @util.memoized
+            def sf(self, b):
+                return self.a + b
+
+        a = A(1)
+        self.assertEqual(a.sf(3), 4)
+        b = A(2)
+        self.assertEqual(b.sf(3), 5)
+
 
     def test_article(self):
         art = Article(self.symbol)

@@ -4,11 +4,10 @@ from itertools import chain
 
 from .provider import Provider, provide
 from .fetcher import WIKIBASE_FETCHER
-from .infobox import Infobox
 from .enchantments import enchant, EnchantedList
 from .resolvers import WIKIBASE_RESOLVERS
 from .classifiers import WIKIBASE_CLASSIFIERS
-from .util import get_article
+from .util import get_article, get_infobox
 
 import re
 
@@ -100,7 +99,7 @@ class KnowledgeBase(Provider):
         Get all attributes of a symbol you cna find.
         """
 
-        ibox = Infobox(symbol, self.fetcher)
+        ibox = get_infobox(symbol, self.fetcher)
 
         ret = []
         for k, v in ibox.markup_parsed_iter():

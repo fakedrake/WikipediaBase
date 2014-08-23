@@ -3,11 +3,15 @@ import re
 import lxml.etree as ET
 from collections import defaultdict
 
-from .util import totext, tostring, fromstring
 from .log import Logging
-from .article import Article
 from .fetcher import WIKIBASE_FETCHER
 from .infobox_tree import ibx_type_superclasses
+from .util import (totext,
+                   tostring,
+                   fromstring,
+                   get_infobox,
+                   get_article,
+                   memoized)
 
 INFOBOX_ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_]*)\s*=" \
                           "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
@@ -61,8 +65,8 @@ class Infobox(Logging):
                 types.append(dominant)
 
                 if extend:
-                    title = Article(dominant,
-                                    self.fetcher).title()
+                    title = get_article(dominant,
+                                        self.fetcher).title()
                     if self.__tt(dominant) != self.__tt(title):
                         types.append(title)
 
@@ -120,14 +124,18 @@ class Infobox(Logging):
         if ret is not False:
             return ret
 
-        for t in self.types(extend=False):
-            tibox = Infobox(t)
+        for tibox in self.type_infoboxes():
             for k, v in tibox.html_parsed():
                 if v == '{{{%s}}}' % mkey or v == mkey + " text":
                     self._rendered_keys[mkey] = k
                     return k
 
         self._rendered_keys[mkey] = None
+
+    @memoized
+    def type_infoboxes(self):
+        return [get_infobox(i) for i in self.types(extend=False)]
+
 
     def markup_parsed_iter(self):
         """
@@ -157,6 +165,7 @@ class Infobox(Logging):
         txt = self.fetcher.source(self.title)
         return self._braces_markup(txt)
 
+    @memoized
     def html_source(self):
         """
         A div with all the infoboxes in it.
@@ -173,6 +182,7 @@ class Infobox(Logging):
     def rendered(self):
         return totext(self.html_source())
 
+    @memoized
     def html_parsed(self):
         """
         Given the infobox html or as soup, return a list of (key, value)

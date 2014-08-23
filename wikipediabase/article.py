@@ -3,7 +3,7 @@ import re
 import itertools
 
 from .log import Logging
-from .util import markup_categories, fromstring, tostring, totext
+from .util import markup_categories, fromstring, tostring, totext, get_infobox
 
 from .fetcher import WIKIBASE_FETCHER
 
@@ -36,7 +36,7 @@ class Article(Logging):
 
     def infobox(self):
         if not self.ibox:
-            self.ibox = Infobox(self.title, fetcher=self.fetcher)
+            self.ibox = get_infobox(self.title, fetcher=self.fetcher)
 
         return self.ibox
 

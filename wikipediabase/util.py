@@ -4,6 +4,7 @@ import os
 import urllib
 import re
 import collections
+import functools
 
 import lxml.etree as ET
 from lxml import html
@@ -14,24 +15,24 @@ _CONTEXT = dict()
 
 # XXX: Plug in here for permanent memoization. You may need to do some
 # garbage collectio here.
-def memoized(fn):
+def memoized(fn, cache=None):
+    @functools.wraps(fn)
     def wrap(*args, **kw):
-
         try:
-            kwkey = hash(kw.items())
+            kwkey = hash(tuple(kw.items()))
             argkey = hash(args)
             key = hash((kwkey, argkey))
         except TypeError:
             return fn(*args, **kw)
 
-        ret = fn.memoized.get(key, None)
-
-        if ret is not None:
+        try:
+            return wrap.cache[key]
+        except KeyError:
+            ret = fn(*args, **kw)
+            wrap.cache[key] = ret
             return ret
 
-        ret = fn(*args, **kw)
-        fn.memoized[key] = ret
-        return ret
+    wrap.cache = dict()
 
     # I dont worry too much about the rest of the signature but I
     # really need the name.
@@ -41,6 +42,8 @@ def memoized(fn):
 
     return wrap
 
+# def memoized(obj):
+#     return obj
 
 def iwindow(seq, n):
     """
