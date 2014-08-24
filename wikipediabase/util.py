@@ -1,4 +1,5 @@
 from itertools import islice, takewhile, dropwhile, chain
+from urlparse import urlparse
 
 import os
 import urllib
@@ -161,7 +162,7 @@ def subclasses(cls, instantiate=True, **kw):
     rcls = lcls + list(chain.from_iterable([c.__subclasses__() for c in lcls]))
     for c in rcls:
         assert isinstance(c.priority, int), \
-        "type(%s . priority) = %s != int" % (repr(c), type(c.priority.name))
+            "type(%s . priority) = %s != int" % (repr(c), type(c.priority.name))
 
     clss = sorted(rcls, key=lambda c: c.priority, reverse=True)
 
@@ -193,3 +194,21 @@ def fromstring(txt):
         fromstring.memoized[txt] = copy.deepcopy(ret)
 
     return ret
+
+def expand(fn, ite):
+    return reduce(lambda a,b: a+b, [fn(i) for i in ite])
+
+def concat(*args):
+
+    return reduce(lambda a,b: a+b,
+                  [list(i) if isinstance(i, list) else [i]
+                   for i in args])
+
+
+def url_get_dict(url):
+    ret = urlparse(url)
+
+    if ret.query:
+        return dict(map(lambda x: x.split('='), ret.query.split('&')))
+    else:
+        return dict()

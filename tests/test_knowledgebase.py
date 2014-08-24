@@ -72,6 +72,9 @@ class TestKnowledgebase(unittest.TestCase):
         self.assertIs(type(ench), EnchantedList)
         self.assertEqual(ench.val, ["Batman", "Mary Shakespeare"])
 
+    def test_synonyms(self):
+        self.assertIn("batman", self.kb.synonyms("bat man"))
+
     def tearDown(self):
         pass
 

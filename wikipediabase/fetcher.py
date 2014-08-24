@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 try:
-    from urllib2 import urlopen, HTTPError
+    import urllib2 as ul
 except:
-    from urllib import urlopen, HTTPError
+    import urllib as ul
 
 from urllib import urlencode
 import re
@@ -53,16 +53,14 @@ class WikipediaSiteFetcher(BaseFetcher):
         return tag
 
     def download(self, *args, **kwargs):
-        try:
             return self.urlopen(*args, **kwargs).read()
-        except HTTPError:
-            raise LookupError("404 - Uropen args: %s" % repr(args))
 
-    def urlopen(self, symbol, get=None):
+    def urlopen(self, symbol, get=None, base=None):
         """
         Download a wikipedia article.
 
-        :param symbol: The wikipedia symbol we are interested in.
+        :param symbol: The wikipedia symbol we are interested in. Set
+        this to None to do different calls.
         :param get: dictionary of the get request. eg. `{'action':'edit'}`
         :returns: HTML code
         """
@@ -71,11 +69,20 @@ class WikipediaSiteFetcher(BaseFetcher):
             get = dict(title=symbol)
         else:
             get = get.copy()
-            get.update(title=symbol)
+            if symbol is not None:
+                get.update(title=symbol)
 
-        url = "%s/%s?%s" % (self.url, self.base,
+        url = "%s/%s?%s" % (self.url, base or self.base,
                             urlencode(get))
-        return urlopen(url)
+
+        try:
+            return ul.urlopen(url)
+        except ul.HTTPError:
+            raise LookupError("404 - Uropen args: %s" % repr(url))
+
+
+    def redirect_url(self, symbol):
+        return self.urlopen(symbol).geturl()
 
     def source(self, symbol, get_request=None, redirect=True):
         """
@@ -127,7 +134,18 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
 
         super(CachingSiteFetcher, self).__init__(*args, **kw)
 
-    def download(self, symbol, get=None):
+    def redirect_url(self, symbol):
+        return self._db_fetch("REDIRECT:" + symbol,
+                         lambda sym: super(CachingSiteFetcher,
+                                           self).redirect_url(symbol), symbol)
+
+    def download(self, symbol, get=None, base=None):
+        dkey = "%s;%s" % (symbol, get) if not base else \
+               "%s:%s;%s" % (base, symbol, get)
+        callback = super(CachingSiteFetcher, self).download
+        return self._db_fetch(dkey, callback, symbol, get=get, base=base)
+
+    def _db_fetch(self, dkey, callback, *args, **kwargs):
         try:
             if not hasattr(self, 'data'):
                 self.data = json.load(open(self._fname))
@@ -135,14 +153,13 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         except (ValueError, IOError):
             self.data = dict()
 
-        dkey = "%s;%s" % (symbol, get)
         ret = None
 
         if dkey in self.data:
             ret = self.data[dkey]
 
         if not self.offline and not ret:
-            pg = super(CachingSiteFetcher, self).download(symbol, get=get)
+            pg = callback(*args, **kwargs)
             if pg:
                 self.data[dkey] = pg
                 json.dump(self.data, open(self._fname, "w"))

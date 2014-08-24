@@ -1,12 +1,17 @@
 import lxml.etree as ET
+import os
 import re
 import itertools
+from urlparse import urlparse
 
 from .log import Logging
-from .util import markup_categories, fromstring, tostring, totext
-
+from .util import (markup_categories,
+                   fromstring,
+                   tostring,
+                   totext,
+                   memoized,
+                   url_get_dict)
 from .fetcher import WIKIBASE_FETCHER
-
 
 # XXX: also support images.
 class Article(Logging):
@@ -22,8 +27,14 @@ class Article(Logging):
         self.fetcher = fetcher
         self.ibox = None
 
+    @memoized
     def url(self):
         return self.fetcher.urlopen(self._title).geturl()
+
+    def symbol(self):
+        url = self.url()
+        return url_get_dict(url).get('title') or \
+            os.path.basename(url)
 
     def _soup(self):
         if not hasattr(self, '__soup'):

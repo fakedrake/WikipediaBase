@@ -3,7 +3,7 @@ try:
 except ImportError:
     from unittest import TestCase
 
-from . import test_resolvers
+from . import test_fetcher
 
 
 class BaseTestCase(TestCase):

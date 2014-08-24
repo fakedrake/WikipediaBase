@@ -1,8 +1,38 @@
 import os
 from wikipediabase.fetcher import CachingSiteFetcher
+import urllib2 as urllib
 
 ALL_TEST_PAGES = [
 ]
+
+class MockURLOpen(object):
+    """
+    Always redirect to redirect_url and receive content.
+    """
+
+    def __init__(self, redirect_url, content):
+        self.redirect_url = redirect_url
+        self.content = content
+
+    def __enter__(self):
+        self.original = urllib.urlopen
+
+
+        class MockURLOpen(object):
+            def __init__(self, _):
+                pass
+
+            def geturl(slf):
+                return self.redirect_url
+
+            def read(slf):
+                return self.content
+
+
+        urllib.urlopen = MockURLOpen
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        urllib.urlopen = self.original
 
 
 def data(fname):

@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from common import TEST_FETCHER_SETUP
+from common import TEST_FETCHER_SETUP, MockURLOpen
 
 from wikipediabase.article import Article
 from wikipediabase import fetcher
@@ -41,6 +41,24 @@ class TestArticle(unittest.TestCase):
         rtcl = Article("Baal", self.ftchr)
         self.assertEqual(rtcl.headings()[-1], "External links")
         self.assertEqual(len(list(rtcl.headings())), 15)
+
+    def test_symbol(self):
+        art = Article("Baal")
+        self.assertEqual(art.symbol(), "Baal")
+
+        redir = "http://fake_wikipedia.c0m/w/index.php?title=han_solo"
+        with MockURLOpen(redir, "Han solo is a bitch."):
+            self.assertEqual(Article("Han Solo").symbol(), 'han_solo')
+
+        redir = "http://fake_wikipedia.c0m/w/han_solo"
+        with MockURLOpen(redir, "Han solo is a bitch."):
+            self.assertEqual(Article("Han Solo").symbol(), 'han_solo')
+
+    def test_redirect(self):
+        # Actually redirects the source
+        self.assertGreater(len(Article("Barack Hussein Obama").markup_source()),
+                         30000)
+
 
     def tearDown(self):
         pass

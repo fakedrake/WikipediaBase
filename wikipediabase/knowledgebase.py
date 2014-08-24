@@ -8,6 +8,7 @@ from .infobox import Infobox
 from .enchantments import enchant
 from .resolvers import WIKIBASE_RESOLVERS
 from .classifiers import WIKIBASE_CLASSIFIERS
+from .synonym_inducers import WIKIBASE_INDUCERS
 from .util import get_article
 
 import re
@@ -34,6 +35,7 @@ class KnowledgeBase(Provider):
         self.fetcher = kw.get('fetcher', WIKIBASE_FETCHER)
         self.resolvers = kw.get('resolvers', WIKIBASE_RESOLVERS)
         self.classifiers = kw.get('classifiers', WIKIBASE_CLASSIFIERS)
+        self.synonym_inducers = kw.get('synonym_inducers', WIKIBASE_INDUCERS)
 
     @provide(name='sort-symbols')
     def sort_symbols(self, *args):
@@ -94,6 +96,14 @@ class KnowledgeBase(Provider):
         # We dont really need wb_class, symbol is eough so it might
         # not be provided
         return self._get_attrs(wb_class)
+
+    def synonyms(self, symbol):
+        synonyms = []
+
+        for si in self.synonym_inducers:
+            synonyms.extend(si.induce(symbol))
+
+        return enchant(None, synonyms)
 
     def _get_attrs(self, symbol):
         """
