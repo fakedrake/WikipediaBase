@@ -7,12 +7,12 @@ except:
 
 from urllib import urlencode
 import re
-import json
+import  dbm
 
 import lxml.etree as ET
 
 from .log import Logging
-from .util import subclasses, fromstring
+from .util import subclasses, fromstring, totext
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
@@ -35,12 +35,19 @@ class BaseFetcher(Logging):
     def source(self, symbol, redirect=True):
         return symbol
 
+    def caching_fetch(self, dkey, callback, *args, **kwargs):
+        """
+        If you support caching use this.
+        """
+
+        return callback(*args, **kwargs)
+
 
 class WikipediaSiteFetcher(BaseFetcher):
 
     priority = 1
 
-    def __init__(self, url="http://en.wikipedia.org", base="w", **kw):
+    def __init__(self, url="http://en.wikipedia.org", base="w/index.php", **kw):
         self.url = url.strip('/')
         self.base = base.strip('/')
 
@@ -48,9 +55,8 @@ class WikipediaSiteFetcher(BaseFetcher):
         """
         Get the source from an html soup of the edit page.
         """
-        tag = u"".join(soup.find(".//*[@id='wpTextbox1']").itertext())
+        return totext(soup.find(".//*[@id='wpTextbox1']"))
 
-        return tag
 
     def download(self, *args, **kwargs):
             return self.urlopen(*args, **kwargs).read()
@@ -135,7 +141,7 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         super(CachingSiteFetcher, self).__init__(*args, **kw)
 
     def redirect_url(self, symbol):
-        return self._db_fetch("REDIRECT:" + symbol,
+        return self.caching_fetch("REDIRECT:" + symbol,
                          lambda sym: super(CachingSiteFetcher,
                                            self).redirect_url(symbol), symbol)
 
@@ -143,15 +149,11 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         dkey = "%s;%s" % (symbol, get) if not base else \
                "%s:%s;%s" % (base, symbol, get)
         callback = super(CachingSiteFetcher, self).download
-        return self._db_fetch(dkey, callback, symbol, get=get, base=base)
+        return self.caching_fetch(dkey, callback, symbol, get=get, base=base)
 
-    def _db_fetch(self, dkey, callback, *args, **kwargs):
-        try:
-            if not hasattr(self, 'data'):
-                self.data = json.load(open(self._fname))
-
-        except (ValueError, IOError):
-            self.data = dict()
+    def caching_fetch(self, dkey, callback, *args, **kwargs):
+        if not hasattr(self, 'data'):
+            self.data = dbm.open(self._fname, 'c')
 
         ret = None
 
@@ -159,19 +161,31 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
             ret = self.data[dkey]
 
         if not self.offline and not ret:
-            pg = callback(*args, **kwargs)
-            if pg:
-                self.data[dkey] = pg
-                json.dump(self.data, open(self._fname, "w"))
-                ret = pg
+            ret = callback(*args, **kwargs)
+            if ret:
+                self.data[dkey] = ret
+
 
         if ret is not None:
-            if isinstance(ret, unicode):
-                return ret
-            else:
-                return ret.decode('utf-8')
+            return ret.decode('utf-8')
 
         raise LookupError("Failed to find page '%s' (%s online)." %
                           (symbol, "didnt look" if self.offline else "looked"))
+
+
+class StaticFetcher(BaseFetcher):
+    """
+    Will always return constant html and markup.
+    """
+
+    def __init__(self, html=None, markup=None):
+        self.html = html
+        self.markup = markup
+
+    def download(self, *args, **kw):
+        return self.html
+
+    def source(self, *args, **kw):
+        return self.markup
 
 WIKIBASE_FETCHER = CachingSiteFetcher()

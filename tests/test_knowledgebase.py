@@ -20,21 +20,7 @@ from wikipediabase.provider import Acquirer, Provider
 from wikipediabase.enchantments import EnchantedList
 
 CLINTON_ATTRS = (
-    '(:code "NAME") (:code "IMAGE") (:code "ORDER") (:code "OFFICE") '
-    '(:code "VICEPRESIDENT") (:code "TERM-START") (:code "TERM-END") (:code '
-    '"PREDECESSOR") (:code "SUCCESSOR") (:code "BIRTH-NAME") (:code '
-    '"BIRTH-DATE") (:code "BIRTH-PLACE") (:code "DEATH-DATE") (:code '
-    '"DEATH-PLACE") (:code "PARTY") (:code "SPOUSE") (:code "CHILDREN") '
-    '(:code "ALMA-MATER") (:code "RELIGION") (:code "SIGNATURE") (:code '
-    '"SIGNATURE-ALT")' )
-
-
-def _as(atrrs_string):
-    """
-    Split attributes string so we can compare lists
-    """
-
-    return atrrs_string.split(") (")
+u'(:code "NAME"', u':code "IMAGE"', u':code "ORDER"', u':code "OFFICE"', u':code "VICEPRESIDENT"', u':code "TERM-START"', u':code "TERM-END"', u':code "PREDECESSOR"', u':code "SUCCESSOR"', u':code "ORDER1"', u':code "OFFICE1"', u':code "LIEUTENANT1"', u':code "TERM-START1"', u':code "TERM-END1"', u':code "PREDECESSOR1"', u':code "SUCCESSOR1"', u':code "LIEUTENANT2"', u':code "TERM-START2"', u':code "TERM-END2"', u':code "PREDECESSOR2"', u':code "SUCCESSOR2"', u':code "ORDER3"', u':code "OFFICE3"', u':code "GOVERNOR3"', u':code "TERM-START3"', u':code "TERM-END3"', u':code "PREDECESSOR3"', u':code "SUCCESSOR3"', u':code "BIRTH-NAME"', u':code "BIRTH-DATE"', u':code "BIRTH-PLACE"', u':code "DEATH-DATE" :rendered "Died"', u':code "DEATH-PLACE"', u':code "PARTY" :rendered "Political party"', u':code "PROFESSION" :rendered "Profession"', u':code "PARENTS" :rendered "Parents"', u':code "RELATIONS" :rendered "Relations"', u':code "SPOUSE" :rendered "Spouse(s)"', u':code "CHILDREN" :rendered "Children"', u':code "ALMA-MATER"', u':code "RELIGION" :rendered "Religion"', u':code "SIGNATURE"', u':code "SIGNATURE-ALT")')
 
 
 class TestKnowledgebase(unittest.TestCase):
@@ -52,10 +38,9 @@ class TestKnowledgebase(unittest.TestCase):
                                                             "Bill Clinton"))
 
     def test_attributes_format(self):
-        result_attrs = _as(
-            self.fe.resources()['get-attributes']("Bill Clinton"))
+        result_attrs = self.fe.resources()['get-attributes']("Bill Clinton")
 
-        for a in _as(CLINTON_ATTRS):
+        for a in CLINTON_ATTRS:
             self.assertIn(a, result_attrs)
 
     def test_classes(self):

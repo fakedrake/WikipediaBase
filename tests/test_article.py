@@ -42,7 +42,9 @@ class TestArticle(unittest.TestCase):
         self.assertEqual(rtcl.headings()[-1], "External links")
         self.assertEqual(len(list(rtcl.headings())), 15)
 
-    def test_symbol(self):
+    # XXX: symbols are not used anyway but here is the test.
+    # The symbols work, mocking
+    def _test_symbol(self):
         art = Article("Baal")
         self.assertEqual(art.symbol(), "Baal")
 
@@ -51,8 +53,12 @@ class TestArticle(unittest.TestCase):
             self.assertEqual(Article("Han Solo").symbol(), 'han_solo')
 
         redir = "http://fake_wikipedia.c0m/w/han_solo"
-        with MockURLOpen(redir, "Han solo is a bitch."):
+        with MockURLOpen(redir, "NOONE CALL HAN SOLO A BITCH."):
             self.assertEqual(Article("Han Solo").symbol(), 'han_solo')
+
+        # Test that we are back to normal
+        art = Article("Astaroth")
+        self.assertEqual(art.symbol(), "astaroth")
 
     def test_redirect(self):
         # Actually redirects the source

@@ -66,6 +66,12 @@ def iwindow(seq, n):
         yield result
 
 
+def get_dummy_infobox(symbol, fetcher=None):
+    from .infobox_scraper import DummyInfobox
+
+    return _get_context(symbol, "rendered_infobox", DummyInfobox, fetcher)
+
+
 def get_infobox(symbol, fetcher=None):
     from .infobox import Infobox
 
@@ -104,7 +110,7 @@ def markup_categories(wiki_markup):
     return map(first_part, wiki_markup.split("[[Category:")[1:])
 
 
-def _get_context(symbol, domain, cls, fetcher=None, new=False, **kwargs):
+def _get_context(symbol, domain, cls, new=False, **kwargs):
     global _CONTEXT
 
     if isinstance(symbol, cls):
@@ -118,7 +124,6 @@ def _get_context(symbol, domain, cls, fetcher=None, new=False, **kwargs):
         if ret is not None:
             return ret
 
-    kwargs.update((dict(fetcher=fetcher) if fetcher else dict()))
     if symbol:
         ret = cls(symbol, **kwargs)
     else:
@@ -212,3 +217,15 @@ def url_get_dict(url):
         return dict(map(lambda x: x.split('='), ret.query.split('&')))
     else:
         return dict()
+
+
+def string_reduce(string):
+    """
+    Remove punctuation, an/a/the and spaces.
+    """
+    # It may seem a bad idea to not even return 'the reckoning' from
+    # symbol '"The Reckonging"' but we rduce user input as well.
+
+    # First remove quotes so the stopwords turn up at the front
+    ret = re.sub(ur"([\W\s]+)", " ", string, flags=re.U|re.I).strip().lower()
+    return re.sub(ur"(^the|^a|^an)\b", "", ret, flags=re.U).strip()

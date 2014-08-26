@@ -7,20 +7,9 @@ Synonyms are are based upon:
 
 
 import re
-from .util import get_article, expand, concat, subclasses, fromstring
+from .util import (get_article, expand, concat, subclasses,
+                   fromstring, string_reduce)
 from .fetcher import WIKIBASE_FETCHER
-
-
-def string_reduce(string):
-    """
-    Remove punctuation, an/a/the and spaces.
-    """
-    # It may seem a bad idea to not even return 'the reckoning' from
-    # symbol '"The Reckonging"' but we rduce user input as well.
-
-    # First remove quotes so the stopwords turn up at the front
-    ret = re.sub(ur"([\W\s]+)", " ", string, flags=re.U|re.I).strip().lower()
-    return re.sub(ur"(^the|^a|^an)\b", "", ret, flags=re.U).strip()
 
 def lexical_synonyms(symbol):
     """

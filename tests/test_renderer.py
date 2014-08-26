@@ -19,7 +19,7 @@ from wikipediabase.util import fromstring
 class TestRenderer(unittest.TestCase):
 
     def setUp(self):
-        self.rndr = renderer.Renderer()
+        self.rndr = renderer.SandboxRenderer()
 
     def test_render(self):
         html_str = self.rndr.render("Bawls of steel")

@@ -1,19 +1,15 @@
 from urllib import urlopen as uopen
 from urllib import urlencode
 
-from fetcher import WIKIBASE_FETCHER
-from .util import fromstring, totext
-
-#  Generate this with
-#
-#  >>> inputs = rnd.findall(".//form[@id='editform']//input")
-#  >>> [(i.get('name'), i.get('value')) for i in inputs
-#           if i.get('type') != 'submit']
-#
-# But they are pretty static so
+import dbm
+from .fetcher import WIKIBASE_FETCHER
+from .util import fromstring, totext, memoized
 
 
-class Renderer(object):
+class SandboxRenderer(object):
+
+    default_file = './renderer.mdb'
+
     def __init__(self, fetcher=None, url=None):
         """
         Provide a fetcher an I ll figure out how to render stuff from
@@ -27,6 +23,8 @@ class Renderer(object):
                 fetcher = WIKIBASE_FETCHER
 
             self.url = fetcher.url + '/' + fetcher.base
+
+        self.cache = dbm.open(self.default_file, 'c')
 
     def post_data(self, data, get, form_id):
         soup = fromstring(self.uopen(get).read())
@@ -45,8 +43,13 @@ class Renderer(object):
         post.update(get)
         return uopen(self.url+'?'+urlencode(get), data=urlencode(post))
 
+    def render(self, string, key=None):
+        if not key:
+            key = str(hash(string))
 
-    def render(self, string):
+        if key in self.cache:
+            return self.cache[key].decode('utf-8')
+
         # XXX: here we assume tha t the mediawiki project name is wikipedia.
         get = dict(title="Wikipedia:Sandbox", action="edit")
         post = self.post_data(dict(wpTextbox1=string, wpSave="Save page"),
@@ -57,4 +60,11 @@ class Renderer(object):
 
         ufd = self.uopen(get, post)
 
-        return ufd.read().decode('utf-8')
+        ret = ufd.read()
+        if key:
+            self.cache[key] = ret
+
+        return ret.decode('utf-8')
+
+
+WIKIBASE_RENDERER = SandboxRenderer()

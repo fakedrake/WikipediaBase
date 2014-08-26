@@ -17,8 +17,7 @@ class MockURLOpen(object):
     def __enter__(self):
         self.original = urllib.urlopen
 
-
-        class MockURLOpen(object):
+        class MyURLfd(object):
             def __init__(self, _):
                 pass
 
@@ -29,7 +28,7 @@ class MockURLOpen(object):
                 return self.content
 
 
-        urllib.urlopen = MockURLOpen
+        urllib.urlopen = MyURLfd
 
     def __exit__(self, exc_type, exc_value, traceback):
         urllib.urlopen = self.original
@@ -50,7 +49,7 @@ def download_all(pages=ALL_TEST_PAGES):
         f.download(p)
         f.source(p)
 
-TEST_FETCHER_SETUP = dict(offline=False, fname=data("pages.json"))
+TEST_FETCHER_SETUP = dict(offline=False, fname=data("pages.db"))
 
 
 def get_fetcher():

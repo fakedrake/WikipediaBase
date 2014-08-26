@@ -9,7 +9,11 @@ import mysql.connector as mdb
 from wikipediabase.util import time_interval
 
 
-class DBFetcher(object):
+class DBUtil(object):
+    """
+    Ad-hoc utils to iteract with a wikimirror database.
+    """
+
     _default_conn = {
         'user': "csail",
         'passwd': "pass",

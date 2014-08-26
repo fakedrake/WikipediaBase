@@ -1,6 +1,6 @@
 """
 wikipediabase.
-Open telnet server XXX: doc this.
+Open telnet server for start to communicate at.
 
 Usage:
   wikipediabase [options]
@@ -8,7 +8,7 @@ Usage:
   wikipediabase -h | --help
 
 Options:
-  --debug               Debug.
+  -p --port             Port (default: 1984)
 
   -h --help             Show this screen.
 """
@@ -22,6 +22,9 @@ from .resolvers import StaticResolver, InfoboxResolver
 from .frontend import TelnetFrontend
 
 log = logging.getLogger(__name__)
+
+
+def cache_mysql
 
 
 def main():

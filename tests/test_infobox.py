@@ -33,12 +33,21 @@ class TestInfobox(unittest.TestCase):
 
     def test_infobox_markup_raw(self):
         self.assertIn("| name = Led Zeppelin", self.ibox.markup_source())
+        clinton = Infobox("Bill Clinton", self.fetcher)
+        self.assertIn("|death_place ", clinton.markup_source())
+
+    def test_rendered_keys(self):
+        clinton = Infobox("Bill Clinton", self.fetcher)
+        self.assertEqual("Died", clinton.rendered_key("death_place"))
 
     def test_infobox_html_parsed(self):
         self.assertIn((u'Origin', u'London, England'), self.ibox.html_parsed())
 
     def test_attributes(self):
         self.assertEqual(self.ibox.get("origin"), "London, England")
+        clinton = Infobox("Bill Clinton", self.fetcher)
+        self.assertIn("death-place",
+                      [k for k, v in clinton.markup_parsed_iter()])
 
     def test_types(self):
         self.assertEqual(self.ibox.start_types(), ['wikipedia-musical-artist'])

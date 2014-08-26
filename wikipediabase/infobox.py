@@ -3,13 +3,13 @@ import re
 import lxml.etree as ET
 from collections import defaultdict
 
-from .util import totext, tostring, fromstring
+from .util import totext, tostring, fromstring, get_dummy_infobox
 from .log import Logging
 from .article import Article
 from .fetcher import WIKIBASE_FETCHER
 from .infobox_tree import ibx_type_superclasses
 
-INFOBOX_ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_]*)\s*=" \
+INFOBOX_ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_0-9]+)\s*=" \
                           "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
 
 
@@ -21,7 +21,7 @@ class Infobox(Logging):
     """
 
     # Various names under which you may find an infobox
-    infobox_tags = ["infobox", "Infobox", 'taxobox', 'Taxobox']
+    box_rx = ur"\b(infobox|Infobox|taxobox|Taxobox)\b"
 
 
     def __init__(self, title, fetcher=None):
@@ -32,7 +32,7 @@ class Infobox(Logging):
 
         self.title = title
         self.fetcher = fetcher or WIKIBASE_FETCHER
-        self._rendered_keys = dict()
+        self._rendered_keys = None
 
     def __nonzero__(self):
         return bool(self.fetcher.download(self.title))
@@ -54,7 +54,7 @@ class Infobox(Logging):
         ibox_source = self.markup_source()
         if ibox_source:
             # XXX: includ taxoboes
-            for m in re.finditer(r'{{\s*(?P<type>[Ii]nfobox\s+[\w ]*)',
+            for m in re.finditer(r'{{\s*(?P<type>%s\s+[\w ]*)' % self.box_rx,
                                  ibox_source):
                 # The direct ibox
                 dominant = "Template:" + m.group('type')
@@ -86,8 +86,8 @@ class Infobox(Logging):
 
     def get(self, key, source=None):
         """
-        Get a specific infobox field. SOURCE tells us where to look. If it
-        is None try 'markup', then 'html'.
+        - First try plain markup keys
+        - Then translating each markup's tanslations
         """
 
         # Look into html first. The results here are much more
@@ -103,31 +103,23 @@ class Infobox(Logging):
                     return v
 
         # Then look into the markup
-        markup_key = key.lower().replace(u"-", u"_")
-        ret = u"\n".join([v for k, v in self.markup_parsed_iter()
-                          if re.sub(ur"[0-9]+$", "",
-                                    k.replace("-", "_"),) == markup_key])
+        for k, v in self.markup_parsed_iter():
+            if k.replace("-", "_") == markup_key:
+                return v
 
-        return ret or None
+    def rendered_key(self, markup_key):
+        # Rendered key dict
+        if self._rendered_keys is None:
+            self._rendered_keys = dict()
 
-    def rendered_key(self, mkey):
-        """
-        Get the corresponding rendered key to the markup key if you can.
-        """
+            for t in reversed(self.types(extend=False)):
+                ibx = get_dummy_infobox(t)
+                self._rendered_keys.update(ibx.rendered_keys())
 
-        mkey = mkey.lower().replace("-", "_")
-        ret = self._rendered_keys.get(mkey, False)
-        if ret is not False:
-            return ret
-
-        for t in self.types(extend=False):
-            tibox = Infobox(t)
-            for k, v in tibox.html_parsed():
-                if v == '{{{%s}}}' % mkey or v == mkey + " text":
-                    self._rendered_keys[mkey] = k
-                    return k
-
-        self._rendered_keys[mkey] = None
+        try:
+            return self._rendered_keys[markup_key.lower().replace("-", "_")]
+        except KeyError:
+            return None
 
     def markup_parsed_iter(self):
         """
@@ -162,8 +154,10 @@ class Infobox(Logging):
         A div with all the infoboxes in it.
         """
 
-        html = self.fetcher.download(self.title)
-        bs = fromstring(html)
+        if not hasattr(self, '_html'):
+            self._html = self.fetcher.download(self.title)
+
+        bs = fromstring(self._html)
         ret = ET.Element('div')
         ret.extend([t for t in bs.findall(".//table")
                     if 'infobox' in t.get('class', '')])
@@ -227,20 +221,23 @@ class Infobox(Logging):
         braces = 0
         rngs = []
 
-        for m in re.finditer("((?P<open>{{)\s*(?P<ibox>\w*)|(?P<close>}}))",
-                             txt):
+        for m in re.finditer(
+                "((?P<open>{{)\s*(?P<ibox>%s)?|(?P<close>}}))" % self.box_rx,
+                txt):
 
             if m.group('open'):
-                # If we are counting just continue
+                # If we are counting just continue, dont count outside
+                # of iboxes
                 if braces:
                     braces += 1
                     continue
 
                 # If we are not counting we better start and mark our
                 # position
-                if m.group('ibox') in self.infobox_tags:
+                if m.group('ibox') and braces == 0:
                     braces = 1
                     ibs = m.start('open')
+                    self.type = m.group('ibox')
 
             elif m.group('close') and braces > 0:
                 braces -= 1
