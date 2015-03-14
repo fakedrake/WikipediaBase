@@ -7,7 +7,7 @@ except:
 
 from urllib import urlencode
 import re
-import  dbm
+import gdbm as dbm
 
 import lxml.etree as ET
 
@@ -41,6 +41,11 @@ class BaseFetcher(Logging):
         """
 
         return callback(*args, **kwargs)
+
+    def encode(self, txt):
+        # return txt.decode('utf-8')
+        return txt.decode("ascii", errors='ignore')
+
 
 
 class WikipediaSiteFetcher(BaseFetcher):
@@ -153,7 +158,7 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
 
     def caching_fetch(self, dkey, callback, *args, **kwargs):
         if not hasattr(self, 'data'):
-            self.data = dbm.open(self._fname, 'c')
+            self.data = dbm.open(self._fname, 'n' if os.path.exists else 'w')
 
         ret = None
 
@@ -165,9 +170,8 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
             if ret:
                 self.data[dkey] = ret
 
-
         if ret is not None:
-            return ret.decode('utf-8')
+            return self.encode(ret)
 
         raise LookupError("Failed to find page '%s' (%s online)." %
                           (symbol, "didnt look" if self.offline else "looked"))
@@ -175,7 +179,7 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
 
 class StaticFetcher(BaseFetcher):
     """
-    Will always return constant html and markup.
+    Will just get the html and markup provided in init.
     """
 
     def __init__(self, html=None, markup=None):
