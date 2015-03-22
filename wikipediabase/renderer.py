@@ -51,7 +51,7 @@ class SandboxRenderer(object):
             return urlopen(self.url+'?'+urlencode(get))
 
         post.update(get)
-        return uopen(self.url+'?'+urlencode(get), data=urlencode(post))
+        return urlopen(self.url+'?'+urlencode(get), data=urlencode(post))
 
     def render(self, string, key=None):
         """

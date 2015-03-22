@@ -3,7 +3,7 @@ import re
 import lxml.etree as ET
 from collections import defaultdict
 
-from wikipediabase.util import totext, tostring, fromstring, get_dummy_infobox
+from wikipediabase.util import totext, tostring, fromstring, get_meta_infobox
 from wikipediabase.log import Logging
 from wikipediabase.article import Article
 from wikipediabase.fetcher import WIKIBASE_FETCHER
@@ -45,9 +45,8 @@ class Infobox(Logging):
 
     def types(self, extend=True):
         """
-        The infobox type. Extend means search inn other places except here
-        (ie find equivalent ones, parent ones etc)
-        to_start will make the types into start classes.
+        The infobox type. Extend means search in other places except here
+        (ie find equivalent ones, parent ones etc).
         """
 
         types = []
@@ -112,8 +111,8 @@ class Infobox(Logging):
         if self._rendered_keys is None:
             self._rendered_keys = dict()
 
-            for t in reversed(self.types(extend=False)):
-                ibx = get_dummy_infobox(t)
+            for infobox_type in reversed(self.types(extend=False)):
+                ibx = get_meta_infobox(infobox_type)
                 self._rendered_keys.update(ibx.rendered_keys())
 
         try:

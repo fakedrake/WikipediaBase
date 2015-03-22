@@ -3,6 +3,6 @@
 
 ((nil
   (compile-root)
-  (compile-command . "/Users/drninjabatman/Projects/CSAIL/venv/bin/python setup.py test -s tests.test_classifiers.TestClassifiers")
+  (compile-command . "/Users/drninjabatman/Projects/CSAIL/venv/bin/python setup.py test -s tests.test_infobox.TestInfobox")
   (python-shell-virtualenv-path . "/Users/drninjabatman/Projects/CSAIL/venv")
   (fd-setup-test-cmd . "test")))

@@ -66,34 +66,38 @@ def iwindow(seq, n):
         yield result
 
 
-def get_dummy_infobox(symbol, fetcher=None):
-    from .infobox_scraper import DummyInfobox
+def get_meta_infobox(symbol, fetcher=None):
+    """
+    Get an infobox that only has keys and not values. A quick and
+    dirty way avoid parsing the values of an infobox.
+    """
+    from wikipediabase.infobox_scraper import MetaInfobox
 
-    return _get_context(symbol, "rendered_infobox", DummyInfobox, fetcher)
+    return _context_get(symbol, "rendered_infobox", MetaInfobox, fetcher)
 
 
 def get_infobox(symbol, fetcher=None):
-    from .infobox import Infobox
+    from wikipediabase.infobox import Infobox
 
-    return _get_context(symbol, "infobox", Infobox, fetcher)
+    return _context_get(symbol, "infobox", Infobox, fetcher)
 
 
 def get_article(symbol, fetcher=None):
     from .article import Article
 
-    return _get_context(symbol, "article", Article, fetcher)
+    return _context_get(symbol, "article", Article, fetcher)
 
 
 def get_knowledgebase(**kw):
     from .knowledgebase import KnowledgeBase
 
-    ret = _get_context(None, "knowledgebase", KnowledgeBase, **kw)
+    ret = _context_get(None, "knowledgebase", KnowledgeBase, **kw)
 
     # It is important to have the correnct frontend or the fronted
     # will fail to find methods.
     if kw.get('frontend') is not None and \
        kw.get('frontend') is not ret.frontend:
-        return _get_context(None, "knowledgebase", KnowledgeBase, new=True, **kw)
+        return _context_get(None, "knowledgebase", KnowledgeBase, new=True, **kw)
 
     return ret
 
@@ -109,8 +113,24 @@ def markup_categories(wiki_markup):
 
     return map(first_part, wiki_markup.split("[[Category:")[1:])
 
+def _context_get(symbol, domain, cls, new=False, **kwargs):
+    """
+    The context is actually a global cache used to keep track of the
+    objects created and reuse them when possible.
 
-def _get_context(symbol, domain, cls, new=False, **kwargs):
+    For example if I need an infobox for bill clinton I can get it by
+    calling. _get_context('bill clinton', 'infoboxes' Infobox). which
+    will create an Infobox instance for 'bill clinton' and cache
+    it. If I later try to create an object in the same way, I will be
+    reusing the old one.
+
+    :param symbol: The symbol for which an object is created.
+    :param domain: The domain for which the object is created.
+    :param cls: The class of the object.
+    :param new: Force the creation of a new object.
+    :param kwargs: Extra keywords to be passed for the instance creation
+    :returns: An instance of class cls.
+    """
     global _CONTEXT
 
     if isinstance(symbol, cls):
@@ -130,7 +150,6 @@ def _get_context(symbol, domain, cls, new=False, **kwargs):
         ret = cls(**kwargs)
 
     _CONTEXT[domain][symbol] = ret
-
     return ret
 
 
