@@ -7,16 +7,17 @@ except:
 
 from urllib import urlencode
 import re
+import os
 import gdbm as dbm
 
 import lxml.etree as ET
 
-from .log import Logging
-from .util import subclasses, fromstring, totext
+from wikipediabase.log import Logging
+from wikipediabase.util import subclasses, fromstring, totext
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
-OFFLINE_PAGES = "/tmp/pages.json"
+OFFLINE_PAGES = "./pages.db"
 
 
 class BaseFetcher(Logging):
@@ -64,7 +65,7 @@ class WikipediaSiteFetcher(BaseFetcher):
 
 
     def download(self, *args, **kwargs):
-            return self.urlopen(*args, **kwargs).read()
+        return self.urlopen(*args, **kwargs).read()
 
     def urlopen(self, symbol, get=None, base=None):
         """
@@ -132,7 +133,7 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
     """
 
     priority = 10
-    _fname = OFFLINE_PAGES
+    cache_file = OFFLINE_PAGES
 
     def __init__(self, *args, **kw):
         """
@@ -141,14 +142,14 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         """
 
         self.offline = kw.get("offline", False)
-        self._fname = kw.get("fname", self._fname)
+        self.cache_file = kw.get("cache_file", self.cache_file)
 
         super(CachingSiteFetcher, self).__init__(*args, **kw)
 
     def redirect_url(self, symbol):
         return self.caching_fetch("REDIRECT:" + symbol,
-                         lambda sym: super(CachingSiteFetcher,
-                                           self).redirect_url(symbol), symbol)
+                                  lambda sym: super(CachingSiteFetcher,
+                                                    self).redirect_url(symbol), symbol)
 
     def download(self, symbol, get=None, base=None):
         dkey = "%s;%s" % (symbol, get) if not base else \
@@ -156,10 +157,28 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         callback = super(CachingSiteFetcher, self).download
         return self.caching_fetch(dkey, callback, symbol, get=get, base=base)
 
-    def caching_fetch(self, dkey, callback, *args, **kwargs):
-        if not hasattr(self, 'data'):
-            self.data = dbm.open(self._fname, 'n' if os.path.exists else 'w')
 
+    @classmethod
+    def persistent_dict(cls, cache_file=None):
+        """
+        Get a peristent key valie store.
+        """
+
+        cache_file = cache_file or cls.cache_file
+
+        if hasattr(cls, '_data'):
+            return cls._data
+
+        cls._data = dbm.open(cache_file,
+                            'w' if os.path.exists(cache_file) else 'n')
+
+        return cls._data
+
+    @property
+    def data(self):
+        return self.persistent_dict(self.cache_file)
+
+    def caching_fetch(self, dkey, callback, *args, **kwargs):
         ret = None
 
         if dkey in self.data:
