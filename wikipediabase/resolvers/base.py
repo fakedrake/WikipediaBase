@@ -1,6 +1,6 @@
-from ..enchantments import Enchanted
-from ..fetcher import CachingSiteFetcher
-from ..provider import Provider
+from wikipediabase.enchantments import Enchanted
+from wikipediabase.fetcher import CachingSiteFetcher
+from wikipediabase.provider import Provider
 
 MIN_PRIORITY = 0
 

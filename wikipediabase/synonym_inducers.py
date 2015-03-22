@@ -7,9 +7,9 @@ Synonyms are are based upon:
 
 
 import re
-from .util import (get_article, expand, concat, subclasses,
+from wikipediabase.util import (get_article, expand, concat, subclasses,
                    fromstring, string_reduce)
-from .fetcher import WIKIBASE_FETCHER
+from wikipediabase.fetcher import WIKIBASE_FETCHER
 
 def lexical_synonyms(symbol):
     """

@@ -1,9 +1,9 @@
 import re
 
-from .infobox_tree import ibx_type_superclasses
-from .util import get_infobox, get_article, subclasses
-from .log import Logging
-from .enchantments import enchant
+from wikipediabase.infobox_tree import ibx_type_superclasses
+from wikipediabase.util import get_infobox, get_article, subclasses
+from wikipediabase.log import Logging
+from wikipediabase.enchantments import enchant
 
 # Return a LIST of classes
 class BaseClassifier(Logging):
@@ -53,7 +53,7 @@ class PersonClassifier(BaseClassifier):
         if ibx.get('birth-date'):
             return True
 
-        from .resolvers import LifespanParagraphResolver as LPR
+        from wikipediabase.resolvers import LifespanParagraphResolver as LPR
         if LPR().resolve(symbol, 'birth-date'):
             return True
 

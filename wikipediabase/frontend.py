@@ -3,12 +3,12 @@
 
 from edn_format import loads, Keyword, Symbol
 
-from .telnet import TelnetServer
-from .enchantments import enchant
-from provider import Acquirer, Provider, provide
-from .knowledgebase import KnowledgeBase
-from .log import Logging
-from .util import get_knowledgebase
+from wikipediabase.telnet import TelnetServer
+from wikipediabase.enchantments import enchant
+from wikipediabase.provider import Acquirer, Provider, provide
+from wikipediabase.knowledgebase import KnowledgeBase
+from wikipediabase.log import Logging
+from wikipediabase.util import get_knowledgebase
 
 import logging
 

@@ -14,7 +14,7 @@ except ImportError:
     import unittest
 
 from wikipediabase import infobox_tree
-from .common import read_data
+from wikipediabase.tests.common import read_data
 
 MU = read_data("dummy_ibox_tree.txt")
 

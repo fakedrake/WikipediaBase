@@ -10,8 +10,8 @@ from numbers import Number
 
 import overlay_parse
 
-from .log import Logging
-from .util import subclasses
+from wikipediabase.log import Logging
+from wikipediabase.util import subclasses
 
 
 # For fully deterministic enchantments use this prioroty.

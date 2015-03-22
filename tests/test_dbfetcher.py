@@ -15,7 +15,7 @@ except ImportError:
 
 import dataset as ds
 
-from wikipediabase import dbfetcher
+# from wikipediabase import dbfetcher
 
 
 class TestDbfetcher(unittest.TestCase):

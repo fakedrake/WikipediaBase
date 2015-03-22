@@ -1,8 +1,8 @@
 import overlay_parse
 
-from .base import BaseResolver
-from ..util import get_article
-from ..enchantments import enchant, Enchanted
+from wikipediabase.resolvers.base import BaseResolver
+from wikipediabase.util import get_article
+from wikipediabase.enchantments import enchant, Enchanted
 
 
 def iter_paren(text, delim=None):

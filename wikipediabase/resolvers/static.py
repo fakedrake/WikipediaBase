@@ -2,10 +2,10 @@
 
 import re
 
-from ..provider import provide
-from .base import BaseResolver
-from ..enchantments import enchant
-from .. util import get_infobox, get_article, totext
+from wikipediabase.provider import provide
+from wikipediabase.resolvers.base import BaseResolver
+from wikipediabase.enchantments import enchant
+from wikipediabase.util import get_infobox, get_article, totext
 
 
 class StaticResolver(BaseResolver):
@@ -27,7 +27,7 @@ class StaticResolver(BaseResolver):
 
     @provide(name="gender")
     def gender(self, article, attribute):
-        from ..classifiers import PersonClassifier
+        from wikipediabase.classifiers import PersonClassifier
         cls = PersonClassifier().classify(article)
 
         if 'wikipedia-male' in cls:

@@ -83,13 +83,13 @@ def get_infobox(symbol, fetcher=None):
 
 
 def get_article(symbol, fetcher=None):
-    from .article import Article
+    from wikipediabase.article import Article
 
     return _context_get(symbol, "article", Article, fetcher)
 
 
 def get_knowledgebase(**kw):
-    from .knowledgebase import KnowledgeBase
+    from wikipediabase.knowledgebase import KnowledgeBase
 
     ret = _context_get(None, "knowledgebase", KnowledgeBase, **kw)
 

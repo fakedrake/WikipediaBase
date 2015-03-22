@@ -2,14 +2,14 @@
 
 from itertools import chain
 
-from .provider import Provider, provide
-from .fetcher import WIKIBASE_FETCHER
-from .infobox import Infobox
-from .enchantments import enchant
-from .resolvers import WIKIBASE_RESOLVERS
-from .classifiers import WIKIBASE_CLASSIFIERS
-from .synonym_inducers import WIKIBASE_INDUCERS
-from .util import get_article
+from wikipediabase.provider import Provider, provide
+from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.infobox import Infobox
+from wikipediabase.enchantments import enchant
+from wikipediabase.resolvers import WIKIBASE_RESOLVERS
+from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
+from wikipediabase.synonym_inducers import WIKIBASE_INDUCERS
+from wikipediabase.util import get_article
 
 import re
 

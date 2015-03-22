@@ -2,8 +2,7 @@ import os
 from wikipediabase.fetcher import CachingSiteFetcher
 import urllib2 as urllib
 
-ALL_TEST_PAGES = [
-]
+ALL_TEST_PAGES = []
 
 class MockURLOpen(object):
     """

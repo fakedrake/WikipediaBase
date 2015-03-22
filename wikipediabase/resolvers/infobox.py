@@ -1,7 +1,7 @@
-from .base import BaseResolver
-from ..util import get_infobox
-from ..enchantments import enchant, Enchanted
-from ..fetcher import WIKIBASE_FETCHER
+from wikipediabase.resolvers.base import BaseResolver
+from wikipediabase.util import get_infobox
+from wikipediabase.enchantments import enchant, Enchanted
+from wikipediabase.fetcher import WIKIBASE_FETCHER
 
 
 class InfoboxResolver(BaseResolver):

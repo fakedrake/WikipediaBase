@@ -1,2 +1,2 @@
-from .cli import main
+from wikipediabase.cli import main
 main()
