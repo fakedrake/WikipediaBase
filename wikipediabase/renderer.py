@@ -11,6 +11,10 @@ import wikipediabase.util as util
 
 
 class SandboxRenderer(object):
+    """
+    Use the wikipedia site sandbox to render mediawiki markup.
+    """
+
     default_file = './renderer.mdb'
 
     def __init__(self, fetcher=None, url=None):
