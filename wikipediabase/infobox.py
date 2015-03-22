@@ -3,11 +3,11 @@ import re
 import lxml.etree as ET
 from collections import defaultdict
 
-from .util import totext, tostring, fromstring, get_dummy_infobox
-from .log import Logging
-from .article import Article
-from .fetcher import WIKIBASE_FETCHER
-from .infobox_tree import ibx_type_superclasses
+from wikipediabase.util import totext, tostring, fromstring, get_dummy_infobox
+from wikipediabase.log import Logging
+from wikipediabase.article import Article
+from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.infobox_tree import ibx_type_superclasses
 
 INFOBOX_ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_0-9]+)\s*=" \
                           "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
