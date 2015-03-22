@@ -27,7 +27,7 @@ class MetaInfobox(Infobox):
     """
 
     def __init__(self, infobox_type, fetcher=None, renderer=None, **kw):
-        if not infobox.startswith("Template:"):
+        if not infobox_type.startswith("Template:"):
             self.symbol = "Template:" + infobox_type
             self.title = infobox_type
 
@@ -41,7 +41,7 @@ class MetaInfobox(Infobox):
         self.type = self.title.split("_")[0]
         self.renderer = renderer or WIKIBASE_RENDERER
 
-        mu = self.meta_markup()
+        mu = self.markup()
         ftchr = StaticFetcher(self.renderer.render(mu, self.title), mu)
         super(MetaInfobox, self).__init__(self.symbol, fetcher=ftchr, **kw)
 
