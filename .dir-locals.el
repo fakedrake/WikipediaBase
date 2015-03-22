@@ -1,10 +1,8 @@
 ;;; Directory Local Variables
-;;; See Info node `(emacs) Directory Variables' for more information.
+;;; For more information see (info "(emacs) Directory Variables")
 
 ((nil
-  (compilation-directory . "/home/fakedrake/Projects/CSAIL/Python/WikipediaBase/wikipediabase//")
-  (compile-command . "/home/fakedrake/Projects/CSAIL/Python/py/bin/python  setup.py flake8"))
- (python-mode
-  (python-shell-virtualenv-path . "/home/fakedrake/Projects/CSAIL/Python/py/")
-  (compile-command . "/home/fakedrake/Projects/CSAIL/Python/py/bin/pep8 /home/fakedrake/Projects/CSAIL/Python/WikipediaBase/wikipediabase /home/fakedrake/Projects/CSAIL/Python/WikipediaBase/tests")
+  (compile-root)
+  (compile-command . "/Users/drninjabatman/Projects/CSAIL/venv/bin/python setup.py test -s tests.test_classifiers.TestClassifiers")
+  (python-shell-virtualenv-path . "/Users/drninjabatman/Projects/CSAIL/venv")
   (fd-setup-test-cmd . "test")))

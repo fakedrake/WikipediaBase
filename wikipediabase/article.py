@@ -4,14 +4,14 @@ import re
 import itertools
 from urlparse import urlparse
 
-from .log import Logging
-from .util import (markup_categories,
-                   fromstring,
-                   tostring,
-                   totext,
-                   memoized,
-                   url_get_dict)
-from .fetcher import WIKIBASE_FETCHER
+from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.log import Logging
+from wikipediabase.util import (markup_categories,
+                                fromstring,
+                                tostring,
+                                totext,
+                                memoized,
+                                url_get_dict)
 
 # XXX: also support images.
 class Article(Logging):

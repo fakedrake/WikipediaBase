@@ -13,7 +13,7 @@ import gdbm as dbm
 import lxml.etree as ET
 
 from wikipediabase.log import Logging
-from wikipediabase.util import subclasses, fromstring, totext
+import wikipediabase.util as util
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
@@ -43,11 +43,6 @@ class BaseFetcher(Logging):
 
         return callback(*args, **kwargs)
 
-    def encode(self, txt):
-        # return txt.decode('utf-8')
-        return txt.decode("ascii", errors='ignore')
-
-
 
 class WikipediaSiteFetcher(BaseFetcher):
 
@@ -61,7 +56,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         """
         Get the source from an html soup of the edit page.
         """
-        return totext(soup.find(".//*[@id='wpTextbox1']"))
+        return util.totext(soup.find(".//*[@id='wpTextbox1']"))
 
 
     def download(self, *args, **kwargs):
@@ -107,7 +102,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         # name="wpTextbox1">
         get_request = get_request or dict(action="edit")
         html = self.download(symbol=symbol, get=get_request)
-        soup = fromstring(html)
+        soup = util.fromstring(html)
 
         try:
             src = self.get_wikisource(soup)
@@ -190,7 +185,7 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
                 self.data[dkey] = ret
 
         if ret is not None:
-            return self.encode(ret)
+            return util.encode(ret)
 
         raise LookupError("Failed to find page '%s' (%s online)." %
                           (symbol, "didnt look" if self.offline else "looked"))

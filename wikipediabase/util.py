@@ -229,3 +229,8 @@ def string_reduce(string):
     # First remove quotes so the stopwords turn up at the front
     ret = re.sub(ur"([\W\s]+)", " ", string, flags=re.U|re.I).strip().lower()
     return re.sub(ur"(^the|^a|^an)\b", "", ret, flags=re.U).strip()
+
+
+def encode(txt):
+    # return txt.decode('utf-8')
+    return txt.decode("ascii", errors='ignore')
