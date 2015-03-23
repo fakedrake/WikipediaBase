@@ -153,28 +153,13 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         return self.caching_fetch(dkey, callback, symbol, get=get, base=base)
 
 
-    @classmethod
-    def persistent_dict(cls, cache_file=None):
-        """
-        Get a peristent key valie store.
-        """
-
-        cache_file = cache_file or cls.cache_file
-
-        if hasattr(cls, '_data'):
-            return cls._data
-
-        cls._data = dbm.open(cache_file,
-                            'w' if os.path.exists(cache_file) else 'n')
-
-        return cls._data
-
     @property
     def data(self):
-        return self.persistent_dict(self.cache_file)
+        return util._get_persistent_dict(self.cache_file)
 
     def caching_fetch(self, dkey, callback, *args, **kwargs):
         ret = None
+        dkey = util.encode(dkey)
 
         if dkey in self.data:
             ret = self.data[dkey]

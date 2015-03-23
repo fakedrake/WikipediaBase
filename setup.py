@@ -13,7 +13,8 @@ setup(
     author=metadata['author'],
     author_email=metadata['email'],
     url=metadata['url'],
-    packages=['wikipediabase'],
+    packages=['wikipediabase',
+              'tests'],
     include_package_data=True,
     install_requires=[
     ],

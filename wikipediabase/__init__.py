@@ -5,9 +5,9 @@ __email__ = 'cperivol@csail.mit.edu'
 __url__ = 'https://github.com/fakedrake/wikipediabase'
 __version__ = '1.0'
 
-from knowledgebase import KnowledgeBase
-from resolvers import StaticResolver
-from frontend import TelnetFrontend, Frontend
+from wikipediabase.knowledgebase import KnowledgeBase
+from wikipediabase.resolvers import StaticResolver
+from wikipediabase.frontend import TelnetFrontend, Frontend
 
 
 def wikipediabase(cmd=None, **kw):

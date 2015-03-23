@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase.tests.common import TEST_FETCHER_SETUP, MockURLOpen
+from .common import TEST_FETCHER_SETUP, MockURLOpen
 
 from wikipediabase import fetcher
 

@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase.tests.common import get_fetcher
+from .common import get_fetcher
 
 from wikipediabase import wikipediabase
 from wikipediabase.frontend import Frontend

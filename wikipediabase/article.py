@@ -62,8 +62,12 @@ class Article(Logging):
         # fetcher to resolve redirects and a cirular recursion will
         # occur
 
-        return "".join(
-            self._soup().find(".//*[@id='firstHeading']/span").itertext())
+        heading = self._soup().get_element_by_id('firstHeading')
+        if heading is not None:
+            return heading.text
+
+        import ipdb; ipdb.set_trace()
+        raise Exception("No title found for '%s'" % self.symbol())
 
     def markup_source(self):
         """

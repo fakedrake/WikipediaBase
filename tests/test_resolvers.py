@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from common import data, TEST_FETCHER_SETUP
+from .common import data, TEST_FETCHER_SETUP
 
 import re
 import logging

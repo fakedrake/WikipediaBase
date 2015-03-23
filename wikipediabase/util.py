@@ -6,12 +6,15 @@ import urllib
 import re
 import collections
 import functools
+import inspect
 
 import lxml.etree as ET
 import copy
+import gdbm as dbm
 from lxml import html
 
 _CONTEXT = dict()
+DBM_FILE = "/tmp/wikipediabase.mdb"
 
 # General tools
 # XXX: Plug in here for permanent memoization. You may need to do some
@@ -101,6 +104,14 @@ def get_knowledgebase(**kw):
 
     return ret
 
+def _get_persistent_dict(filename=DBM_FILE):
+    """
+    A dict that syncs with persistent data storage.
+    """
+
+    flag = 'w' if os.path.exists(filename) else 'n'
+    return _context_get(filename, 'peristent_store', lambda fn: dbm.open(fn, flag))
+
 def markup_categories(wiki_markup):
     """
     return the names of the categories.
@@ -124,6 +135,11 @@ def _context_get(symbol, domain, cls, new=False, **kwargs):
     it. If I later try to create an object in the same way, I will be
     reusing the old one.
 
+    In place of symbol an object can be passed. In that case we return
+    the object itself. This way we can have some flexibility with
+    types and when calling get_<class>(<class instance>) have the
+    right thing done.
+
     :param symbol: The symbol for which an object is created.
     :param domain: The domain for which the object is created.
     :param cls: The class of the object.
@@ -133,7 +149,7 @@ def _context_get(symbol, domain, cls, new=False, **kwargs):
     """
     global _CONTEXT
 
-    if isinstance(symbol, cls):
+    if inspect.isclass(cls) and isinstance(symbol, cls):
         return symbol
 
     if domain not in _CONTEXT:
@@ -252,4 +268,4 @@ def string_reduce(string):
 
 def encode(txt):
     # return txt.decode('utf-8')
-    return txt.decode("ascii", errors='ignore')
+    return str(txt.decode("ascii", errors='ignore'))
