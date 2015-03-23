@@ -1,3 +1,9 @@
+"""
+Symbol annotation. Subclass BaseClassifier provideing the classify
+method and return an iterable of strings that are the classes that
+your classifier provides.
+"""
+
 import re
 
 from wikipediabase.infobox_tree import ibx_type_superclasses
