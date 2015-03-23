@@ -13,16 +13,16 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase.infobox_scraper import DummyInfobox
-from wikipediabase.util import get_dummy_infobox
+from wikipediabase.infobox_scraper import MetaInfobox
+from wikipediabase.util import get_meta_infobox
 
-class TestDummyInfobox(unittest.TestCase):
+class TestMetaInfobox(unittest.TestCase):
 
     def setUp(self):
-        self.ibx = DummyInfobox('infobox_person')
+        self.ibx = MetaInfobox('infobox_person')
 
     def test_musician(self):
-        di = get_dummy_infobox('Template:Infobox musical artist')
+        di = get_meta_infobox('Template:Infobox musical artist')
         self.assertEqual(di.rendered_keys()['origin'], "Origin")
 
 
