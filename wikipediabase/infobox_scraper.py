@@ -28,24 +28,21 @@ class MetaInfobox(Infobox):
 
     def __init__(self, infobox_type, fetcher=None, renderer=None, **kw):
         if not infobox_type.startswith("Template:"):
-            self.symbol = "Template:" + infobox_type
-            self.title = infobox_type
+            symbol, title = "Template:" + infobox_type, infobox_type
 
         else:
-            self.symbol = infobox_type
-            self.title = infobox_type.replace("Template:", "")
+            symbol, title = infobox_type, infobox_type.replace("Template:", "")
 
-        self.title = string_reduce(self.title).replace(" ", "_")
+        self.title = string_reduce(title).replace(" ", "_")
+        self.symbol = symbol
 
         # Infobox or ambox
-        self.type = self.title.split("_")[0]
+        self.type = title.split("_")[0]
         self.renderer = renderer or WIKIBASE_RENDERER
 
         mu = self.markup()
         ftchr = StaticFetcher(self.renderer.render(mu, self.title), mu)
-        super(MetaInfobox, self).__init__(self.symbol, fetcher=ftchr, **kw)
-
-
+        super(MetaInfobox, self).__init__(symbol, title=title, fetcher=ftchr, **kw)
 
     # These use the scratch.
     def attributes(self):
@@ -69,7 +66,7 @@ class MetaInfobox(Infobox):
         contains all the equivalent attributes to itself.
         """
 
-        ret = '{{'+self.title.capitalize().replace("_", " ")+ "\n"
+        ret = '{{' + self.title.capitalize().replace("_", " ")+ "\n"
         for aset in self.attributes():
             ret += "| %s = " % aset[0]
 

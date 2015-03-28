@@ -5,7 +5,6 @@ Turn markdown into html.
 from urllib import urlopen
 from urllib import urlencode
 
-import dbm
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 import wikipediabase.util as util
 
@@ -31,9 +30,12 @@ class SandboxRenderer(object):
 
             self.url = fetcher.url + '/' + fetcher.base
 
-        self.cache = dbm.open(self.default_file, 'c')
+        self.cache = util._get_persistent_dict(self.default_file)
 
     def post_data(self, data, get, form_id):
+        """
+        Get a dict with the default post data.
+        """
         soup = util.fromstring(self.uopen(get).read())
         form = soup.find(".//form[@id='%s']" % form_id)
         inputs = soup.findall(".//input")

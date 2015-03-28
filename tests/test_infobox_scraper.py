@@ -25,6 +25,16 @@ class TestMetaInfobox(unittest.TestCase):
         di = get_meta_infobox('Template:Infobox musical artist')
         self.assertEqual(di.rendered_keys()['origin'], "Origin")
 
+    def test_getting_by_symbol(self):
+        di = get_meta_infobox('Template:Infobox musical artist')
+        self.assertEqual(di.symbol, "Template:Infobox musical artist")
+        self.assertEqual(di.title, "Infobox musical artist")
+
+    def test_getting_by_title(self):
+        di = get_meta_infobox('Infobox musical artist')
+        self.assertEqual(di.symbol, "Template:Infobox musical artist")
+        self.assertEqual(di.title, "Infobox musical artist")
+
 
     def test_attributes(self):
         self.assertIn((u'Native\xa0name', '!!!!!native_name!!!!!'),

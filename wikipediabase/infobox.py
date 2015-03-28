@@ -24,18 +24,21 @@ class Infobox(Logging):
     box_rx = ur"\b(infobox|Infobox|taxobox|Taxobox)\b"
 
 
-    def __init__(self, title, fetcher=None):
+    def __init__(self, symbol, title=None, fetcher=None):
         """
         It is a good idea to provide a fetcher as caching will be done
         much better.
         """
 
-        self.title = title
+        self.symbol = self.title = symbol
+        if title is not None:
+            self.title = title
+
         self.fetcher = fetcher or WIKIBASE_FETCHER
         self._rendered_keys = None
 
     def __nonzero__(self):
-        return bool(self.fetcher.download(self.title))
+        return bool(self.fetcher.download(self.symbol))
 
     @staticmethod
     def __tt(tmpl):
@@ -145,7 +148,7 @@ class Infobox(Logging):
         Get the markup source of this infobox.
         """
 
-        txt = self.fetcher.source(self.title)
+        txt = self.fetcher.source(self.symbol)
         return self._braces_markup(txt)
 
     def html_source(self):
@@ -154,7 +157,7 @@ class Infobox(Logging):
         """
 
         if not hasattr(self, '_html'):
-            self._html = self.fetcher.download(self.title)
+            self._html = self.fetcher.download(self.symbol)
 
         bs = fromstring(self._html)
         ret = ET.Element('div')
