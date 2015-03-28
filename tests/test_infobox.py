@@ -58,7 +58,7 @@ class TestInfobox(unittest.TestCase):
 
     def test_html_keys(self):
         bbc = Infobox("BBC News", self.fetcher)
-        self.assertEquals("Owner(s)", bbc.rendered_key("owner"))
+        self.assertEquals("Owner", bbc.rendered_key("owner"))
 
     def tearDown(self):
         pass

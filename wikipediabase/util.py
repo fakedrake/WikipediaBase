@@ -10,7 +10,6 @@ import inspect
 
 import lxml.etree as ET
 import copy
-import gdbm as dbm
 from lxml import html
 
 _CONTEXT = dict()
@@ -108,9 +107,8 @@ def _get_persistent_dict(filename=DBM_FILE):
     """
     A dict that syncs with persistent data storage.
     """
-
-    flag = 'w' if os.path.exists(filename) else 'n'
-    return _context_get(filename, 'peristent_store', lambda fn: dbm.open(fn, flag))
+    from wikipediabase.persistentkv import PersistentDict
+    return _context_get(filename, 'peristent_store', PersistentDict)
 
 def markup_categories(wiki_markup):
     """
@@ -268,4 +266,4 @@ def string_reduce(string):
 
 def encode(txt):
     # return txt.decode('utf-8')
-    return str(txt.decode("ascii", errors='ignore'))
+    return unicode(txt.decode("utf-8", errors='ignore'))
