@@ -257,7 +257,7 @@ WIKI_EXAMPLES_RX = [
     ('(get-attributes "wikipedia-company" "BBC News")',
      r':code \"KEY-PEOPLE\"'),
     ('(get-attributes "wikipedia-company" "BBC News")',
-     r'(:code \"OWNER\" :rendered \"Owner\")'),
+     r'(:code \"OWNER\" :rendered \"Owner\(s\)\")'),
     ('(get-attributes "wikipedia-company" "BBC News")',
      r'(:code \"SERVICES\" :rendered \"Services\")'),
     ('(get-attributes "wikipedia-company" "BBC News")',

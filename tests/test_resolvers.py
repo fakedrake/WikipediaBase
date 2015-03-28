@@ -28,7 +28,7 @@ from wikipediabase.resolvers.paragraph import first_paren
 
 from tests.examples import *
 
-ARTICLE = u"""A ninja (忍者?) or shinobi (忍び?) was a covert agent or mercenary
+ARTICLE_BODY = u"""A ninja (忍者?) or shinobi (忍び?) was a covert agent or mercenary
 in feudal Japan. The functions of the ninja included espionage,
 sabotage, infiltration, and assassination, and open combat in certain
 situations.[1] Their covert methods of waging war contrasted the ninja
@@ -61,8 +61,16 @@ class TestResolvers(unittest.TestCase):
         self.kb = get_knowledgebase()
 
     def test_resolver(self):
-        self.assertEqual(self.simple_resolver.resolve(ARTICLE, "word-count"),
+        self.assertEqual(self.simple_resolver.resolve(ARTICLE_BODY, "word-count"),
                          100)
+
+    def test_url(self):
+        """
+        The url we provide should be to wikipedia.org for the user's
+        benefit.
+        """
+        self.assertIn('en.wikipedia.org/wiki',
+                      str(self.simple_resolver.resolve("Barack obama", "url")))
 
     def test_infobox(self):
         # Disable compatibility mode: no extra tag info on result.

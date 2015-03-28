@@ -48,7 +48,7 @@ class WikipediaSiteFetcher(BaseFetcher):
 
     priority = 1
 
-    def __init__(self, url="http://en.wikipedia.org", base="w/index.php", **kw):
+    def __init__(self, url="http://ashmore.csail.mit.edu:8080", base="mediawiki/index.php", **kw):
         self.url = url.strip('/')
         self.base = base.strip('/')
 

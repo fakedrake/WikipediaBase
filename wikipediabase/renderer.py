@@ -67,7 +67,7 @@ class SandboxRenderer(object):
             return util.encode(self.cache[key])
 
         # XXX: here we assume tha t the mediawiki project name is wikipedia.
-        get = dict(title="Wikipedia:Sandbox", action="edit")
+        get = dict(title="CSAIL_Wikipedia:Sandbox", action="edit")
         post = self.post_data(dict(wpTextbox1=string, wpSave="Save page"),
                               get, 'editForm')
         get['action'] = 'submit'

@@ -87,8 +87,23 @@ class StaticResolver(BaseResolver):
 
     @provide(name='url')
     def url(self, article, _):
-        # Will also take care of redirections.
-        return enchant("url", get_article(article).url())
+        """
+        Note that this url is the wikipedia.org url. NOT the place where
+        we got the page.
+        """
+        # Will also teake care of redirections.
+        article = get_article(article)
+        url = article.url()
+
+        # We may be hitting a mirror so return the original here.
+        url = url.replace(article.fetcher.url.strip('/'), "http://en.wikipedia.org")
+
+        mirror_dir = article.fetcher.base.strip('/').split("/")
+        org_dir = "wiki/index.php".split("/")
+        for mirror, org in zip(mirror_dir, org_dir):
+            url = url.replace(mirror, org)
+
+        return enchant("url", url)
 
     @provide(name='number')
     def number(self, article, _):
