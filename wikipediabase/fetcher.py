@@ -7,16 +7,17 @@ except:
 
 from urllib import urlencode
 import re
-import  dbm
+import os
+import gdbm as dbm
 
 import lxml.etree as ET
 
-from .log import Logging
-from .util import subclasses, fromstring, totext
+from wikipediabase.log import Logging
+import wikipediabase.util as util
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
-OFFLINE_PAGES = "/tmp/pages.json"
+OFFLINE_PAGES = "./pages.db"
 
 
 class BaseFetcher(Logging):
@@ -47,7 +48,7 @@ class WikipediaSiteFetcher(BaseFetcher):
 
     priority = 1
 
-    def __init__(self, url="http://en.wikipedia.org", base="w/index.php", **kw):
+    def __init__(self, url="http://ashmore.csail.mit.edu:8080", base="mediawiki/index.php", **kw):
         self.url = url.strip('/')
         self.base = base.strip('/')
 
@@ -55,11 +56,11 @@ class WikipediaSiteFetcher(BaseFetcher):
         """
         Get the source from an html soup of the edit page.
         """
-        return totext(soup.find(".//*[@id='wpTextbox1']"))
+        return util.totext(soup.find(".//*[@id='wpTextbox1']"))
 
 
     def download(self, *args, **kwargs):
-            return self.urlopen(*args, **kwargs).read()
+        return self.urlopen(*args, **kwargs).read()
 
     def urlopen(self, symbol, get=None, base=None):
         """
@@ -101,7 +102,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         # name="wpTextbox1">
         get_request = get_request or dict(action="edit")
         html = self.download(symbol=symbol, get=get_request)
-        soup = fromstring(html)
+        soup = util.fromstring(html)
 
         try:
             src = self.get_wikisource(soup)
@@ -127,7 +128,7 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
     """
 
     priority = 10
-    _fname = OFFLINE_PAGES
+    cache_file = OFFLINE_PAGES
 
     def __init__(self, *args, **kw):
         """
@@ -136,14 +137,14 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         """
 
         self.offline = kw.get("offline", False)
-        self._fname = kw.get("fname", self._fname)
+        self.cache_file = kw.get("cache_file", self.cache_file)
 
         super(CachingSiteFetcher, self).__init__(*args, **kw)
 
     def redirect_url(self, symbol):
         return self.caching_fetch("REDIRECT:" + symbol,
-                         lambda sym: super(CachingSiteFetcher,
-                                           self).redirect_url(symbol), symbol)
+                                  lambda sym: super(CachingSiteFetcher,
+                                                    self).redirect_url(symbol), symbol)
 
     def download(self, symbol, get=None, base=None):
         dkey = "%s;%s" % (symbol, get) if not base else \
@@ -151,11 +152,14 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         callback = super(CachingSiteFetcher, self).download
         return self.caching_fetch(dkey, callback, symbol, get=get, base=base)
 
-    def caching_fetch(self, dkey, callback, *args, **kwargs):
-        if not hasattr(self, 'data'):
-            self.data = dbm.open(self._fname, 'c')
 
+    @property
+    def data(self):
+        return util._get_persistent_dict(self.cache_file)
+
+    def caching_fetch(self, dkey, callback, *args, **kwargs):
         ret = None
+        dkey = util.encode(dkey)
 
         if dkey in self.data:
             ret = self.data[dkey]
@@ -165,9 +169,8 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
             if ret:
                 self.data[dkey] = ret
 
-
         if ret is not None:
-            return ret.decode('utf-8')
+            return util.encode(ret)
 
         raise LookupError("Failed to find page '%s' (%s online)." %
                           (symbol, "didnt look" if self.offline else "looked"))
@@ -175,7 +178,7 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
 
 class StaticFetcher(BaseFetcher):
     """
-    Will always return constant html and markup.
+    Will just get the html and markup provided in init.
     """
 
     def __init__(self, html=None, markup=None):

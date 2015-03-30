@@ -1,7 +1,7 @@
 from itertools import chain
 
-from log import Logging
-from .util import memoized
+from wikipediabase.log import Logging
+from wikipediabase.util import memoized
 
 
 def provide(name=None, memoize=True):

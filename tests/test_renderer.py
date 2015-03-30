@@ -24,8 +24,9 @@ class TestRenderer(unittest.TestCase):
     def test_render(self):
         html_str = self.rndr.render("Bawls of steel")
         self.assertIn(u"Bawls of steel", html_str, "Body not found")
-        self.assertNotIn(u"wpTextbox1", html_str, "There was an input box.")
-
+        # If this fails it is possible that wikipedia.org has blocked
+        # you. Use a mirror.
+        self.assertNotIn(u"wpTextbox1", html_str, "Get just the contents..")
 
     def test_render_ibox(self):
         ibx_txt ="""{{Infobox person

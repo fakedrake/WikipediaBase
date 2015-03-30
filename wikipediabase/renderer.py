@@ -1,12 +1,18 @@
-from urllib import urlopen as uopen
+"""
+Turn markdown into html.
+"""
+
+from urllib import urlopen
 from urllib import urlencode
 
-import dbm
-from .fetcher import WIKIBASE_FETCHER
-from .util import fromstring, totext, memoized
+from wikipediabase.fetcher import WIKIBASE_FETCHER
+import wikipediabase.util as util
 
 
 class SandboxRenderer(object):
+    """
+    Use the wikipedia site sandbox to render mediawiki markup.
+    """
 
     default_file = './renderer.mdb'
 
@@ -24,10 +30,13 @@ class SandboxRenderer(object):
 
             self.url = fetcher.url + '/' + fetcher.base
 
-        self.cache = dbm.open(self.default_file, 'c')
+        self.cache = util._get_persistent_dict(self.default_file)
 
     def post_data(self, data, get, form_id):
-        soup = fromstring(self.uopen(get).read())
+        """
+        Get a dict with the default post data.
+        """
+        soup = util.fromstring(self.uopen(get).read())
         form = soup.find(".//form[@id='%s']" % form_id)
         inputs = soup.findall(".//input")
         fields = dict([(i.get('name'), i.get('value')) for i in inputs
@@ -37,21 +46,28 @@ class SandboxRenderer(object):
         return fields
 
     def uopen(self, get, post=None):
+        """
+        Open the url and provided a map of the get request.
+        """
         if not post:
-            return uopen(self.url+'?'+urlencode(get))
+            return urlopen(self.url+'?'+urlencode(get))
 
         post.update(get)
-        return uopen(self.url+'?'+urlencode(get), data=urlencode(post))
+        return urlopen(self.url+'?'+urlencode(get), data=urlencode(post))
 
     def render(self, string, key=None):
+        """
+        Turn markdown into html.
+        """
+
         if not key:
             key = str(hash(string))
 
         if key in self.cache:
-            return self.cache[key].decode('utf-8')
+            return util.encode(self.cache[key])
 
         # XXX: here we assume tha t the mediawiki project name is wikipedia.
-        get = dict(title="Wikipedia:Sandbox", action="edit")
+        get = dict(title="CSAIL_Wikipedia:Sandbox", action="edit")
         post = self.post_data(dict(wpTextbox1=string, wpSave="Save page"),
                               get, 'editForm')
         get['action'] = 'submit'
@@ -64,7 +80,6 @@ class SandboxRenderer(object):
         if key:
             self.cache[key] = ret
 
-        return ret.decode('utf-8')
-
+        return util.encode(ret)
 
 WIKIBASE_RENDERER = SandboxRenderer()

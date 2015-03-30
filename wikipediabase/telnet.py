@@ -9,7 +9,7 @@ import select
 import threading
 import time
 
-from .log import Logging
+from wikipediabase.log import Logging
 
 
 class TelnetServer(Logging):

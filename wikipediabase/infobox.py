@@ -3,11 +3,11 @@ import re
 import lxml.etree as ET
 from collections import defaultdict
 
-from .util import totext, tostring, fromstring, get_dummy_infobox
-from .log import Logging
-from .article import Article
-from .fetcher import WIKIBASE_FETCHER
-from .infobox_tree import ibx_type_superclasses
+from wikipediabase.util import totext, tostring, fromstring, get_meta_infobox
+from wikipediabase.log import Logging
+from wikipediabase.article import Article
+from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.infobox_tree import ibx_type_superclasses
 
 INFOBOX_ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_0-9]+)\s*=" \
                           "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
@@ -24,18 +24,20 @@ class Infobox(Logging):
     box_rx = ur"\b(infobox|Infobox|taxobox|Taxobox)\b"
 
 
-    def __init__(self, title, fetcher=None):
+    def __init__(self, symbol, title=None, fetcher=None):
         """
         It is a good idea to provide a fetcher as caching will be done
         much better.
         """
 
-        self.title = title
+        self.symbol = self.title = symbol
+        if title is not None:
+            self.title = title
+
         self.fetcher = fetcher or WIKIBASE_FETCHER
-        self._rendered_keys = None
 
     def __nonzero__(self):
-        return bool(self.fetcher.download(self.title))
+        return bool(self.fetcher.download(self.symbol))
 
     @staticmethod
     def __tt(tmpl):
@@ -45,9 +47,8 @@ class Infobox(Logging):
 
     def types(self, extend=True):
         """
-        The infobox type. Extend means search inn other places except here
-        (ie find equivalent ones, parent ones etc)
-        to_start will make the types into start classes.
+        The infobox type. Extend means search in other places except here
+        (ie find equivalent ones, parent ones etc).
         """
 
         types = []
@@ -63,6 +64,7 @@ class Infobox(Logging):
                 if extend:
                     title = Article(dominant,
                                     self.fetcher).title()
+
                     if self.__tt(dominant) != self.__tt(title):
                         types.append(title)
 
@@ -94,7 +96,7 @@ class Infobox(Logging):
         # readable.
         html_key = key.lower().replace(u"-", u" ")
         markup_key = key.lower().replace(u"-", u"_")
-        rendered_key = self.rendered_key(markup_key)
+        rendered_key = self.rendered_keys().get(markup_key)
 
         if source is None or source == 'html':
             for k, v in self.html_parsed():
@@ -107,19 +109,17 @@ class Infobox(Logging):
             if k.replace("-", "_") == markup_key:
                 return v
 
-    def rendered_key(self, markup_key):
-        # Rendered key dict
-        if self._rendered_keys is None:
-            self._rendered_keys = dict()
+    def rendered_keys(self):
+        # Populate the rendered keys dict
+        if hasattr(self, '_rendered_keys'):
+            return self._rendered_keys
 
-            for t in reversed(self.types(extend=False)):
-                ibx = get_dummy_infobox(t)
-                self._rendered_keys.update(ibx.rendered_keys())
+        self._rendered_keys = dict()
+        for infobox_type in reversed(self.types()):
+            ibx = get_meta_infobox(infobox_type)
+            self._rendered_keys.update(ibx.rendered_keys())
 
-        try:
-            return self._rendered_keys[markup_key.lower().replace("-", "_")]
-        except KeyError:
-            return None
+        return self._rendered_keys
 
     def markup_parsed_iter(self):
         """
@@ -146,7 +146,7 @@ class Infobox(Logging):
         Get the markup source of this infobox.
         """
 
-        txt = self.fetcher.source(self.title)
+        txt = self.fetcher.source(self.symbol)
         return self._braces_markup(txt)
 
     def html_source(self):
@@ -155,7 +155,7 @@ class Infobox(Logging):
         """
 
         if not hasattr(self, '_html'):
-            self._html = self.fetcher.download(self.title)
+            self._html = self.fetcher.download(self.symbol)
 
         bs = fromstring(self._html)
         ret = ET.Element('div')
@@ -186,7 +186,7 @@ class Infobox(Logging):
 
             return re.sub(r"&lt;(/?\s*(br\s*/?|ul|li))&gt;", "<\\1>", val)
 
-        soup = self.html_source()
+        soup = fromstring(self.html_source())
         # Render all tags except <ul> and <li>. Escape them in some way and
         # then reparse
 

@@ -4,14 +4,14 @@ import re
 import itertools
 from urlparse import urlparse
 
-from .log import Logging
-from .util import (markup_categories,
-                   fromstring,
-                   tostring,
-                   totext,
-                   memoized,
-                   url_get_dict)
-from .fetcher import WIKIBASE_FETCHER
+from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.log import Logging
+from wikipediabase.util import (markup_categories,
+                                fromstring,
+                                tostring,
+                                totext,
+                                memoized,
+                                url_get_dict)
 
 # XXX: also support images.
 class Article(Logging):
@@ -62,8 +62,11 @@ class Article(Logging):
         # fetcher to resolve redirects and a cirular recursion will
         # occur
 
-        return "".join(
-            self._soup().find(".//*[@id='firstHeading']/span").itertext())
+        heading = self._soup().get_element_by_id('firstHeading')
+        if heading is not None:
+            return totext(heading).strip()
+
+        raise Exception("No title found for '%s'" % self.symbol())
 
     def markup_source(self):
         """
@@ -99,3 +102,10 @@ class Article(Logging):
         return ["".join(h.itertext())[:-len("[edit]")]
                 for h in s.findall(xpath)
                 if "".join(h.itertext())]
+
+    def first_paragraph(self):
+        for p in self.paragraphs():
+            if p.strip():
+                return p
+
+        return None

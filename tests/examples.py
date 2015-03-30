@@ -138,7 +138,7 @@ DEGENERATE_EXAMPLES = [
      '((0 "Juri_Manin,_Ksenia_Semenova.jpeg" "Yuri Manin with his wife Ksenia Semenova at the ICM 2006 in Madrid"))'),
     ('(get "wikipedia-term" "Sium sisarum" (:code "IMAGE-DATA"))',
      # '((0 "illustration_Sium_sisarum0.jpg" "<i>Sium sisarum</i>"))'
-     '((0 "Illustration_Sium_sisarum0.jpg"))'),
+     '((0 "illustration_Sium_sisarum0.jpg"))'),
 
     # Next three tests copied from old tests that asserted that each
     # coordinate was within a small delta (.1) of the tested value, to
@@ -185,6 +185,7 @@ DEGENERATE_EXAMPLES = [
     ('(get "Board game" "PROPER")',
      '#f'),
 
+    # This means plural or singular I guess
     ('(get "wikipedia-term" "Bill Clinton" (:calculated "NUMBER"))',
      '#f'),
     ('(get "wikipedia-term" "The Beatles" (:calculated "NUMBER"))',

@@ -7,9 +7,9 @@ Synonyms are are based upon:
 
 
 import re
-from .util import (get_article, expand, concat, subclasses,
+from wikipediabase.util import (get_article, expand, concat, subclasses,
                    fromstring, string_reduce)
-from .fetcher import WIKIBASE_FETCHER
+from wikipediabase.fetcher import WIKIBASE_FETCHER
 
 def lexical_synonyms(symbol):
     """
@@ -37,7 +37,7 @@ class ForwardRedirectInducer(BaseInducer):
         sym = string_reduce(symbol)
         api_get = dict(action='query', titles=symbol, redirects="",
                        format='xml')
-        xml_data = fetcher.download(symbol, get=api_get, base="w/api.php")
+        xml_data = fetcher.download(symbol, get=api_get, base="mediawiki/api.php")
         ret = []
 
         for p in fromstring(xml_data).findall(".//page"):

@@ -2,14 +2,14 @@
 
 from itertools import chain
 
-from .provider import Provider, provide
-from .fetcher import WIKIBASE_FETCHER
-from .infobox import Infobox
-from .enchantments import enchant
-from .resolvers import WIKIBASE_RESOLVERS
-from .classifiers import WIKIBASE_CLASSIFIERS
-from .synonym_inducers import WIKIBASE_INDUCERS
-from .util import get_article
+from wikipediabase.provider import Provider, provide
+from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.infobox import Infobox
+from wikipediabase.enchantments import enchant
+from wikipediabase.resolvers import WIKIBASE_RESOLVERS
+from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
+from wikipediabase.synonym_inducers import WIKIBASE_INDUCERS
+from wikipediabase.util import get_article
 
 import re
 
@@ -69,7 +69,6 @@ class KnowledgeBase(Provider):
 
         # Attribute is wrapped into a dict just until we retrieve the
         # keys.
-
         for ar in self.resolvers:
             res = ar.resolve(article, attr)
             # Errors enchantments should get returned.
@@ -114,8 +113,9 @@ class KnowledgeBase(Provider):
 
         ret = []
         for k, v in ibox.markup_parsed_iter():
+            rendered = ibox.rendered_keys().get(k.replace('-', '_'))
             tmp = enchant(None, dict(code=k.upper(),
-                                     rendered=ibox.rendered_key(k)))
+                                     rendered=rendered))
 
             ret.append(tmp._str())
 

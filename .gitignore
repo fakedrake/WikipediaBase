@@ -39,3 +39,6 @@ nosetests.xml
 *.iml
 
 .travis-solo
+G*
+*.db
+*.mdb

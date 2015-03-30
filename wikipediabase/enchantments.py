@@ -1,8 +1,13 @@
 """
-Enchantments are meant to represent anything that comes in the
-form (:<key> <vale>). The interface to the outer world is
-enchant(). To add your own enchantments teach enchant() how to deal
-with them.
+Enchantments are an abstraction to representation of data within
+and outside of wikipediabase, ie wikipedia free text, python types and
+START s-expressions.
+
+To use the enchantment infrastructure use the 'enchant' function. To
+create a new way of interpreting data subclass the Enchanted
+class. Prefix your class with an underscore (_) if it is an
+intermediate generation between Enchanted and the classes that
+actually parse so that the enchant method will ignore it.
 """
 
 import re
@@ -10,8 +15,8 @@ from numbers import Number
 
 import overlay_parse
 
-from .log import Logging
-from .util import subclasses
+from wikipediabase.log import Logging
+from wikipediabase.util import subclasses
 
 
 # For fully deterministic enchantments use this prioroty.
@@ -102,7 +107,7 @@ class Enchanted(Logging):
         if self.literal:
             return self._str()
 
-        return u"(%s)" % self._str()
+        return u"(%s)" % self._str().replace("\n", "")
 
     def _str(self):
         if self:

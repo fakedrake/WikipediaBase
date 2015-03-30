@@ -1,6 +1,6 @@
-from .base import MIN_PRIORITY, BaseResolver
-from ..util import get_knowledgebase
-from ..enchantments import enchant
+from wikipediabase.resolvers.base import MIN_PRIORITY, BaseResolver
+from wikipediabase.util import get_knowledgebase
+from wikipediabase.enchantments import enchant
 
 class ErrorResolver(BaseResolver):
     """

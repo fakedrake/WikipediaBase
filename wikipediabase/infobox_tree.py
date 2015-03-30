@@ -2,7 +2,7 @@ import re
 from itertools import izip_longest as izl
 from itertools import chain, izip
 
-from .fetcher import WIKIBASE_FETCHER
+from wikipediabase.fetcher import WIKIBASE_FETCHER
 
 MW_HEADING_RX = map(re.compile, [
     ur"\s*==([\w\s]+)==",
