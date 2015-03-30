@@ -37,7 +37,7 @@ class ForwardRedirectInducer(BaseInducer):
         sym = string_reduce(symbol)
         api_get = dict(action='query', titles=symbol, redirects="",
                        format='xml')
-        xml_data = fetcher.download(symbol, get=api_get, base="w/api.php")
+        xml_data = fetcher.download(symbol, get=api_get, base="mediawiki/api.php")
         ret = []
 
         for p in fromstring(xml_data).findall(".//page"):
