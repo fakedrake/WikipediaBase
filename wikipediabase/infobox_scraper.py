@@ -7,7 +7,8 @@ import re
 from wikipediabase.renderer import WIKIBASE_RENDERER
 from wikipediabase.fetcher import StaticFetcher
 from wikipediabase.infobox import Infobox
-from wikipediabase.util import fromstring, totext, string_reduce, get_article
+from wikipediabase.util import fromstring, totext, string_reduce, \
+    get_article, get_infobox
 
 class MetaInfobox(Infobox):
     """
@@ -27,6 +28,7 @@ class MetaInfobox(Infobox):
     """
 
     def __init__(self, infobox_type, fetcher=None, renderer=None, **kw):
+        infobox_type = infobox_type.strip()
         if not infobox_type.startswith("Template:"):
             symbol, title = "Template:" + infobox_type, infobox_type
 
@@ -40,45 +42,35 @@ class MetaInfobox(Infobox):
         self.type = title.split("_")[0]
         self.renderer = renderer or WIKIBASE_RENDERER
 
-        mu = self.markup()
+        mu = self.markup_source()
         ftchr = StaticFetcher(self.renderer.render(mu, self.title), mu)
         super(MetaInfobox, self).__init__(symbol, title=title, fetcher=ftchr, **kw)
 
-    # These use the scratch.
     def attributes(self):
         """
-        Generator of lists whose elements are names of infobox attributes
-        that are equivalent. These are essentially the attributes of
-        the meta infobox.
+        A list of the markup attributes.
         """
 
-        soup = fromstring(get_article(self.symbol).html_source())
+        # There will always be an example in the documentation but
+        # there may be more than one.
+        ibxes = get_article(self.symbol + '/doc').markup_source()
+        return [i for i \
+                in set(re.findall(r"^\s*|\s*([a-zA-Z_\-]+)\s*=", ibxes)) if i]
 
-        for table in soup.findall(".//table"):
-            if 'mw-templatedata-doc-params' in table.get("class", ""):
-                for codes in table.findall(
-                        ".//td[@class='mw-templatedata-doc-param-name']"):
-                    yield [totext(c).strip() for c in codes.findall('.//code')]
 
-    def markup(self):
+    def markup_source(self):
         """
         Markup of the meta infobox. Each attribute has a value that
         contains all the equivalent attributes to itself.
         """
 
-        ret = '{{' + self.title.capitalize().replace("_", " ")+ "\n"
-        for aset in self.attributes():
-            ret += "| %s = " % aset[0]
+        return '{{' + self.title.capitalize().replace("_", " ") + "\n" + \
+            '\n'.join(["| %s = !!!!!%s!!!!!" % (attr, attr) for \
+                       attr in self.attributes()]) + \
+            "\n}}\n"
 
-            # Put all equivalent attributes next to each other.
-            for a in aset:
-                ret += "!!!!!%s!!!!! " % a
-
-            ret += '\n'
-
-        ret += "}}\n"
-
-        return ret
+    def html_source(self):
+        return self.renderer.render(self.markup_source())
 
     def rendered_keys(self):
         """
@@ -87,7 +79,6 @@ class MetaInfobox(Infobox):
         """
 
         ret = dict()
-
         for k, v in self.html_parsed():
             for m in re.finditer("!!!!!([^!]+)!!!!!", v):
                 ret[m.group(1)] = k
