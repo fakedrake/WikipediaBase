@@ -35,7 +35,6 @@ class Infobox(Logging):
             self.title = title
 
         self.fetcher = fetcher or WIKIBASE_FETCHER
-        self._rendered_keys = None
 
     def __nonzero__(self):
         return bool(self.fetcher.download(self.symbol))
@@ -65,6 +64,7 @@ class Infobox(Logging):
                 if extend:
                     title = Article(dominant,
                                     self.fetcher).title()
+
                     if self.__tt(dominant) != self.__tt(title):
                         types.append(title)
 
@@ -96,7 +96,7 @@ class Infobox(Logging):
         # readable.
         html_key = key.lower().replace(u"-", u" ")
         markup_key = key.lower().replace(u"-", u"_")
-        rendered_key = self.rendered_key(markup_key)
+        rendered_key = self.rendered_keys().get(markup_key)
 
         if source is None or source == 'html':
             for k, v in self.html_parsed():
@@ -109,19 +109,17 @@ class Infobox(Logging):
             if k.replace("-", "_") == markup_key:
                 return v
 
-    def rendered_key(self, markup_key):
-        # Rendered key dict
-        if self._rendered_keys is None:
-            self._rendered_keys = dict()
+    def rendered_keys(self):
+        # Populate the rendered keys dict
+        if hasattr(self, '_rendered_keys'):
+            return self._rendered_keys
 
-            for infobox_type in reversed(self.types(extend=False)):
-                ibx = get_meta_infobox(infobox_type)
-                self._rendered_keys.update(ibx.rendered_keys())
+        self._rendered_keys = dict()
+        for infobox_type in reversed(self.types()):
+            ibx = get_meta_infobox(infobox_type)
+            self._rendered_keys.update(ibx.rendered_keys())
 
-        try:
-            return self._rendered_keys[markup_key.lower().replace("-", "_")]
-        except KeyError:
-            return None
+        return self._rendered_keys
 
     def markup_parsed_iter(self):
         """
@@ -188,7 +186,7 @@ class Infobox(Logging):
 
             return re.sub(r"&lt;(/?\s*(br\s*/?|ul|li))&gt;", "<\\1>", val)
 
-        soup = self.html_source()
+        soup = fromstring(self.html_source())
         # Render all tags except <ul> and <li>. Escape them in some way and
         # then reparse
 
