@@ -69,7 +69,6 @@ class KnowledgeBase(Provider):
 
         # Attribute is wrapped into a dict just until we retrieve the
         # keys.
-
         for ar in self.resolvers:
             res = ar.resolve(article, attr)
             # Errors enchantments should get returned.
@@ -114,8 +113,9 @@ class KnowledgeBase(Provider):
 
         ret = []
         for k, v in ibox.markup_parsed_iter():
+            rendered = ibox.rendered_keys().get(k.replace('-', '_'))
             tmp = enchant(None, dict(code=k.upper(),
-                                     rendered=ibox.rendered_key(k)))
+                                     rendered=rendered))
 
             ret.append(tmp._str())
 
