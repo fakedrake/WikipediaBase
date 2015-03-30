@@ -16,6 +16,7 @@ except ImportError:
 from common import TEST_FETCHER_SETUP
 
 from wikipediabase.infobox import Infobox
+from wikipediabase.util import get_infobox
 from wikipediabase import fetcher
 
 
@@ -23,7 +24,7 @@ class TestInfobox(unittest.TestCase):
 
     def setUp(self):
         self.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
-        self.ibox = Infobox("Led Zeppelin", self.fetcher)
+        self.ibox = get_infobox("Led Zeppelin", self.fetcher)
 
     def test_markup(self):
         self.assertEqual(self.ibox.markup_source()[:9], "{{Infobox")
@@ -33,19 +34,19 @@ class TestInfobox(unittest.TestCase):
 
     def test_infobox_markup_raw(self):
         self.assertIn("| name = Led Zeppelin", self.ibox.markup_source())
-        clinton = Infobox("Bill Clinton", self.fetcher)
+        clinton = get_infobox("Bill Clinton", self.fetcher)
         self.assertIn("|death_place ", clinton.markup_source())
 
     def test_rendered_keys(self):
-        clinton = Infobox("Bill Clinton", self.fetcher)
-        self.assertEqual("Died", clinton.rendered_key("death_place"))
+        clinton = get_infobox("Bill Clinton", self.fetcher)
+        self.assertEqual("Died", clinton.rendered_keys().get("death_place"))
 
     def test_infobox_html_parsed(self):
         self.assertIn((u'Origin', u'London, England'), self.ibox.html_parsed())
 
     def test_attributes(self):
         self.assertEqual(self.ibox.get("origin"), "London, England")
-        clinton = Infobox("Bill Clinton", self.fetcher)
+        clinton = get_infobox("Bill Clinton", self.fetcher)
         self.assertIn("death-place",
                       [k for k, v in clinton.markup_parsed_iter()])
 
@@ -53,12 +54,12 @@ class TestInfobox(unittest.TestCase):
         self.assertEqual(self.ibox.start_types(), ['wikipedia-musical-artist'])
 
     def test_types_redirect(self):
-        clinton = Infobox("Bill Clinton", self.fetcher)
+        clinton = get_infobox("Bill Clinton", self.fetcher)
         self.assertIn('wikipedia-president', clinton.start_types())
 
     def test_html_keys(self):
-        bbc = Infobox("BBC News", self.fetcher)
-        self.assertEquals("Owner(s)", bbc.rendered_key("owner"))
+        bbc = get_infobox("BBC News", self.fetcher)
+        self.assertEquals("Owner(s)", bbc.rendered_keys().get("owner"))
 
     def tearDown(self):
         pass
