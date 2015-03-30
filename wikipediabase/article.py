@@ -64,9 +64,8 @@ class Article(Logging):
 
         heading = self._soup().get_element_by_id('firstHeading')
         if heading is not None:
-            return heading.text
+            return totext(heading).strip()
 
-        import ipdb; ipdb.set_trace()
         raise Exception("No title found for '%s'" % self.symbol())
 
     def markup_source(self):
@@ -103,3 +102,10 @@ class Article(Logging):
         return ["".join(h.itertext())[:-len("[edit]")]
                 for h in s.findall(xpath)
                 if "".join(h.itertext())]
+
+    def first_paragraph(self):
+        for p in self.paragraphs():
+            if p.strip():
+                return p
+
+        return None
