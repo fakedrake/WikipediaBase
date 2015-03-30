@@ -107,7 +107,7 @@ class Enchanted(Logging):
         if self.literal:
             return self._str()
 
-        return u"(%s)" % self._str()
+        return u"(%s)" % self._str().replace("\n", "")
 
     def _str(self):
         if self:
