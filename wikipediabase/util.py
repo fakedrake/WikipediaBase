@@ -10,6 +10,7 @@ import inspect
 
 import lxml.etree as ET
 import copy
+import lxml
 from lxml import html
 
 _CONTEXT = dict()
@@ -221,6 +222,9 @@ def tostring(et):
 
 # A memoization
 def fromstring(txt):
+    if isinstance(txt, lxml.etree._Element):
+        return txt
+
     if not hasattr(fromstring, 'memoized'):
         fromstring.memoized = dict()
 
@@ -267,3 +271,6 @@ def string_reduce(string):
 def encode(txt):
     # return txt.decode('utf-8')
     return unicode(txt.decode("utf-8", errors='ignore'))
+
+def markup_unlink(markup):
+    return re.sub(r"\[+(.*\||)(?P<content>.*?)\]+", r'\g<content>', markup)
