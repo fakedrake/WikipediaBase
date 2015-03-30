@@ -27,7 +27,7 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "Klaus Barbie" "BIRTH-DATE")',
      '((:yyyymmdd 19131025))'),
     ('(get "wikipedia-person" "Klaus Barbie" "DEATH-DATE")',
-     '((:yyyymmdd 19910923))'),
+     '((:yyyymmdd 19910925))'),
     ('(get "wikipedia-person" "Paul Shardlow" "BIRTH-DATE")',
      '((:yyyymmdd 19430429))'),
     ('(get "wikipedia-person" "Paul Shardlow" "DEATH-DATE")',
@@ -131,14 +131,14 @@ DEGENERATE_EXAMPLES = [
     # =====================================
 
     ('(get "wikipedia-term" "Bill Clinton"  "image-data")',
-     '((0 "44_Bill_Clinton_3x4.jpg"))'),
+     '((0 "Bill_Clinton.jpg"))'),
     ('(get "wikipedia-term" "Bill Clinton" (:code "IMAGE-DATA"))',
-     '((0 "44_Bill_Clinton_3x4.jpg"))'),
+     '((0 "Bill_Clinton.jpg"))'),
     ('(get "wikipedia-term" "Yuri I. Manin" (:CODE "IMAGE-DATA"))',
      '((0 "Juri_Manin,_Ksenia_Semenova.jpeg" "Yuri Manin with his wife Ksenia Semenova at the ICM 2006 in Madrid"))'),
     ('(get "wikipedia-term" "Sium sisarum" (:code "IMAGE-DATA"))',
      # '((0 "illustration_Sium_sisarum0.jpg" "<i>Sium sisarum</i>"))'
-     '((0 "Illustration_Sium_sisarum0.jpg"))'),
+     '((0 "illustration_Sium_sisarum0.jpg"))'),
 
     # Next three tests copied from old tests that asserted that each
     # coordinate was within a small delta (.1) of the tested value, to
@@ -185,6 +185,7 @@ DEGENERATE_EXAMPLES = [
     ('(get "Board game" "PROPER")',
      '#f'),
 
+    # This means plural or singular I guess
     ('(get "wikipedia-term" "Bill Clinton" (:calculated "NUMBER"))',
      '#f'),
     ('(get "wikipedia-term" "The Beatles" (:calculated "NUMBER"))',
