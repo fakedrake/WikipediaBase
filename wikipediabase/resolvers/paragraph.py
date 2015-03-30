@@ -57,7 +57,7 @@ class LifespanParagraphResolver(BaseResolver):
             attr = attribute.lower()
 
         if attr == 'short-article':
-            return get_article(article).paragraphs()[0]
+            return get_article(article).first_paragraph()
 
         if attr not in ("birth-date", "death-date"):
             return None
