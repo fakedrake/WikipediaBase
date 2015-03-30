@@ -5,7 +5,7 @@ import re
 from wikipediabase.provider import provide
 from wikipediabase.resolvers.base import BaseResolver
 from wikipediabase.enchantments import enchant
-from wikipediabase.util import get_infobox, get_article, totext
+from wikipediabase.util import get_infobox, get_article, totext, markup_unlink
 
 
 class StaticResolver(BaseResolver):
@@ -76,14 +76,17 @@ class StaticResolver(BaseResolver):
     def image(self, article, attribute):
         # Make sure we are not getting back the enchanted.
 
-        imgl = get_infobox(article).html_source().find('.//td/a/img/..')
-        if imgl is None:
+        ibx = get_infobox(article)
+        img = ibx.get('image')
+        if not img:
             return None
 
-        fnam = imgl.get('href').split("File:")[1]
-        cap = totext(imgl.getparent()).strip()
+        fnam = img.replace(" ", "_")
+        if "File:" in img:
+            fnam = fnam.split("File:")[1]
 
-        return enchant(None, [0, fnam] + ([cap] if cap else []))
+        cap = ibx.get('caption')
+        return enchant(None, [0, fnam] + ([markup_unlink(cap)] if cap else []))
 
     @provide(name='url')
     def url(self, article, _):
@@ -107,11 +110,14 @@ class StaticResolver(BaseResolver):
 
     @provide(name='number')
     def number(self, article, _):
+        """
+        True if it is plural.
+        """
         a = re.sub(r"\s*\(.*\)\s*", "", article.replace("_", " "))
 
         # First paragraph refers more often to the symbol itself
         # rather than things related to it.
-        txt = get_article(article).paragraphs()[0]
+        txt = get_article(article).first_paragraph()
 
         nay = sum(map(txt.count, [' is ', ' was ', ' has ']))
         yay = sum(map(txt.count, [' are ', ' were ', ' have ']))
