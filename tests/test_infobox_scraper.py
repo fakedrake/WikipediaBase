@@ -25,6 +25,10 @@ class TestMetaInfobox(unittest.TestCase):
         di = get_meta_infobox('Template:Infobox musical artist')
         self.assertEqual(di.rendered_keys()['origin'], "Origin")
 
+    def test_regression_officeholder(self):
+        mibx = get_meta_infobox('Template:Infobox officeholder')
+        self.assertEqual("Died", mibx.rendered_keys().get("death_place"))
+
     def test_getting_by_symbol(self):
         di = get_meta_infobox('Template:Infobox musical artist')
         self.assertEqual(di.symbol, "Template:Infobox musical artist")
