@@ -13,8 +13,12 @@ setup(
     author=metadata['author'],
     author_email=metadata['email'],
     url=metadata['url'],
-    packages=['wikipediabase',
-              'tests'],
+    packages=[
+        'wikipediabase',
+        'wikipediabase.resolvers',
+        'wikipediabase.adhoc',
+        'tests'
+    ],
     include_package_data=True,
     install_requires=[
         'edn_format',
