@@ -7,7 +7,7 @@ from pip.download import PipSession
 install_reqs = parse_requirements('requirements.txt',
                                   session=PipSession())
 reqs = [str(ir.req) for ir in install_reqs]
-req_links = [str(req_line.url) for req_line in install_reqs]
+reqlinks = [str(req_line.url) for req_line in install_reqs]
 init_py = open('wikipediabase/__init__.py').read()
 metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", init_py))
 metadata['doc'] = re.findall('"""(.+)"""', init_py)[0]
