@@ -53,3 +53,5 @@ TEST_FETCHER_SETUP = dict(offline=False, fname=data("pages.db"))
 
 def get_fetcher():
     return CachingSiteFetcher(**TEST_FETCHER_SETUP)
+
+WIKIBASE_FETCHER = get_fetcher()

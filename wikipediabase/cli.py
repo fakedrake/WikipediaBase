@@ -23,10 +23,6 @@ from wikipediabase.frontend import TelnetFrontend
 
 log = logging.getLogger(__name__)
 
-
-def cache_mysql
-
-
 def main():
     arguments = docopt(__doc__, version=wikipediabase.__version__)
     debug = arguments['--debug']
