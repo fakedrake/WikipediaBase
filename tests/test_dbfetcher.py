@@ -13,8 +13,6 @@ try:
 except ImportError:
     import unittest
 
-import dataset as ds
-
 # from wikipediabase import dbfetcher
 
 

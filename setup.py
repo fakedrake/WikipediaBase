@@ -18,20 +18,12 @@ setup(
     include_package_data=True,
     install_requires=[
         'edn_format',
-        'changes < 1.0.0',
-        'coverage < 4.0.0',
         'docopt',
         'flake8 < 3.0.0',
         'mock < 2.0.0',
-        'nose < 2.0.0',
-        'python-coveralls < 3.0.0',
-        'sphinx-bootstrap-theme < 1.0.0',
-        'testtube < 1.0.0',
-        'travis-solo < 1.0.0',
         'unittest2 < 1.0.0',
         'overlay-parse',
-        'lxml',
-        'dataset'
+        'lxml'
     ],
     dependency_links=[
         'git+https://github.com/fakedrake/overlay_parse#egg=overlay-parse',
