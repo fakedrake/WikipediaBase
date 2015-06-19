@@ -33,7 +33,7 @@ Install `wikipediabase`:
 Install development requirements (do this after every 'git pull' in
 case there are new requirements):
 
-    pip install -r requirements.txt
+    python setup.py develop
 
 Tests can then be run with:
 
