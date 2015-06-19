@@ -3,7 +3,7 @@
 __author__ = 'Chris Perivolaropoulos'
 __email__ = 'cperivol@csail.mit.edu'
 __url__ = 'https://github.com/fakedrake/wikipediabase'
-__version__ = '1.0'
+__version__ = '1.1'
 
 from wikipediabase.knowledgebase import KnowledgeBase
 from wikipediabase.resolvers import StaticResolver
