@@ -20,7 +20,6 @@ setup(
         'edn_format',
         'docopt',
         'flake8 < 3.0.0',
-        'mock < 2.0.0',
         'unittest2 < 1.0.0',
         'overlay-parse',
         'lxml'
