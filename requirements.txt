@@ -1,6 +1,5 @@
 # MySQL by Oracle and others, it's the official one. Note that MySQLdb
 # is written by some dude. I don't know why they are both maintained.
-mysql-connector-python
 edn_format
 changes < 1.0.0
 coverage < 4.0.0
