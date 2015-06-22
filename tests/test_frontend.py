@@ -18,7 +18,7 @@ from wikipediabase.frontend import Frontend
 
 
 def get_attribute(x, y):
-    return "%s of %s" % (repr(y), repr(x))
+    return "%s of %s" % (str(repr(y)), str(repr(x)))
 
 
 class TestFrontend(unittest.TestCase):
