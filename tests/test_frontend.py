@@ -13,6 +13,7 @@ try:
 except ImportError:
     import unittest
 
+import common
 from wikipediabase.provider import Provider
 from wikipediabase.frontend import Frontend
 

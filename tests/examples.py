@@ -3,6 +3,7 @@ Just some examples to be run by.
 """
 
 import re
+import common
 
 # A list of (query, expected-answer) tuples
 WIKI_EXAMPLES = [

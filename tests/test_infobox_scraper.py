@@ -13,6 +13,7 @@ try:
 except ImportError:
     import unittest
 
+import common
 from wikipediabase.infobox_scraper import MetaInfobox
 from wikipediabase.util import get_meta_infobox
 

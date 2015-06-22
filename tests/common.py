@@ -1,4 +1,5 @@
 import os
+import wikipediabase.fetcher
 from wikipediabase.fetcher import CachingSiteFetcher
 import urllib2 as urllib
 
@@ -42,16 +43,16 @@ def read_data(fname):
 
 
 def download_all(pages=ALL_TEST_PAGES):
-    f = CachingSiteFetcher(offline=False, fname=data("pages.json"))
+    f = CachingSiteFetcher(offline=False, cache_file=data("pages.db"))
 
     for p in pages:
         f.download(p)
         f.source(p)
 
-TEST_FETCHER_SETUP = dict(offline=False, fname=data("pages.db"))
+TEST_FETCHER_SETUP = dict(offline=False, cache_file=data("pages.db"))
 
 
 def get_fetcher():
     return CachingSiteFetcher(**TEST_FETCHER_SETUP)
 
-WIKIBASE_FETCHER = get_fetcher()
+wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')

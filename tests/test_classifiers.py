@@ -13,6 +13,7 @@ try:
 except ImportError:
     import unittest
 
+import common
 from wikipediabase import classifiers as cls
 
 

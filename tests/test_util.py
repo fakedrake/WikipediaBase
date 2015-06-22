@@ -15,7 +15,7 @@ except ImportError:
 
 import datetime
 
-
+import common
 from wikipediabase import util
 from wikipediabase.infobox import Infobox
 from wikipediabase.article import Article

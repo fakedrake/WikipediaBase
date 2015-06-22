@@ -14,6 +14,7 @@ except ImportError:
     import unittest
 
 import os
+import common
 from wikipediabase import persistentkv as pkv
 
 DATABASE = "/tmp/remove-me.db"

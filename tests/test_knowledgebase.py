@@ -15,6 +15,7 @@ except ImportError:
 
 import re
 
+import common
 from wikipediabase.knowledgebase import KnowledgeBase
 from wikipediabase.provider import Acquirer, Provider
 from wikipediabase.enchantments import EnchantedList

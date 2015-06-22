@@ -33,6 +33,7 @@ setup(
     ],
     tests_require=[
         'nose>=1.0',
+        'vcrpy'
     ],
     entry_points={
         'console_scripts': [
