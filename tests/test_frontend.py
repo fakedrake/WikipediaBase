@@ -18,7 +18,7 @@ from wikipediabase.frontend import Frontend
 
 
 def get_attribute(x, y):
-    return "%s of %s" % (repr(y), repr(x))
+    return u"%s of %s" % (repr(y), repr(x))
 
 
 class TestFrontend(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestFrontend(unittest.TestCase):
 
     def test_simple(self):
         self.assertEqual(self.simple_fe.eval("(get \"article\" words)"),
-                         "Symbol(words) of 'article'")
+                         u"Symbol(words) of 'article'")
 
     def test_unicode(self):
         date = self.fe.eval(
