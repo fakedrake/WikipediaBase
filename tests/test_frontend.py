@@ -29,7 +29,7 @@ class TestFrontend(unittest.TestCase):
         self.fe = Frontend()
 
     def test_simple(self):
-        self.assertEqual(str(xself.simple_fe.eval("(get \"article\" words)")),
+        self.assertEqual(str(self.simple_fe.eval("(get \"article\" words)")),
                          str("Symbol(words) of 'article'"))
 
     def test_unicode(self):
