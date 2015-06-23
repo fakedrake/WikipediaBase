@@ -109,6 +109,7 @@ def _get_persistent_dict(filename=DBM_FILE):
     A dict that syncs with persistent data storage.
     """
     from wikipediabase.persistentkv import PersistentDict
+
     return _context_get(filename, 'peristent_store', PersistentDict)
 
 def markup_categories(wiki_markup):

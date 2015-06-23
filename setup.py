@@ -33,7 +33,7 @@ setup(
     ],
     tests_require=[
         'nose>=1.0',
-        'vcrpy'
+        'sqlitedict'
     ],
     entry_points={
         'console_scripts': [

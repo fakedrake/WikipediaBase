@@ -8,7 +8,6 @@ except:
 from urllib import urlencode
 import re
 import os
-import gdbm as dbm
 
 import lxml.etree as ET
 
@@ -17,7 +16,7 @@ import wikipediabase.util as util
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
-OFFLINE_PAGES = "./pages.db"
+OFFLINE_PAGES = "./pages.sqlite"
 
 
 class BaseFetcher(Logging):
