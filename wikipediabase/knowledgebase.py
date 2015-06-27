@@ -11,8 +11,6 @@ from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
 from wikipediabase.synonym_inducers import WIKIBASE_INDUCERS
 from wikipediabase.util import get_article
 
-import re
-
 
 class KnowledgeBase(Provider):
 

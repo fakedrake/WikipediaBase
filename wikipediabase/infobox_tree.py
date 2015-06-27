@@ -1,6 +1,5 @@
 import re
-from itertools import izip_longest as izl
-from itertools import chain, izip
+from itertools import chain
 
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 

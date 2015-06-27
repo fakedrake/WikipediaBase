@@ -7,6 +7,7 @@ from itertools import imap
 
 import collections
 import gdbm as dbm
+import json
 from sqlitedict import SqliteDict
 import os
 
@@ -36,7 +37,7 @@ class EncodedDict(collections.MutableMapping):
         """
         return key
 
-    def __del__(self, ):
+    def __del__(self):
         del self.db
 
     def __setitem__(self, key, val):
@@ -64,7 +65,7 @@ class EncodedDict(collections.MutableMapping):
         return self.db.values()
 
     def items(self):
-        return [(self._decode_key(k), v) for key,v in self.db.iteritems()]
+        return [(self._decode_key(key), v) for key,v in self.db.iteritems()]
 
     def to_json(self, filename):
         json.dump([(k,v) for k,v in self.db.iteritems()],
@@ -72,7 +73,7 @@ class EncodedDict(collections.MutableMapping):
 
     def from_json(self, filename):
         for k,v in json.load(open(filename)):
-            this.db[k] = v
+            self.db[k] = v
 
 
 class DbmPersistentDict(EncodedDict):
@@ -143,4 +144,4 @@ def benchmark_write(dic, times=100000):
 
 def benchmark_read(dic, times=100000):
     for i in xrange(times):
-        tmp = dic['o' + str(i)]
+        dic['o' + str(i)]

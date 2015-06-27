@@ -17,8 +17,6 @@ from docopt import docopt
 import logging
 
 import wikipediabase
-from wikipediabase.knowledgebase import KnowledgeBase
-from wikipediabase.resolvers import StaticResolver, InfoboxResolver
 from wikipediabase.frontend import TelnetFrontend
 
 log = logging.getLogger(__name__)

@@ -1,8 +1,6 @@
-from itertools import islice, takewhile, dropwhile, chain
+from itertools import islice, chain
 from urlparse import urlparse
 
-import os
-import urllib
 import re
 import collections
 import functools

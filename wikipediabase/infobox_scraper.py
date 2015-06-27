@@ -7,8 +7,7 @@ import re
 from wikipediabase.renderer import WIKIBASE_RENDERER
 from wikipediabase.fetcher import StaticFetcher
 from wikipediabase.infobox import Infobox
-from wikipediabase.util import fromstring, totext, string_reduce, \
-    get_article, get_infobox
+from wikipediabase.util import string_reduce, get_article
 
 class MetaInfobox(Infobox):
     """

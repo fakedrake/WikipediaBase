@@ -44,7 +44,7 @@ class StaticResolver(BaseResolver):
 
         ls = re.split(ur'(?:°|′|″)', s.strip())
         sig = -1 if ls.pop() in ['S', 'W'] else 1
-        ret = d = int(ls.pop(0))
+        ret = int(ls.pop(0))
         if len(ls):
             m = float(ls.pop(0))
             ret += m / 60
@@ -113,8 +113,6 @@ class StaticResolver(BaseResolver):
         """
         True if it is plural.
         """
-        a = re.sub(r"\s*\(.*\)\s*", "", article.replace("_", " "))
-
         # First paragraph refers more often to the symbol itself
         # rather than things related to it.
         txt = get_article(article).first_paragraph()
