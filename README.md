@@ -15,14 +15,25 @@ Wikipedia backend interface for
 queries via Telnet.
 
 ## Usage
+Install `pip` and `gdbm` if not installed:
 
-Install `pip` if not installed:
+    apt-get install python-setuptools python-gdbm
 
-    apt-get install python-setuptools
+### Release Version 
 
 Install `wikipediabase`:
 
     pip install wikipediabase
+
+### Development Version
+
+Install dependencies:
+
+    pip install -r requirements.txt
+
+Install `wikipediabase`:
+
+    python setup.py install
 
 ## Documentation
 
