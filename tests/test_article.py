@@ -37,6 +37,9 @@ class TestArticle(unittest.TestCase):
         self.assertIn("Appearances in literature",
                       self.rtcl.headings())
 
+    def test_infobox(self):
+        self.assertEqual(self.rtcl.infobox().types(), [])
+
     def test_complex(self):
         rtcl = Article("Baal", self.ftchr)
         self.assertEqual(rtcl.headings()[-1], "External links")

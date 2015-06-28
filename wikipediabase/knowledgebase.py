@@ -9,7 +9,7 @@ from wikipediabase.enchantments import enchant
 from wikipediabase.resolvers import WIKIBASE_RESOLVERS
 from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
 from wikipediabase.synonym_inducers import WIKIBASE_INDUCERS
-from wikipediabase.util import get_article
+from wikipediabase.util import get_article, get_infobox
 
 
 class KnowledgeBase(Provider):
@@ -107,7 +107,7 @@ class KnowledgeBase(Provider):
         Get all attributes of a symbol you cna find.
         """
 
-        ibox = Infobox(symbol, self.fetcher)
+        ibox = get_infobox(symbol, self.fetcher)
 
         ret = []
         for k, v in ibox.markup_parsed_iter():

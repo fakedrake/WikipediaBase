@@ -51,6 +51,8 @@ class TestInfobox(unittest.TestCase):
                       [k for k, v in clinton.markup_parsed_iter()])
 
     def test_types(self):
+        self.assertEqual(self.ibox.types(), ['Template:Infobox musical artist'])
+        self.assertEqual(self.ibox.types(True), ['Template:Infobox musical artist'])
         self.assertEqual(self.ibox.start_types(), ['wikipedia-musical-artist'])
 
     def test_types_redirect(self):

@@ -13,13 +13,12 @@ try:
 except ImportError:
     import unittest
 
-import common
 from wikipediabase.provider import Provider
 from wikipediabase.frontend import Frontend
 
 
 def get_attribute(x, y):
-    return "%s of %s" % (str(repr(y)), str(repr(x)))
+    return "%s of '%s'" % (str(repr(y)), str(x))
 
 
 class TestFrontend(unittest.TestCase):
