@@ -8,6 +8,7 @@ flake8 < 3.0.0
 mock < 2.0.0
 nose < 2.0.0
 python-coveralls < 3.0.0
+sqlitedict==1.3.0
 sphinx-bootstrap-theme < 1.0.0
 testtube < 1.0.0
 travis-solo < 1.0.0

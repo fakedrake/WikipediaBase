@@ -12,6 +12,7 @@ actually parse so that the enchant method will ignore it.
 
 import re
 from numbers import Number
+import warnings
 
 import overlay_parse
 

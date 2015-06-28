@@ -6,10 +6,8 @@ your classifier provides.
 
 import re
 
-from wikipediabase.infobox_tree import ibx_type_superclasses
 from wikipediabase.util import get_infobox, get_article, subclasses
 from wikipediabase.log import Logging
-from wikipediabase.enchantments import enchant
 
 # Return a LIST of classes
 class BaseClassifier(Logging):

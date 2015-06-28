@@ -1,7 +1,5 @@
-import string
 import re
 import lxml.etree as ET
-from collections import defaultdict
 
 from wikipediabase.util import totext, tostring, fromstring, get_meta_infobox
 from wikipediabase.log import Logging

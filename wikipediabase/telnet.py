@@ -7,7 +7,6 @@ A telnet 'chatroom' server.
 import socket
 import select
 import threading
-import time
 
 from wikipediabase.log import Logging
 
@@ -123,5 +122,5 @@ class TelnetServer(Logging):
 
 if __name__ == '__main__':
     srv = TelnetServer(answer=lambda x: "You said '%s'\n" %
-                       x, safeword="quit", log=log.Logger())
+                       x, safeword="quit")
     srv.start(thread=True)

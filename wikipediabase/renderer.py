@@ -37,7 +37,6 @@ class SandboxRenderer(object):
         Get a dict with the default post data.
         """
         soup = util.fromstring(self.uopen(get).read())
-        form = soup.find(".//form[@id='%s']" % form_id)
         inputs = soup.findall(".//input")
         fields = dict([(i.get('name'), i.get('value')) for i in inputs
                        if i.get('type') != 'submit' and i.get('value')])

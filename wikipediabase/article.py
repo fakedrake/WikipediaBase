@@ -1,14 +1,9 @@
-import lxml.etree as ET
 import os
-import re
-import itertools
-from urlparse import urlparse
 
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.log import Logging
 from wikipediabase.util import (markup_categories,
                                 fromstring,
-                                tostring,
                                 totext,
                                 memoized,
                                 url_get_dict)

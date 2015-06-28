@@ -7,9 +7,6 @@ except:
 
 from urllib import urlencode
 import re
-import os
-
-import lxml.etree as ET
 
 from wikipediabase.log import Logging
 import wikipediabase.util as util
@@ -172,7 +169,7 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
             return util.encode(ret)
 
         raise LookupError("Failed to find page '%s' (%s online)." %
-                          (symbol, "didnt look" if self.offline else "looked"))
+                          (dkey, "didnt look" if self.offline else "looked"))
 
 
 class StaticFetcher(BaseFetcher):

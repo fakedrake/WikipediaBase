@@ -5,9 +5,7 @@ from edn_format import loads, Keyword, Symbol
 
 from wikipediabase.telnet import TelnetServer
 from wikipediabase.enchantments import enchant
-from wikipediabase.provider import Acquirer, Provider, provide
-from wikipediabase.knowledgebase import KnowledgeBase
-from wikipediabase.log import Logging
+from wikipediabase.provider import Acquirer, provide
 from wikipediabase.util import get_knowledgebase
 
 import logging
