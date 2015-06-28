@@ -1,9 +1,12 @@
 import re
 import lxml.etree as ET
 
-from wikipediabase.util import totext, tostring, fromstring, get_meta_infobox
+from wikipediabase.util import (totext,
+                                tostring,
+                                fromstring,
+                                get_meta_infobox,
+                                get_article)
 from wikipediabase.log import Logging
-from wikipediabase.article import Article
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.infobox_tree import ibx_type_superclasses
 
@@ -29,6 +32,7 @@ class Infobox(Logging):
         """
 
         self.symbol = self.title = symbol
+        assert isinstance(self.symbol,str) or isinstance(self.symbol,unicode), self.symbol
         if title is not None:
             self.title = title
 
@@ -60,8 +64,8 @@ class Infobox(Logging):
                 types.append(dominant)
 
                 if extend:
-                    title = Article(dominant,
-                                    self.fetcher).title()
+                    title = get_article(dominant,
+                                        self.fetcher).title()
 
                     if self.__tt(dominant) != self.__tt(title):
                         types.append(title)

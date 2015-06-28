@@ -6,7 +6,8 @@ from wikipediabase.util import (markup_categories,
                                 fromstring,
                                 totext,
                                 memoized,
-                                url_get_dict)
+                                url_get_dict,
+                                get_infobox)
 
 # XXX: also support images.
 class Article(Logging):
@@ -42,7 +43,7 @@ class Article(Logging):
 
     def infobox(self):
         if not self.ibox:
-            self.ibox = Infobox(self.title, fetcher=self.fetcher)
+            self.ibox = get_infobox(self.title(), fetcher=self.fetcher)
 
         return self.ibox
 
