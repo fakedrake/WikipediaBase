@@ -16,13 +16,12 @@ queries via Telnet.
 
 ## Usage
 
-Install `pip` if not installed:
+Install `pip` and `python-gdbm` if not installed:
 
-    apt-get install python-setuptools
+    apt-get install python-setuptools python-gdbm
 
-Install `wikipediabase`:
-
-    pip install wikipediabase
+Until wikipedibase is deployed on START installing it for non-testing
+purposes is not something one is supposed to do.
 
 ## Documentation
 
