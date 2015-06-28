@@ -1,4 +1,4 @@
-*nder active development. Go no further unless you know what you are
+*Under active development. Go no further unless you know what you are
  doing.*
 
 # wikipediabase
@@ -19,17 +19,7 @@ Install `pip` and `gdbm` if not installed:
 
     apt-get install python-setuptools python-gdbm
 
-### Release Version 
-
-Install `wikipediabase`:
-
-    pip install wikipediabase
-
-### Development Version
-
-Install dependencies:
-
-    pip install -r requirements.txt
+> Caution: Until wikipedibase is deployed on START installing it for non-testing purposes is not something one is supposed to do.
 
 Install `wikipediabase`:
 
