@@ -26,6 +26,7 @@ setup(
         'flake8 < 3.0.0',
         'unittest2 < 1.0.0',
         'overlay-parse',
+        'sqlitedict',
         'lxml'
     ],
     dependency_links=[

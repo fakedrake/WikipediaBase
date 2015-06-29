@@ -14,7 +14,7 @@ class SandboxRenderer(object):
     Use the wikipedia site sandbox to render mediawiki markup.
     """
 
-    default_file = './renderer.mdb'
+    default_file = './renderer.dbm'
 
     def __init__(self, fetcher=None, url=None):
         """
@@ -76,8 +76,7 @@ class SandboxRenderer(object):
         ufd = self.uopen(get, post)
 
         ret = ufd.read()
-        if key:
-            self.cache[key] = ret
+        self.cache[key] = ret
 
         return util.encode(ret)
 

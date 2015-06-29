@@ -22,6 +22,9 @@ class TestMetaInfobox(unittest.TestCase):
     def setUp(self):
         self.ibx = MetaInfobox('infobox_person')
 
+    def test_newlines(self):
+        self.assertEqual(get_meta_infobox('Template:Infobox weapon').rendered_keys()['secondary_armament'], "Secondary armament")
+
     def test_musician(self):
         di = get_meta_infobox('Template:Infobox musical artist')
         self.assertEqual(di.rendered_keys()['origin'], "Origin")
@@ -42,12 +45,12 @@ class TestMetaInfobox(unittest.TestCase):
 
 
     def test_attributes(self):
-        self.assertIn((u'Native\xa0name', '!!!!!native_name!!!!!'),
+        self.assertIn((u'Native\xc2\xa0name', '!!!!!native_name!!!!!'),
                       self.ibx.html_parsed())
 
     def test_rendered_keys(self):
         self.assertEqual(self.ibx.rendered_keys()['native_name'],
-                         u'Native\xa0name')
+                         u'Native\xc2\xa0name')
 
 
     def tearDown(self):

@@ -47,19 +47,19 @@ class EncodedDict(collections.MutableMapping):
         return self.db[self._encode_key(key)]
 
     def __contains__(self, key):
-        return self._encode_key(key) in self.db
+        return self._encode_key(key) in self.keys()
 
     def __delitem__(self, key):
         del self.db[self._encode_key(key)]
 
     def __iter__(self):
-        return imap(self._decode_key, self.db)
+        return imap(self._decode_key, self.db.keys())
 
     def __len__(self):
         return len(self.db)
 
     def keys(self):
-        return [i for i in self]
+        return list(self)
 
     def values(self):
         return self.db.values()
@@ -83,18 +83,18 @@ class DbmPersistentDict(EncodedDict):
 
     def __init__(self, filename):
         flag = 'w' if os.path.exists(filename) else 'n'
-        if not (filename.endswith('.dbm') or filename.endswith('.db')):
-            filename += '.dbm'
 
         super(DbmPersistentDict, self).__init__(dbm.open(filename, flag))
 
     def _encode_key(self, key):
+        # Asciify
         if isinstance(key, unicode):
             return key.encode('unicode_escape')
 
         return str(key)
 
     def _decode_key(self, key):
+        # Unicodify
         return key.decode('unicode_escape')
 
 
