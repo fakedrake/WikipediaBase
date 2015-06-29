@@ -26,7 +26,8 @@ setup(
         'flake8 < 3.0.0',
         'unittest2 < 1.0.0',
         'overlay-parse',
-        'lxml'
+        'lxml',
+        'sqlitedict'
     ],
     dependency_links=[
         'git+https://github.com/fakedrake/overlay_parse#egg=overlay-parse',
