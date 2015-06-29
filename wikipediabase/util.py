@@ -220,7 +220,7 @@ def tostring(et):
     return ET.tostring(et, method='html', encoding='utf-8')
 
 # A memoization
-def fromstring(txt):
+def fromstring(txt, literal_newlines=False):
     if isinstance(txt, lxml.etree._Element):
         return txt
 
@@ -230,6 +230,11 @@ def fromstring(txt):
     if txt in fromstring.memoized:
         ret = copy.deepcopy(fromstring.memoized[txt])
     else:
+        if literal_newlines:
+            txt = re.sub('<\s*br\s*/?>',"\n", txt)
+            if not txt.strip():
+                return txt
+
         ret = html.fromstring(txt)
         # Keep a separate copy in the cache
         fromstring.memoized[txt] = copy.deepcopy(ret)

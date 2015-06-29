@@ -26,6 +26,10 @@ class TestUtil(unittest.TestCase):
     def setUp(self):
         self.symbol = "Led Zeppelin"
 
+    def test_fromstringtotext(self):
+        self.assertEqual(util.totext(util.fromstring("hello<br/>")), "hello")
+        self.assertEqual(util.totext(util.fromstring("<br/>", True)), "\n")
+
     def test_infobox(self):
         ibx = Infobox(self.symbol)
         self.assertIs(Infobox, type(util.get_infobox(self.symbol)))

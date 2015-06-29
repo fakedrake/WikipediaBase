@@ -32,7 +32,6 @@ class Infobox(Logging):
         """
 
         self.symbol = self.title = symbol
-        assert isinstance(self.symbol,str) or isinstance(self.symbol,unicode), self.symbol
         if title is not None:
             self.title = title
 
@@ -186,11 +185,12 @@ class Infobox(Logging):
             if not val:
                 return ""
 
-            return re.sub(r"&lt;(/?\s*(br\s*/?|ul|li))&gt;", "<\\1>", val)
+            val = re.sub(r"&lt;(/?\s*(br\s*/?|ul|li))&gt;", "<\\1>", val)
+            return val
 
         soup = fromstring(self.html_source())
-        # Render all tags except <ul> and <li>. Escape them in some way and
-        # then reparse
+        # Render all tags except <ul> and <li> and <br>. Escape them
+        # in some way and then reparse
 
         tpairs = []
 
@@ -201,7 +201,11 @@ class Infobox(Logging):
                 continue
 
             if e_key is not None and e_val is not None:
-                key = totext(e_key).strip()
+                # Turn the key into xml string, parse the other tags
+                # making brs into newlines, parse the rest of the
+                # tags, get the text back
+                key = totext(fromstring(tostring(e_key), True))
+                key = re.sub(ur"\s+", " ", key).strip()
                 val = escape_lists(tostring(e_val))
                 # Extract text
                 val = fromstring(val)
