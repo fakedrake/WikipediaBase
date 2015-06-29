@@ -1,4 +1,4 @@
-*nder active development. Go no further unless you know what you are
+*Under active development. Go no further unless you know what you are
  doing.*
 
 # wikipediabase
@@ -15,14 +15,15 @@ Wikipedia backend interface for
 queries via Telnet.
 
 ## Usage
+Install `pip` and `gdbm` if not installed:
 
-Install `pip` if not installed:
+    apt-get install python-setuptools python-gdbm
 
-    apt-get install python-setuptools
+> Caution: Until wikipedibase is deployed on START installing it for non-testing purposes is not something one is supposed to do.
 
 Install `wikipediabase`:
 
-    pip install wikipediabase
+    python setup.py install
 
 ## Documentation
 
