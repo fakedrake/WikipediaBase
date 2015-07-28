@@ -16,7 +16,6 @@ except ImportError:
 from .common import get_fetcher
 
 from wikipediabase import wikipediabase
-from wikipediabase.frontend import Frontend
 
 
 class TestParagraph(unittest.TestCase):

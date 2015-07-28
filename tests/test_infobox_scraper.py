@@ -13,9 +13,9 @@ try:
 except ImportError:
     import unittest
 
-import common
 from wikipediabase.infobox_scraper import MetaInfobox
 from wikipediabase.util import get_meta_infobox
+
 
 class TestMetaInfobox(unittest.TestCase):
 
@@ -43,7 +43,6 @@ class TestMetaInfobox(unittest.TestCase):
         self.assertEqual(di.symbol, "Template:Infobox musical artist")
         self.assertEqual(di.title, "Infobox musical artist")
 
-
     def test_attributes(self):
         self.assertIn((u'Native\xc2\xa0name', '!!!!!native_name!!!!!'),
                       self.ibx.html_parsed())
@@ -51,7 +50,6 @@ class TestMetaInfobox(unittest.TestCase):
     def test_rendered_keys(self):
         self.assertEqual(self.ibx.rendered_keys()['native_name'],
                          u'Native\xc2\xa0name')
-
 
     def tearDown(self):
         pass
