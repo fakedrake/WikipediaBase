@@ -95,7 +95,7 @@ class Article(Logging):
         """
 
         s = self._soup()
-        xpath = ".//*[@id='mw-content-text']//span[@class='mw-headline']/.."
+        xpath = ".//*[@id='mw-content-text']//span[@class='mw-headline']/."
 
         return [u"".join(h.itertext())
                 for h in s.findall(xpath)
