@@ -9,7 +9,9 @@ from wikipediabase.fetcher import StaticFetcher
 from wikipediabase.infobox import Infobox
 from wikipediabase.util import string_reduce, get_article
 
+
 class MetaInfobox(Infobox):
+
     """
     This is an infobox of an infobox. It is an infobox with all the
     valid attributes and each value is all the names of all attributes
@@ -42,8 +44,9 @@ class MetaInfobox(Infobox):
         self.renderer = renderer or WIKIBASE_RENDERER
 
         mu = self.markup_source()
-        ftchr = StaticFetcher(self.renderer.render(mu, key=self.title), mu)
-        super(MetaInfobox, self).__init__(symbol, title=title, fetcher=ftchr, **kw)
+        fetcher = StaticFetcher(self.renderer.render(mu, key=self.title), mu)
+        super(MetaInfobox, self).__init__(symbol, title=title, fetcher=fetcher,
+                                          **kw)
 
     def attributes(self):
         """
@@ -52,10 +55,15 @@ class MetaInfobox(Infobox):
 
         # There will always be an example in the documentation but
         # there may be more than one.
-        ibxes = get_article(self.symbol + '/doc').markup_source()
-        return [i for i \
-                in set(re.findall(r"^\s*|\s*([a-zA-Z_\-]+)\s*=", ibxes)) if i]
 
+        try:
+            ibxes = get_article(self.symbol + '/doc').markup_source()
+        except LookupError:
+            # fallback if no /doc page exists
+            ibxes = get_article(self.symbol).markup_source()
+
+        return [i for i
+                in set(re.findall(r"^\s*|\s*([a-zA-Z_\-]+)\s*=", ibxes)) if i]
 
     def markup_source(self):
         """
@@ -64,7 +72,7 @@ class MetaInfobox(Infobox):
         """
 
         return '{{' + self.title.capitalize().replace("_", " ") + "\n" + \
-            '\n'.join(["| %s = !!!!!%s!!!!!" % (attr, attr) for \
+            '\n'.join(["| %s = !!!!!%s!!!!!" % (attr, attr) for
                        attr in self.attributes()]) + \
             "\n}}\n"
 
