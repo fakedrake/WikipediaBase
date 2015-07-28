@@ -25,9 +25,11 @@ class Article(Logging):
 
     @memoized
     def url(self):
+        # TODO : fix
         return self.fetcher.urlopen(self._title).geturl()
 
     def symbol(self):
+        # TODO : fix
         url = self.url()
         return url_get_dict(url).get('title') or \
             os.path.basename(url)
@@ -95,7 +97,7 @@ class Article(Logging):
         s = self._soup()
         xpath = ".//*[@id='mw-content-text']//span[@class='mw-headline']/.."
 
-        return ["".join(h.itertext())[:-len("[edit]")]
+        return [u"".join(h.itertext())
                 for h in s.findall(xpath)
                 if "".join(h.itertext())]
 

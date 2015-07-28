@@ -2,82 +2,51 @@
 Turn markdown into html.
 """
 
-from urllib import urlopen
-from urllib import urlencode
-
-from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.log import Logging
+from wikipediabase.fetcher import USER_AGENT
 import wikipediabase.util as util
+import requests
 
 
-class SandboxRenderer(object):
+class BaseRenderer(Logging):
+
     """
-    Use the wikipedia site sandbox to render mediawiki markup.
+    Render mediawiki markup into HTML.
     """
 
-    default_file = './renderer.dbm'
+    def render(self, wikitext, key=None):
+        pass
 
-    def __init__(self, fetcher=None, url=None):
-        """
-        Provide a fetcher an I ll figure out how to render stuff from
-        there or actually provide a url.
-        """
 
-        if url is not None:
-            self.url = url
-        else:
-            if fetcher is None:
-                fetcher = WIKIBASE_FETCHER
+class Renderer(BaseRenderer):
 
-            self.url = fetcher.url + '/' + fetcher.base
+    """
+    Use Wikipedia's API to render mediawiki markup.
+    """
 
-        self.cache = util._get_persistent_dict(self.default_file)
+    def __init__(self, url="https://en.wikipedia.org/w/api.php"):
+        self.url = url.strip('/')
 
-    def post_data(self, data, get, form_id):
-        """
-        Get a dict with the default post data.
-        """
-        soup = util.fromstring(self.uopen(get).read())
-        inputs = soup.findall(".//input")
-        fields = dict([(i.get('name'), i.get('value')) for i in inputs
-                       if i.get('type') != 'submit' and i.get('value')])
-
-        fields.update(data)
-        return fields
-
-    def uopen(self, get, post=None):
-        """
-        Open the url and provided a map of the get request.
-        """
-        if not post:
-            return urlopen(self.url+'?'+urlencode(get))
-
-        post.update(get)
-        return urlopen(self.url+'?'+urlencode(get), data=urlencode(post))
-
-    def render(self, string, key=None):
+    def render(self, wikitext, key=None):
         """
         Turn markdown into html.
         """
 
-        if not key:
-            key = str(hash(string))
+        # TODO : remove for production
+        if not isinstance(wikitext, unicode):
+            self.log().warn("Renderer received a non-unicode string: %s",
+                            wikitext)
 
-        if key in self.cache:
-            return util.encode(self.cache[key])
+        params = {"action":"parse", "text":wikitext, "prop": "text", "format": "json"}
+        headers = {'User-Agent': USER_AGENT}
+        r = requests.post(self.url, params=params, headers=headers)
+        if r.status_code != requests.codes.ok:
+            raise LookupError("Error rendering from the Wikipedia API. "
+                              "%s returned status code %s : %s" %
+                              (r.url, r.status_code, r.reason))
 
-        # XXX: here we assume tha t the mediawiki project name is wikipedia.
-        get = dict(title="CSAIL_Wikipedia:Sandbox", action="edit")
-        post = self.post_data(dict(wpTextbox1=string, wpSave="Save page"),
-                              get, 'editForm')
-        get['action'] = 'submit'
-        get['printable'] = 'yes'
+        rendered = r.json()['parse']['text']['*']
+        assert(isinstance(rendered, unicode)) # TODO : remove for production
+        return rendered
 
-
-        ufd = self.uopen(get, post)
-
-        ret = ufd.read()
-        self.cache[key] = ret
-
-        return util.encode(ret)
-
-WIKIBASE_RENDERER = SandboxRenderer()
+WIKIBASE_RENDERER = Renderer()

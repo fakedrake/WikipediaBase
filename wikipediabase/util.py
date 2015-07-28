@@ -10,10 +10,14 @@ import lxml.etree as ET
 import copy
 import lxml
 from lxml import html
+from unidecode import unidecode
 
 _CONTEXT = dict()
 DBM_FILE = "/tmp/wikipediabase.mdb"
 
+
+class StringException(Exception):
+    pass
 # General tools
 # XXX: Plug in here for permanent memoization. You may need to do some
 # garbage collection here.
@@ -21,6 +25,8 @@ DBM_FILE = "/tmp/wikipediabase.mdb"
 # XXX: I deepcopy objects. If you disable that be very
 # careful. However use this only on out facing functions.
 DEEPCOPY = True
+
+
 def memoized(fn):
     @functools.wraps(fn)
     def wrap(*args, **kw):
@@ -30,7 +36,6 @@ def memoized(fn):
             key = hash((kwkey, argkey))
         except TypeError:
             return wrap(*args, **kw)
-
 
         if key in wrap.memoized:
             if DEEPCOPY:
@@ -50,6 +55,7 @@ def memoized(fn):
         wrap._provided = fn._provided
 
     return wrap
+
 
 def iwindow(seq, n):
     """
@@ -102,6 +108,7 @@ def get_knowledgebase(**kw):
 
     return ret
 
+
 def _get_persistent_dict(filename=DBM_FILE):
     """
     A dict that syncs with persistent data storage.
@@ -109,6 +116,7 @@ def _get_persistent_dict(filename=DBM_FILE):
     from wikipediabase.persistentkv import PersistentDict
 
     return _context_get(filename, 'peristent_store', PersistentDict)
+
 
 def markup_categories(wiki_markup):
     """
@@ -121,6 +129,7 @@ def markup_categories(wiki_markup):
         return s.split(']]', 1)[0]
 
     return map(first_part, wiki_markup.split("[[Category:")[1:])
+
 
 def _context_get(symbol, domain, cls, new=False, **kwargs):
     """
@@ -220,6 +229,8 @@ def tostring(et):
     return ET.tostring(et, method='html', encoding='utf-8')
 
 # A memoization
+
+
 def fromstring(txt, literal_newlines=False):
     if isinstance(txt, lxml.etree._Element):
         return txt
@@ -231,7 +242,7 @@ def fromstring(txt, literal_newlines=False):
         ret = copy.deepcopy(fromstring.memoized[txt])
     else:
         if literal_newlines:
-            txt = re.sub('<\s*br\s*/?>',"\n", txt)
+            txt = re.sub('<\s*br\s*/?>', "\n", txt)
             if not txt.strip():
                 return txt
 
@@ -241,12 +252,14 @@ def fromstring(txt, literal_newlines=False):
 
     return ret
 
+
 def expand(fn, ite):
-    return reduce(lambda a,b: a+b, [fn(i) for i in ite])
+    return reduce(lambda a, b: a + b, [fn(i) for i in ite])
+
 
 def concat(*args):
 
-    return reduce(lambda a,b: a+b,
+    return reduce(lambda a, b: a + b,
                   [list(i) if isinstance(i, list) else [i]
                    for i in args])
 
@@ -268,7 +281,7 @@ def string_reduce(string):
     # symbol '"The Reckonging"' but we rduce user input as well.
 
     # First remove quotes so the stopwords turn up at the front
-    ret = re.sub(ur"([\W\s]+)", " ", string, flags=re.U|re.I).strip().lower()
+    ret = re.sub(ur"([\W\s]+)", " ", string, flags=re.U | re.I).strip().lower()
     return re.sub(ur"(^the|^a|^an)\b", "", ret, flags=re.U).strip()
 
 
@@ -276,5 +289,13 @@ def encode(txt):
     # return txt.decode('utf-8')
     return unicode(txt.decode("utf-8", errors='ignore'))
 
+
 def markup_unlink(markup):
     return re.sub(r"\[+(.*\||)(?P<content>.*?)\]+", r'\g<content>', markup)
+
+
+def output(s):
+    if not isinstance(s, unicode):
+        raise StringException("Not a unicode string: %s" % s)
+
+    return unidecode(s)

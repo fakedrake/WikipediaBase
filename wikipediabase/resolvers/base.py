@@ -1,5 +1,5 @@
 from wikipediabase.enchantments import Enchanted
-from wikipediabase.fetcher import CachingSiteFetcher
+from wikipediabase.fetcher import Fetcher
 from wikipediabase.provider import Provider
 
 MIN_PRIORITY = 0
@@ -15,7 +15,7 @@ class BaseResolver(Provider):
         """
 
         super(BaseResolver, self).__init__(*args, **kwargs)
-        self.fetcher = fetcher or CachingSiteFetcher()
+        self.fetcher = fetcher or Fetcher()
         self.compat = compat
 
         self._tag = None
