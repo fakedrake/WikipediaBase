@@ -4,10 +4,8 @@ import re
 import requests
 
 from wikipediabase.log import Logging
-import wikipediabase.util as util
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
-OFFLINE_PAGES = "./pages.sqlite"
 USER_AGENT = "WikipediaBase/1.0 " \
              "(http://start.csail.mit.edu; start-admins@csail.mit.edu)"
 
@@ -22,18 +20,11 @@ class BaseFetcher(Logging):
 
     priority = 0
 
-    def download(self, symbol, get=None):
+    def download(self, symbol):
         return symbol
 
-    def source(self, symbol, redirect=True):
+    def source(self, symbol):
         return symbol
-
-    def caching_fetch(self, dkey, callback, *args, **kwargs):
-        """
-        If you support caching use this.
-        """
-
-        return callback(*args, **kwargs)
 
 class Fetcher(BaseFetcher):
 
@@ -95,10 +86,10 @@ class StaticFetcher(BaseFetcher):
         self.html = html
         self.markup = markup
 
-    def download(self, *args, **kw):
+    def download(self, symbol):
         return self.html
 
-    def source(self, *args, **kw):
+    def source(self, symbol):
         return self.markup
 
 WIKIBASE_FETCHER = Fetcher()
