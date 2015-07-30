@@ -10,7 +10,7 @@ import re
 from wikipediabase.util import subclasses, string_reduce
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 
-TITLE_REGEX = r"\"wgTitle\":\"(.*?)\","
+TITLE_REGEX = re.compile(r"\"wgTitle\":\"(.*?)\",")
 # looks for the wgTitle element in a <script> block that contains metadata for
 # wikipedia
 
