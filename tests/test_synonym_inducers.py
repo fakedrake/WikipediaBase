@@ -13,8 +13,8 @@ try:
 except ImportError:
     import unittest
 
-import common
 from wikipediabase import synonym_inducers as si
+
 
 class TestSynonymInducers(unittest.TestCase):
 
@@ -33,9 +33,6 @@ class TestSynonymInducers(unittest.TestCase):
         fl = si.LexicalInducer()
         self.assertIn('awesome', fl.induce('awesome (singer)'))
 
-
-    def tearDown(self):
-        pass
 
 if __name__ == '__main__':
     unittest.main()

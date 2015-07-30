@@ -4,7 +4,6 @@ from itertools import chain
 
 from wikipediabase.provider import Provider, provide
 from wikipediabase.fetcher import WIKIBASE_FETCHER
-from wikipediabase.infobox import Infobox
 from wikipediabase.enchantments import enchant
 from wikipediabase.resolvers import WIKIBASE_RESOLVERS
 from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
@@ -73,7 +72,6 @@ class KnowledgeBase(Provider):
             if res is not None:
                 return res
 
-
     @provide(name="get-classes")
     def get_classes(self, symbol):
         """
@@ -86,7 +84,7 @@ class KnowledgeBase(Provider):
         return enchant(None, list(it))
 
     @provide(name="get-attributes")
-    def get_attributes(self, wb_class,  symbol=None):
+    def get_attributes(self, wb_class, symbol=None):
         if symbol is not None:
             return self._get_attrs(symbol)
 
@@ -95,10 +93,10 @@ class KnowledgeBase(Provider):
         return self._get_attrs(wb_class)
 
     def synonyms(self, symbol):
-        synonyms = []
+        synonyms = set()
 
         for si in self.synonym_inducers:
-            synonyms.extend(si.induce(symbol))
+            synonyms.update(si.induce(symbol))
 
         return enchant(None, synonyms)
 
