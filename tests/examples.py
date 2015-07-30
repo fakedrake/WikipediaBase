@@ -28,7 +28,7 @@ WIKI_EXAMPLES = [
     ('(get "wikipedia-person" "Klaus Barbie" "BIRTH-DATE")',
      '((:yyyymmdd 19131025))'),
     ('(get "wikipedia-person" "Klaus Barbie" "DEATH-DATE")',
-     '((:yyyymmdd 19910925))'),
+     '((:yyyymmdd 19910923))'),
     ('(get "wikipedia-person" "Paul Shardlow" "BIRTH-DATE")',
      '((:yyyymmdd 19430429))'),
     ('(get "wikipedia-person" "Paul Shardlow" "DEATH-DATE")',
