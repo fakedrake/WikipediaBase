@@ -3,7 +3,12 @@
 import re
 import requests
 
+import logging
 from wikipediabase.log import Logging
+
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
 USER_AGENT = "WikipediaBase/1.0 " \

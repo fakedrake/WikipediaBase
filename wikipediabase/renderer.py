@@ -4,8 +4,11 @@ Turn markdown into html.
 
 from wikipediabase.log import Logging
 from wikipediabase.fetcher import USER_AGENT
-import wikipediabase.util as util
+import logging
 import requests
+
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 class BaseRenderer(Logging):
@@ -37,9 +40,9 @@ class Renderer(BaseRenderer):
             self.log().warn("Renderer received a non-unicode string: %s",
                             wikitext)
 
-        params = {"action":"parse", "text":wikitext, "prop": "text", "format": "json"}
+        data = {"action":"parse", "text":wikitext, "prop": "text", "format": "json"}
         headers = {'User-Agent': USER_AGENT}
-        r = requests.post(self.url, params=params, headers=headers)
+        r = requests.post(self.url, data=data, headers=headers)
         if r.status_code != requests.codes.ok:
             raise LookupError("Error rendering from the Wikipedia API. "
                               "%s returned status code %s : %s" %
