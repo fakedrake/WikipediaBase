@@ -6,6 +6,112 @@ a root dict. Children are prioritized by the order they are added.
 from random import random
 from itertools import chain
 
+class ConfigItem(object):
+    """
+    Convenience class to provide configurations that change
+    dynamically. Basically a reference to a configuration item that is
+    dereferenced on the fly. To evaluate something over the return
+    value (eg. clear whitespaces) each time the item is taken use
+    lenses.
+    """
+
+    def __init__(self, config=None, path=None):
+        """
+        Create a reference to a member of a config object. The lens attribute
+        """
+        self._config = config
+        self._path = path or []
+
+    def __getattr__(self, key):
+        """
+        Get a new ConfigItem that can be dereferenced.
+        """
+        if key.startswith('_'):
+            return self.__dict__[key]
+
+        return ConfigItem(config=self._config, path=self._path + [key])
+
+    def lens(self, lens):
+        """
+        Return a ConfigItem that when checked will use the provided
+        lens function to deref. Eg
+
+        >>> class A(Configurable):
+        ...     def __init__(self, cfg):
+        ...             self.hello = cfg.ref.hello.lens(lambda x: x+1)
+        ...
+        >>> cfg = Configuration()
+        >>> a = A(cfg)
+        >>> cfg['hello'] = 1
+        >>> a.hello
+        2
+
+        This can be used for example to remove trailing whitespaces
+        from config strings.
+        """
+
+        return LensConfigItem(parent=self, lens=lens)
+
+    def deref(self, lens=None):
+        return reduce(lambda obj, key: obj[key], self._path, self._config)
+
+
+class LensConfigItem(ConfigItem):
+    """
+    Here is a demostrative example on how this is used:
+
+    >>> Configuration({'hello': {'there': 2}}).ref.hello
+    <__main__.ConfigItem object at 0x1074dfb50>
+    >>> Configuration({'hello': 1}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2).deref()
+    4
+    >>> Configuration({'hello': 1}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2)
+    <__main__.LensConfigItem object at 0x1074dfb10>
+    >>> Configuration({'hello': {'there': 2}}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2).there.deref()
+    2
+    """
+    def __init__(self, parent, lens):
+        self._parent = parent
+        self._lens = lens
+
+    @property
+    def _config(self):
+        return self._parent._config
+
+    @property
+    def _path(self):
+        return self._parent._path
+
+    def deref(self):
+        return self._lens(self._parent.deref())
+
+
+class Configurable(object):
+    """
+    Superclass of an object that can have attributes that are
+    references to a configuration object. They are evaluated lazily so
+    changing the configuration in runtime will immediately change the
+    entire system's behavior.
+    """
+
+    def __setattr__(self, attr, val):
+        if self.__dict__.get('local_config_scope', None) is None:
+            self.__dict__['local_config_scope'] = {}
+
+        lcs = self.__dict__['local_config_scope']
+        if isinstance(val, ConfigItem):
+            lcs[attr] = val
+            return
+
+        super(Configurable, self).__setattr__(key, val)
+
+    def __getattr__(self, attr):
+        lcs = self.__dict__.get('local_config_scope', {})
+        if attr in lcs:
+            return lcs[attr].deref()
+
+        return super(Configurable, self).__getattr__(attr)
+
+
 class Configuration(object):
     """
     A configuration is a key-value container that can have
@@ -14,26 +120,27 @@ class Configuration(object):
     """
 
     def __init__(self, local=None):
-        self.local = local or {}
-        self.children = []
-        self.id = random()
+        self._local = local or {}
+        self._children = []
+        self._id = random()
+        self.ref = ConfigItem(self)
 
     def __hash__(self):
-        return self.id
+        return self._id
 
     def remove_child(self, child_conf):
-        self.children = [c for c in self.children if c is not child_conf]
-        return self.children
+        self._children = [c for c in self._children if c is not child_conf]
+        return self._children
 
     def add_child(self, child_conf):
-        self.children.insert(0, child_conf)
-        return self.children
+        self._children.insert(0, child_conf)
+        return self._children
 
     def keys(self):
         return list(chain.from_iterable((c.keys for c in self.children)))
 
     def __setitem__(self, key, val):
-        self.local[key] = val
+        self._local[key] = val
 
     def get(self, key, default=None, blacklist=None):
 
@@ -46,11 +153,11 @@ class Configuration(object):
 
             blacklist.add(self)
 
-        ret = self.local.get(key, None)
+        ret = self._local.get(key, None)
         if ret is not None:
             return ret
 
-        for c in self.children:
+        for c in self._children:
             if isinstance(c, Configuration):
                 val = c.get(key, None, blacklist)
             else:
@@ -85,7 +192,7 @@ class MethodConfiguration(Configuration):
 
                 return val
 
-        self.local = Local()
+        self._local = Local()
 
 class SubclassesFactory(object):
     """
@@ -150,11 +257,3 @@ class SubclassesFactory(object):
 
         return [self.get_instance(C, **kw) for C in clss
                 if not C.__name__.startswith("_")]
-
-# A global configuration that everyone can use
-configuration = Configuration()
-
-# Register all interfaces. See the test for how to do it.
-interfaces = MethodConfiguration()
-configuration.add_child(interfaces)
-__all__ = ['configuration', 'interfaces']

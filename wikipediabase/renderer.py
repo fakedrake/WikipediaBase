@@ -5,7 +5,7 @@ Turn markdown into html.
 from urllib import urlopen
 from urllib import urlencode
 
-from wikipediabase.fetcher import WIKIBASE_FETCHER
+import wikipediabase.fetcher
 import wikipediabase.util as util
 
 
@@ -16,18 +16,17 @@ class SandboxRenderer(object):
 
     default_file = './renderer.mdb'
 
-    def __init__(self, fetcher=None, url=None):
+    def __init__(self, configuration=configuration):
         """
         Provide a fetcher an I ll figure out how to render stuff from
         there or actually provide a url.
         """
 
+        self.default_file = configuration['cache']['rendered_pages']
         if url is not None:
-            self.url = url
+            self.url = configuration['url']
         else:
-            if fetcher is None:
-                fetcher = WIKIBASE_FETCHER
-
+            fetcher = configuration['fetcher']
             self.url = fetcher.url + '/' + fetcher.base
 
         self.cache = util._get_persistent_dict(self.default_file)
@@ -82,3 +81,4 @@ class SandboxRenderer(object):
         return util.encode(ret)
 
 WIKIBASE_RENDERER = SandboxRenderer()
+settings.interfaces['renderer'] = WIKIBASE_RENDERER

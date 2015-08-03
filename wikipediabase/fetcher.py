@@ -8,8 +8,9 @@ except:
 from urllib import urlencode
 import re
 
-from wikipediabase.log import Logging
 import wikipediabase.util as util
+from wikipediabase.log import Logging
+from wikipediabase.settings import configuration
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
@@ -44,9 +45,10 @@ class WikipediaSiteFetcher(BaseFetcher):
 
     priority = 1
 
-    def __init__(self, url="http://ashmore.csail.mit.edu:8080", base="mediawiki/index.php", **kw):
-        self.url = url.strip('/')
-        self.base = base.strip('/')
+    def __init__(self, configuration=configuration, **kw):
+        self.config = configuration
+        self.url = self.config['remote']['url'].strip('/')
+        self.base = self.config['remote']['base'].strip('/')
 
     def get_wikisource(self, soup):
         """

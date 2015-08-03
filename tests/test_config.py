@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase.config import Configuration, MethodConfiguration, SubclassesFactory
+from wikipediabase.config import Configuration, MethodConfiguration, SubclassesFactory, Configurable
 
 class TestConfig(unittest.TestCase):
 
@@ -86,6 +86,31 @@ class TestConfig(unittest.TestCase):
         sf()[0].name = 'new_name'
         self.assertEqual([i.name for i in sf()], ['new_name', 'B', 'C', 'E'])
 
+    def test_references(self):
+        this = self
+        class A(Configurable):
+            def __init__(self, config):
+                self.hello = config.ref.hello
+
+        cfg = Configuration()
+        a = A(cfg)
+
+        with self.assertRaises(KeyError):
+            tmp = a.hello + 1
+
+        cfg['hello'] = 1
+        self.assertEqual(a.hello, 1)
+
+    def test_lenses(self):
+        # Multiple lenses can be stacked
+        self.assertEqual(Configuration({'hello': 1}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2).deref(), 4)
+
+        # Lenses do not affect the abuility to create further
+        # references
+        self.assertEqual(Configuration({'hello': 1, 'hi': {'there': 0}}).ref.hi.lens(lambda x: x+1).lens(lambda x: x+2).there.deref(), 0)
+
+        # Non lensed stuff still works
+        self.assertEqual(Configuration({'hello': 1}).ref.hello.deref(), 1)
 
     def tearDown(self):
         pass
