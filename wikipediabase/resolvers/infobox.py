@@ -47,8 +47,8 @@ class InfoboxResolver(BaseResolver):
                 return enchant(key, ret, result_from=attr,
                                log=self.log())
 
-            self.log().warning("Could nont find infobox attribute '%s'"
+            self.log().warning("Could not find infobox attribute '%s'"
                                % attr)
         else:
-            self.log().warning("Could nont find infobox for article '%s'"
+            self.log().warning("Could not find infobox for article '%s'"
                                % article)
