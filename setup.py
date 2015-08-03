@@ -1,5 +1,4 @@
 import re
-import multiprocessing
 from setuptools import setup
 
 init_py = open('wikipediabase/__init__.py').read()
@@ -17,7 +16,7 @@ setup(
         'wikipediabase',
         'wikipediabase.resolvers',
         'wikipediabase.adhoc',
-        'tests'
+        'tests',
     ],
     include_package_data=True,
     install_requires=[
@@ -29,13 +28,14 @@ setup(
         'lxml',
         'sqlitedict',
         'requests',
+        'beautifulsoup4',
     ],
     dependency_links=[
         'git+https://github.com/fakedrake/overlay_parse#egg=overlay-parse',
     ],
     tests_require=[
         'nose>=1.0',
-        'sqlitedict'
+        'sqlitedict',
     ],
     entry_points={
         'console_scripts': [
