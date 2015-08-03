@@ -27,8 +27,8 @@ setup(
         'unittest2 < 1.0.0',
         'overlay-parse',
         'lxml',
-        'sqlitedict'
-        'requests'
+        'sqlitedict',
+        'requests',
     ],
     dependency_links=[
         'git+https://github.com/fakedrake/overlay_parse#egg=overlay-parse',
