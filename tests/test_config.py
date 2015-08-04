@@ -50,6 +50,10 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(conf['a'], 1)
         self.assertEqual(conf['b'], 2)
 
+    def test_keys(self):
+        conf = Configuration({'a': 1, 'b': 2})
+        self.assertEqual(conf.keys(), ['a','b'])
+
     def test_subclass(self):
         class A(object):
             priority = 1
@@ -101,6 +105,14 @@ class TestConfig(unittest.TestCase):
         cfg['hello'] = 1
         self.assertEqual(a.hello, 1)
 
+    def test_refsetting(self):
+        cfg = Configuration()
+
+        cfg.ref.hello.there.guvnah = 3
+        cfg.ref.hello.there.chris = 4
+        self.assertEqual(cfg['hello']['there']['guvnah'], 3)
+        self.assertEqual(cfg['hello']['there']['chris'], 4)
+
     def test_lenses(self):
         # Multiple lenses can be stacked
         self.assertEqual(Configuration({'hello': 1}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2).deref(), 4)
@@ -111,6 +123,13 @@ class TestConfig(unittest.TestCase):
 
         # Non lensed stuff still works
         self.assertEqual(Configuration({'hello': 1}).ref.hello.deref(), 1)
+
+    def test_multilenses(self):
+        cfg = Configuration({'a': 1, 'b':2, 'c':3})
+        multilens = (cfg.ref.a & cfg.ref.b & cfg.ref.c).lens(lambda a, b, c: a+b+c)
+        self.assertEqual(multilens.deref(), 6)
+        cfg.ref.a = 11
+        self.assertEqual(multilens.deref(), 16)
 
     def tearDown(self):
         pass

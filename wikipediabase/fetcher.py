@@ -47,8 +47,8 @@ class WikipediaSiteFetcher(BaseFetcher):
 
     def __init__(self, configuration=configuration, **kw):
         self.config = configuration
-        self.url = self.config['remote']['url'].strip('/')
-        self.base = self.config['remote']['base'].strip('/')
+        self.url = self.config.ref.remote.url.lens(lambda x: x.strip('/'))
+        self.base = self.config.ref.remote.base.lens(lambda x: x.strip('/'))
 
     def get_wikisource(self, soup):
         """
@@ -190,3 +190,6 @@ class StaticFetcher(BaseFetcher):
         return self.markup
 
 WIKIBASE_FETCHER = CachingSiteFetcher()
+
+from wikipediabase.settings import configuration
+configuration.ref.fetcher = WIKIBASE_FETCHER

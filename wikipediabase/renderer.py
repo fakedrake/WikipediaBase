@@ -8,28 +8,24 @@ from urllib import urlencode
 import wikipediabase.fetcher
 import wikipediabase.util as util
 
+from wikipediabase.config import Configurable
+from wikipediabase.settings import configuration, interfaces
 
-class SandboxRenderer(object):
+
+class SandboxRenderer(Configurable):
     """
     Use the wikipedia site sandbox to render mediawiki markup.
     """
 
-    default_file = './renderer.mdb'
-
-    def __init__(self, configuration=configuration):
+    def __init__(self, config=configuration):
         """
         Provide a fetcher an I ll figure out how to render stuff from
         there or actually provide a url.
         """
 
-        self.default_file = configuration['cache']['rendered_pages']
-        if url is not None:
-            self.url = configuration['url']
-        else:
-            fetcher = configuration['fetcher']
-            self.url = fetcher.url + '/' + fetcher.base
-
-        self.cache = util._get_persistent_dict(self.default_file)
+        self.cache = config.ref.cache.rendered_pages.lens(util._get_persistent_dict)
+        self.url = (config.ref.remote.url & config.ref.remote.base) \
+            .lens(lambda u,b: u+'/'+b)
 
     def post_data(self, data, get, form_id):
         """
@@ -81,4 +77,4 @@ class SandboxRenderer(object):
         return util.encode(ret)
 
 WIKIBASE_RENDERER = SandboxRenderer()
-settings.interfaces['renderer'] = WIKIBASE_RENDERER
+interfaces['renderer'] = WIKIBASE_RENDERER

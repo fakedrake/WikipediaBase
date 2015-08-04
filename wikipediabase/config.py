@@ -31,6 +31,28 @@ class ConfigItem(object):
 
         return ConfigItem(config=self._config, path=self._path + [key])
 
+    def __setattr__(self, key, val):
+        """
+        Realize the reference path so far, creating empty dicts where
+        necessary and set the value to the final key.
+        """
+
+        if key.startswith('_'):
+            return super(ConfigItem, self).__setattr__(key, val)
+
+        tip = self._config
+        for k in self._path:
+            if k not in tip.keys():
+                tip[k] = {}
+
+            tip = tip[k]
+
+        tip[key] = val
+
+
+    def __and__(self, config_item):
+        return MultiLensConfigItem([self, config_item])
+
     def lens(self, lens):
         """
         Return a ConfigItem that when checked will use the provided
@@ -53,7 +75,10 @@ class ConfigItem(object):
         return LensConfigItem(parent=self, lens=lens)
 
     def deref(self, lens=None):
-        return reduce(lambda obj, key: obj[key], self._path, self._config)
+        try:
+            return reduce(lambda obj, key: obj[key], self._path, self._config)
+        except KeyError, e:
+            raise KeyError("%s" % '.'.join(self._path))
 
 
 class LensConfigItem(ConfigItem):
@@ -84,6 +109,29 @@ class LensConfigItem(ConfigItem):
     def deref(self):
         return self._lens(self._parent.deref())
 
+class MultiLensConfigItem(ConfigItem):
+    """
+    Combine many lenses together.
+    """
+
+    def __init__(self, parents, lens=None):
+        self._lens = lens
+        self._parents = parents
+
+    def __and__(self, config_item):
+        return MultiLensConfigItem(self._parents + [config_item])
+
+    def lens(self, lens):
+        if self._lens is not None:
+            return super(MultiLensConfigItem, self).lens(lens)
+
+        return MultiLensConfigItem(self._parents, lens=lens)
+
+    def deref(self):
+        if self._lens is None:
+            raise Exception("Did not define lens.")
+
+        return self._lens(*[p.deref() for p in self._parents])
 
 class Configurable(object):
     """
@@ -128,6 +176,9 @@ class Configuration(object):
     def __hash__(self):
         return self._id
 
+    def __contains__(self, val):
+        return val in list(self.keys())
+
     def remove_child(self, child_conf):
         self._children = [c for c in self._children if c is not child_conf]
         return self._children
@@ -137,7 +188,8 @@ class Configuration(object):
         return self._children
 
     def keys(self):
-        return list(chain.from_iterable((c.keys for c in self.children)))
+        return list(chain.from_iterable((c.keys() for c in self._children))) + \
+            self._local.keys()
 
     def __setitem__(self, key, val):
         self._local[key] = val
