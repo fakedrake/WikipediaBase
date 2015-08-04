@@ -43,18 +43,23 @@ class ForwardRedirectInducer(BaseInducer):
     Finds the title of the article. Useful for redirects.
     """
 
-    def induce(self, symbol, fetcher=None):
+    def title(self, symbol, fetcher=None):
         fetcher = fetcher or WIKIBASE_FETCHER
-        sym = string_reduce(symbol)
         html = fetcher.download(symbol)
         match = re.search(TITLE_REGEX, html)
         if match:
-            title = match.group(1)
-            ret = []
-            if title != sym:
-                ret.extend(lexical_synonyms(title))
+            return match.group(1)
 
-        return ret
+    def induce(self, symbol, fetcher=None):
+        synonyms = []
+        fetcher = fetcher or WIKIBASE_FETCHER
+        title = self.title(symbol, fetcher=fetcher)
+        if title:
+            sym = string_reduce(symbol)
+            if title != sym:
+                synonyms.extend(lexical_synonyms(title))
+
+        return synonyms
 
 
 class LexicalInducer(BaseInducer):

@@ -85,6 +85,11 @@ class StaticResolver(BaseResolver):
         if "File:" in img:
             fnam = fnam.split("File:")[1]
 
+        # TODO : is this a temporary fix? investigate what this annotation means
+        # see 'Bill Clinton' for an example
+        if "{{!}}border" in img:
+            fnam = fnam.split("{{!}}border")[0]
+
         cap = ibx.get('caption')
         return enchant(None, [0, fnam] + ([markup_unlink(cap)] if cap else []))
 
@@ -97,15 +102,6 @@ class StaticResolver(BaseResolver):
         # Will also teake care of redirections.
         article = get_article(article)
         url = article.url()
-
-        # We may be hitting a mirror so return the original here.
-        url = url.replace(article.fetcher.url.strip('/'), "http://en.wikipedia.org")
-
-        mirror_dir = article.fetcher.base.strip('/').split("/")
-        org_dir = "wiki/index.php".split("/")
-        for mirror, org in zip(mirror_dir, org_dir):
-            url = url.replace(mirror, org)
-
         return enchant("url", url)
 
     @provide(name='number')

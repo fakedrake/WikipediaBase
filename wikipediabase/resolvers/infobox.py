@@ -44,6 +44,7 @@ class InfoboxResolver(BaseResolver):
             ret = ibox.get(attr)
             if ret:
                 self.log().info("Found infobox attribute '%s'" % attr)
+                assert(isinstance(ret, unicode)) # TODO : remove for production
                 return enchant(key, ret, result_from=attr,
                                log=self.log())
 

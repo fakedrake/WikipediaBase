@@ -13,14 +13,18 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase.infobox_scraper import MetaInfobox
+from wikipediabase.infobox_scraper import _clean_attribute, MetaInfobox
 from wikipediabase.util import get_meta_infobox
 
 
 class TestMetaInfobox(unittest.TestCase):
 
     def setUp(self):
-        self.ibx = MetaInfobox('infobox_person')
+        self.ibx = MetaInfobox('Template:Infobox person')
+
+    def test_clean_attribute(self):
+        dirty = "  attr12 "
+        self.assertEqual(_clean_attribute(dirty), "attr")
 
     def test_newlines(self):
         self.assertEqual(get_meta_infobox('Template:Infobox weapon').rendered_keys()['secondary_armament'], "Secondary armament")
@@ -39,17 +43,17 @@ class TestMetaInfobox(unittest.TestCase):
         self.assertEqual(di.title, "Infobox musical artist")
 
     def test_getting_by_title(self):
-        di = get_meta_infobox('Infobox musical artist')
+        di = get_meta_infobox('Template:Infobox musical artist')
         self.assertEqual(di.symbol, "Template:Infobox musical artist")
         self.assertEqual(di.title, "Infobox musical artist")
 
     def test_attributes(self):
-        self.assertIn((u'Native\xc2\xa0name', '!!!!!native_name!!!!!'),
+        self.assertIn((u'Native\xa0name', '!!!!!native_name!!!!!'),
                       self.ibx.html_parsed())
 
     def test_rendered_keys(self):
         self.assertEqual(self.ibx.rendered_keys()['native_name'],
-                         u'Native\xc2\xa0name')
+                         u'Native\xa0name')
 
     def tearDown(self):
         pass

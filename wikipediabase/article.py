@@ -1,12 +1,10 @@
-import os
-
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.log import Logging
+from wikipediabase.synonym_inducers import ForwardRedirectInducer
 from wikipediabase.util import (markup_categories,
                                 fromstring,
                                 totext,
                                 memoized,
-                                url_get_dict,
                                 get_infobox)
 
 # XXX: also support images.
@@ -22,17 +20,16 @@ class Article(Logging):
         self._title = title
         self.fetcher = fetcher
         self.ibox = None
+        self.title_inducer = ForwardRedirectInducer()
 
     @memoized
     def url(self):
-        # TODO : fix
-        return self.fetcher.urlopen(self._title).geturl()
+        symbol = self.symbol().replace(" ", "_")
+        return u"https://en.wikipedia.org/wiki/%s" % symbol
 
+    @memoized
     def symbol(self):
-        # TODO : fix
-        url = self.url()
-        return url_get_dict(url).get('title') or \
-            os.path.basename(url)
+        return self.title_inducer.title(self._title, fetcher=self.fetcher)
 
     def _soup(self):
         if not hasattr(self, '__soup'):

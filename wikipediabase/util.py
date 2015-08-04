@@ -6,6 +6,7 @@ import collections
 import functools
 import inspect
 
+from bs4 import UnicodeDammit
 import lxml.etree as ET
 import copy
 import lxml
@@ -222,11 +223,15 @@ def subclasses(cls, instantiate=True, **kw):
 
 
 def totext(et):
-    return html.HtmlElement(et).text_content()
+    txt = html.HtmlElement(et).text_content()
+    txt = unicode(txt)
+    return txt
 
 
 def tostring(et):
-    return ET.tostring(et, method='html', encoding='utf-8')
+    s = ET.tostring(et, method='html', encoding=unicode)
+    assert(isinstance(s, unicode)) # TODO : remove for production
+    return s
 
 # A memoization
 
@@ -242,11 +247,14 @@ def fromstring(txt, literal_newlines=False):
         ret = copy.deepcopy(fromstring.memoized[txt])
     else:
         if literal_newlines:
-            txt = re.sub('<\s*br\s*/?>', "\n", txt)
+            txt = re.sub('<\s*br\s*/?>', u"\n", txt)
             if not txt.strip():
                 return txt
 
-        ret = html.fromstring(txt)
+        # force lxml to do unicode encoding
+        ud = UnicodeDammit(txt, is_html=True)
+        ret = html.fromstring(ud.unicode_markup)
+
         # Keep a separate copy in the cache
         fromstring.memoized[txt] = copy.deepcopy(ret)
 
