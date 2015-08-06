@@ -29,6 +29,9 @@ setup(
         'sqlitedict',
         'requests',
         'beautifulsoup4',
+        'redis',
+        'redis',
+        'hiredis',
     ],
     dependency_links=[
         'git+https://github.com/fakedrake/overlay_parse#egg=overlay-parse',
