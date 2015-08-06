@@ -22,7 +22,7 @@ from wikipediabase import fetcher
 class TestArticle(unittest.TestCase):
 
     def setUp(self):
-        self.fetcher = fetcher.Fetcher()
+        self.fetcher = fetcher.WIKIBASE_FETCHER
         self.article = Article("Astaroth", self.fetcher)
 
     def test_html(self):

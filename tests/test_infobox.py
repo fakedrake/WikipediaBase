@@ -20,7 +20,7 @@ from wikipediabase import fetcher
 class TestInfobox(unittest.TestCase):
 
     def setUp(self):
-        self.fetcher = fetcher.Fetcher()
+        self.fetcher = fetcher.WIKIBASE_FETCHER
 
     def test_markup(self):
         ibox = get_infobox("Led Zeppelin", self.fetcher)
