@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import re
+import redis
 import requests
 
 import logging
 from wikipediabase.log import Logging
+from wikipediabase.util import Expiry
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -25,11 +27,12 @@ class BaseFetcher(Logging):
 
     priority = 0
 
-    def download(self, symbol):
+    def download(self, symbol, **kwargs):
         return symbol
 
-    def source(self, symbol):
+    def source(self, symbol, **kwargs):
         return symbol
+
 
 class Fetcher(BaseFetcher):
 
@@ -41,7 +44,7 @@ class Fetcher(BaseFetcher):
     def urlopen(self, url, params):
         # TODO : remove for production
         if not isinstance(params['title'], unicode):
-            self.log().warn('Fetcher received a non-unicode string: %s', 
+            self.log().warn('Fetcher received a non-unicode string: %s',
                             params['title'])
 
         headers = {'User-Agent': USER_AGENT}
@@ -55,7 +58,7 @@ class Fetcher(BaseFetcher):
         assert(isinstance(page, unicode))  # TODO : remove for production
         return page
 
-    def download(self, symbol):
+    def download(self, symbol, **kwargs):
         """
         Get the rendered HTML article of the symbol.
         """
@@ -63,7 +66,7 @@ class Fetcher(BaseFetcher):
         params = {'action': 'view', 'title': symbol, 'redirect': 'yes'}
         return self.urlopen(self.url, params)
 
-    def source(self, symbol):
+    def source(self, symbol, **kwargs):
         """
         Get the wikitext markup of the symbol.
         """
@@ -82,7 +85,46 @@ class Fetcher(BaseFetcher):
 
         return page
 
+
+class CachingFetcher(Fetcher):
+
+    def __init__(self, url='https://en.wikipedia.org/w/index.php'):
+        self.redis = redis.StrictRedis(host='localhost', port=6379, db=0,
+                                       decode_responses=True)
+        super(CachingFetcher, self).__init__(url)
+
+    def _caching_fetch(self, symbol, content_type, prefix, fetch,
+                       expiry=Expiry.DEFAULT):
+        dkey = prefix + symbol
+        content = self.redis.hget(dkey, content_type)
+
+        if content is None:
+            content = fetch(symbol)
+            self.redis.hset(dkey, content_type, content)
+            if expiry is not None:
+                self.redis.expire(dkey, expiry)
+
+        return content
+
+    def source(self, symbol, expiry=Expiry.DEFAULT):
+        source = self._caching_fetch(symbol, 'source', 'article:',
+                                     super(CachingFetcher, self).source,
+                                     expiry=expiry)
+
+        assert(isinstance(source, unicode))  # TODO : remove for production
+        return source
+
+    def download(self, symbol, expiry=Expiry.DEFAULT):
+        rendered = self._caching_fetch(symbol, 'rendered', 'article:',
+                                       super(CachingFetcher, self).download,
+                                       expiry=expiry)
+
+        assert(isinstance(rendered, unicode))  # TODO : remove for production
+        return rendered
+
+
 class StaticFetcher(BaseFetcher):
+
     """
     Will just get the html and markup provided in init.
     """
@@ -91,10 +133,10 @@ class StaticFetcher(BaseFetcher):
         self.html = html
         self.markup = markup
 
-    def download(self, symbol):
+    def download(self, symbol, **kwargs):
         return self.html
 
-    def source(self, symbol):
+    def source(self, symbol, **kwargs):
         return self.markup
 
-WIKIBASE_FETCHER = Fetcher()
+WIKIBASE_FETCHER = CachingFetcher()

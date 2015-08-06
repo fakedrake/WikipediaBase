@@ -8,9 +8,9 @@ import re
 from wikipediabase.renderer import WIKIBASE_RENDERER
 from wikipediabase.fetcher import StaticFetcher
 from wikipediabase.infobox import Infobox
-from wikipediabase.util import get_article
+from wikipediabase.util import get_article, Expiry
 
-ATTRIBUTE_REGEX = re.compile(r"^\s*\\|\s+([a-zA-Z_\-]+)\s+=")
+ATTRIBUTE_REGEX = re.compile(r"^\s*\\|\s*([a-zA-Z_\-]+)\s+=")
 TEMPLATE_DATA_REGEX = re.compile(r"<templatedata>(.*?)</templatedata>",
                                  flags=re.M | re.S)
 
@@ -88,7 +88,8 @@ class MetaInfobox(Infobox):
 
         try:
             doc_page = get_article(self.symbol + '/doc')
-            match = re.search(TEMPLATE_DATA_REGEX, doc_page.markup_source())
+            match = re.search(TEMPLATE_DATA_REGEX,
+                              doc_page.markup_source(expiry=Expiry.LONG))
             if match:
                 template_data = json.loads(match.group(1))
                 for a in template_data["params"]:
@@ -107,7 +108,8 @@ class MetaInfobox(Infobox):
             # fallback if no /doc page exists
             doc_page = get_article(self.symbol)
 
-        attributes.extend(re.findall(ATTRIBUTE_REGEX, doc_page.html_source()))
+        attributes.extend(re.findall(ATTRIBUTE_REGEX,
+                                     doc_page.html_source(expiry=Expiry.LONG)))
 
         # deduplicate and remove empty string
         attributes = [_clean_attribute(a) for a in set(attributes) if a]

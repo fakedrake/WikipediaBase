@@ -17,8 +17,15 @@ _CONTEXT = dict()
 DBM_FILE = "/tmp/wikipediabase.mdb"
 
 
+class Expiry:
+    DEFAULT = 14 * 24 * 60 * 60   # two weeks in seconds
+    LONG = 6 * 30 * 24 * 60 * 60   # six months in seconds
+    NEVER = None
+
+
 class StringException(Exception):
     pass
+
 # General tools
 # XXX: Plug in here for permanent memoization. You may need to do some
 # garbage collection here.
@@ -230,7 +237,7 @@ def totext(et):
 
 def tostring(et):
     s = ET.tostring(et, method='html', encoding=unicode)
-    assert(isinstance(s, unicode)) # TODO : remove for production
+    assert(isinstance(s, unicode))  # TODO : remove for production
     return s
 
 # A memoization

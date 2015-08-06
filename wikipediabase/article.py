@@ -1,13 +1,16 @@
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.log import Logging
 from wikipediabase.synonym_inducers import ForwardRedirectInducer
-from wikipediabase.util import (markup_categories,
+from wikipediabase.util import (Expiry,
+                                markup_categories,
                                 fromstring,
                                 totext,
                                 memoized,
                                 get_infobox)
 
 # XXX: also support images.
+
+
 class Article(Logging):
 
     """
@@ -63,19 +66,19 @@ class Article(Logging):
 
         raise Exception("No title found for '%s'" % self.symbol())
 
-    def markup_source(self):
+    def markup_source(self, expiry=Expiry.DEFAULT):
         """
         Markup source of the article.
         """
 
-        return self.fetcher.source(self._title)
+        return self.fetcher.source(self._title, expiry=expiry)
 
-    def html_source(self):
+    def html_source(self, expiry=Expiry.DEFAULT):
         """
         Markup source of the article.
         """
 
-        return self.fetcher.download(self._title)
+        return self.fetcher.download(self._title, expiry=expiry)
 
     def paragraphs(self):
         """

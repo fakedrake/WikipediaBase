@@ -20,7 +20,7 @@ from wikipediabase import fetcher
 class TestFetcher(unittest.TestCase):
 
     def setUp(self):
-        self.fetcher = fetcher.Fetcher()
+        self.fetcher = fetcher.WIKIBASE_FETCHER
 
     def test_html(self):
         html = self.fetcher.download("Led Zeppelin")
