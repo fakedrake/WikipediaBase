@@ -32,6 +32,7 @@ setup(
         'redis',
         'redis',
         'hiredis',
+        'unidecode',
     ],
     dependency_links=[
         'git+https://github.com/fakedrake/overlay_parse#egg=overlay-parse',
