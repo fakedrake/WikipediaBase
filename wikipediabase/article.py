@@ -9,8 +9,6 @@ from wikipediabase.util import (Expiry,
                                 get_infobox)
 
 # XXX: also support images.
-
-
 class Article(Logging):
 
     """

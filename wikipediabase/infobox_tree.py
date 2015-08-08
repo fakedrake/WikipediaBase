@@ -3,9 +3,6 @@ from itertools import chain
 
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 
-# TODO : use HTML instead of wikimarkup to reduce requests
-# TODO : figure out caching
-
 MW_HEADING_RX = map(re.compile, [
     ur"\s*==([\w\s]+)==",
     ur"\s*===([\w\s]+)===",

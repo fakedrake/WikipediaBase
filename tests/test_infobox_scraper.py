@@ -16,7 +16,6 @@ except ImportError:
 from wikipediabase.infobox_scraper import _clean_attribute, MetaInfobox
 from wikipediabase.util import get_meta_infobox
 
-
 class TestMetaInfobox(unittest.TestCase):
 
     def setUp(self):

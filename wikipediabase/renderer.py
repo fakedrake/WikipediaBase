@@ -37,11 +37,6 @@ class Renderer(BaseRenderer):
         Turn markdown into html.
         """
 
-        # TODO : remove for production
-        if not isinstance(wikitext, unicode):
-            self.log().warn("Renderer received a non-unicode string: %s",
-                            wikitext)
-
         data = {"action": "parse", "text": wikitext, "prop": "text", "format": "json"}
         headers = {'User-Agent': USER_AGENT}
         r = requests.post(self.url, data=data, headers=headers)

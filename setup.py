@@ -16,7 +16,7 @@ setup(
         'wikipediabase',
         'wikipediabase.resolvers',
         'wikipediabase.adhoc',
-        'tests',
+        'tests'
     ],
     include_package_data=True,
     install_requires=[
@@ -39,7 +39,7 @@ setup(
     ],
     tests_require=[
         'nose>=1.0',
-        'sqlitedict',
+        'sqlitedict'
     ],
     entry_points={
         'console_scripts': [

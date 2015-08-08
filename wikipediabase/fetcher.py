@@ -42,11 +42,6 @@ class Fetcher(BaseFetcher):
         self.url = url.strip('/')
 
     def urlopen(self, url, params):
-        # TODO : remove for production
-        if not isinstance(params['title'], unicode):
-            self.log().warn('Fetcher received a non-unicode string: %s',
-                            params['title'])
-
         headers = {'User-Agent': USER_AGENT}
         r = requests.get(url, params=params, headers=headers)
 
@@ -124,7 +119,6 @@ class CachingFetcher(Fetcher):
 
 
 class StaticFetcher(BaseFetcher):
-
     """
     Will just get the html and markup provided in init.
     """

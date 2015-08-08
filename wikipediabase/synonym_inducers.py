@@ -27,9 +27,7 @@ def lexical_synonyms(symbol):
 
     return map(string_reduce, ret)
 
-
 class BaseInducer(object):
-
     """
     All inducers should take care of also lexically inducing.
     """
@@ -38,7 +36,6 @@ class BaseInducer(object):
 
 
 class ForwardRedirectInducer(BaseInducer):
-
     """
     Finds the title of the article. Useful for redirects.
     """
@@ -63,7 +60,6 @@ class ForwardRedirectInducer(BaseInducer):
 
 
 class LexicalInducer(BaseInducer):
-
     """
     Induce just the lexicals of the symbol
     """

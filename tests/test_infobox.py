@@ -40,8 +40,11 @@ class TestInfobox(unittest.TestCase):
         self.assertIn(("Origin", "Sydney, Australia"), ibox.html_parsed())
 
     def test_rendered_keys(self):
-        ibox = get_infobox("Brooklyn Bridge", self.fetcher)
-        self.assertEqual("Maintained by", ibox.rendered_keys().get("maint"))
+        clinton = get_infobox("Bill Clinton", self.fetcher)
+        self.assertEqual("Died", clinton.rendered_keys().get("death_place"))
+
+        bridge = get_infobox("Brooklyn Bridge", self.fetcher)
+        self.assertEqual("Maintained by", bridge.rendered_keys().get("maint"))
 
     def test_get(self):
         ibox = get_infobox("The Rolling Stones", self.fetcher)
@@ -78,5 +81,5 @@ class TestInfobox(unittest.TestCase):
         ibox = get_infobox("BBC News", self.fetcher)
         self.assertEquals("Owners", ibox.rendered_keys().get("owners"))
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

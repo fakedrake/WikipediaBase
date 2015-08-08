@@ -25,8 +25,8 @@ from wikipediabase.resolvers.paragraph import first_paren
 
 from tests.examples import *
 
-ARTICLE_BODY = u"""A ninja (忍者?) or shinobi (忍び?) was a covert agent or
-mercenary in feudal Japan. The functions of the ninja included espionage,
+ARTICLE_BODY = u"""A ninja (忍者?) or shinobi (忍び?) was a covert agent or mercenary
+in feudal Japan. The functions of the ninja included espionage,
 sabotage, infiltration, and assassination, and open combat in certain
 situations.[1] Their covert methods of waging war contrasted the ninja
 with the samurai, who observed strict rules about honor and combat.[2]
@@ -58,8 +58,8 @@ class TestResolvers(unittest.TestCase):
         self.kb = get_knowledgebase()
 
     def test_resolver(self):
-        self.assertEqual(self.simple_resolver.resolve(ARTICLE_BODY,
-                                                      "word-count"), 100)
+        self.assertEqual(self.simple_resolver.resolve(ARTICLE_BODY, "word-count"),
+                         100)
 
     def test_url(self):
         """
@@ -77,27 +77,22 @@ class TestResolvers(unittest.TestCase):
         self.assertEqual(band_name, '((:html "The Def Leppard E.P."))')
 
     def test_compat(self):
-        self.ibresolver.fetcher = fetcher.WIKIBASE_FETCHER
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES):
             self.assertEqual(ans, rx, msg=msg)
 
     def test_strangeness(self):
-        self.ibresolver.fetcher = fetcher.WIKIBASE_FETCHER
         for ans, rx, msg in self._ans_match(DEGENERATE_EXAMPLES, All()):
             self.assertEqual(ans, rx, msg=msg)
 
     def test_compat_not(self):
-        self.ibresolver.fetcher = fetcher.WIKIBASE_FETCHER
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT):
             self.assertNotEqual(ans, rx, msg=msg)
 
     def test_compat_rx(self):
-        self.ibresolver.fetcher = fetcher.WIKIBASE_FETCHER
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_RX):
             self.assertRegexpMatches(ans, rx, msg=msg)
 
     def test_compat_not_rx(self):
-        self.ibresolver.fetcher = fetcher.WIKIBASE_FETCHER
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT_RX):
             self.assertNotRegexpMatches(ans, rx, msg=msg)
 
@@ -116,8 +111,8 @@ class TestResolvers(unittest.TestCase):
         err = self.kb.get('Bill Clinton', 'death-date')
         err = self.kb.get('wikipedia-person', 'Barack Obama', 'death-date')
         self.assertEqual(str(err),
-                         '(((error attribute-value-not-found :reply '
-                         '"Currently alive")))')
+                      '(((error attribute-value-not-found :reply '
+                      '"Currently alive")))')
 
     def _ans_match(self, lst, just=None):
         """

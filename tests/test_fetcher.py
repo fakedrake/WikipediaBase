@@ -42,5 +42,5 @@ class TestFetcher(unittest.TestCase):
         src = self.fetcher.source("Obama")
         self.assertFalse(re.match(fetcher.REDIRECT_REGEX, src))
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
