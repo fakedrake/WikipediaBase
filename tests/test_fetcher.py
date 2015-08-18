@@ -13,33 +13,34 @@ try:
 except ImportError:
     import unittest
 
-from .common import TEST_FETCHER_SETUP, MockURLOpen
-
+import re
 from wikipediabase import fetcher
 
 
 class TestFetcher(unittest.TestCase):
 
     def setUp(self):
-        self.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
+        self.fetcher = fetcher.WIKIBASE_FETCHER
 
     def test_html(self):
-        # Remember, this probably needs internet.
         html = self.fetcher.download("Led Zeppelin")
-        self.assertIn("wikipedia", html)
+        self.assertIn("Jimmy Page", html)
 
     def test_source(self):
-        # This should be cached.
         src = self.fetcher.source("Led Zeppelin")
-        self.assertIn("{{Infobox", src)
+        self.assertIn("{{Infobox musical artist", src)
 
-    def test_redirect(self):
-        redir = "http://fake_wikipedia.c0m/w/index.php?title=han_solo"
-        with MockURLOpen(redir, "Han solo is a bitch."):
-            self.assertEqual(self.fetcher.redirect_url("hansolo"), redir)
+    def test_unicode_html(self):
+        html = self.fetcher.download(u"Rhône")
+        self.assertIn("France", html)
 
-    def tearDown(self):
-        pass
+    def test_unicode_source(self):
+        src = self.fetcher.source("Rhône")
+        self.assertIn("Geobox|River", src)
+
+    def test_silent_redirect(self):
+        src = self.fetcher.source("Obama")
+        self.assertFalse(re.match(fetcher.REDIRECT_REGEX, src))
 
 if __name__ == '__main__':
     unittest.main()

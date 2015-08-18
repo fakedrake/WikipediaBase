@@ -1,6 +1,5 @@
 import os
-import wikipediabase.fetcher
-from wikipediabase.fetcher import CachingSiteFetcher
+from wikipediabase.fetcher import WIKIBASE_FETCHER
 import urllib2 as urllib
 
 ALL_TEST_PAGES = []
@@ -27,7 +26,6 @@ class MockURLOpen(object):
             def read(slf):
                 return self.content
 
-
         urllib.urlopen = MyURLfd
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -43,16 +41,8 @@ def read_data(fname):
 
 
 def download_all(pages=ALL_TEST_PAGES):
-    f = CachingSiteFetcher(offline=False, cache_file=data("pages.db"))
+    f = WIKIBASE_FETCHER
 
     for p in pages:
         f.download(p)
         f.source(p)
-
-TEST_FETCHER_SETUP = dict(offline=False, cache_file=data("pages.db"))
-
-
-def get_fetcher():
-    return CachingSiteFetcher(**TEST_FETCHER_SETUP)
-
-wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')

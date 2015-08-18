@@ -2,82 +2,74 @@
 Turn markdown into html.
 """
 
-from urllib import urlopen
-from urllib import urlencode
+from wikipediabase.log import Logging
+from wikipediabase.fetcher import USER_AGENT
+from wikipediabase.util import Expiry
+import logging
+import redis
+import requests
 
-from wikipediabase.fetcher import WIKIBASE_FETCHER
-import wikipediabase.util as util
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-class SandboxRenderer(object):
+class BaseRenderer(Logging):
+
     """
-    Use the wikipedia site sandbox to render mediawiki markup.
+    Render mediawiki markup into HTML.
     """
 
-    default_file = './renderer.dbm'
+    def render(self, wikitext, key=None, **kwargs):
+        pass
 
-    def __init__(self, fetcher=None, url=None):
-        """
-        Provide a fetcher an I ll figure out how to render stuff from
-        there or actually provide a url.
-        """
 
-        if url is not None:
-            self.url = url
-        else:
-            if fetcher is None:
-                fetcher = WIKIBASE_FETCHER
+class Renderer(BaseRenderer):
 
-            self.url = fetcher.url + '/' + fetcher.base
+    """
+    Use Wikipedia's API to render mediawiki markup.
+    """
 
-        self.cache = util._get_persistent_dict(self.default_file)
+    def __init__(self, url="https://en.wikipedia.org/w/api.php"):
+        self.url = url.strip('/')
 
-    def post_data(self, data, get, form_id):
-        """
-        Get a dict with the default post data.
-        """
-        soup = util.fromstring(self.uopen(get).read())
-        inputs = soup.findall(".//input")
-        fields = dict([(i.get('name'), i.get('value')) for i in inputs
-                       if i.get('type') != 'submit' and i.get('value')])
-
-        fields.update(data)
-        return fields
-
-    def uopen(self, get, post=None):
-        """
-        Open the url and provided a map of the get request.
-        """
-        if not post:
-            return urlopen(self.url+'?'+urlencode(get))
-
-        post.update(get)
-        return urlopen(self.url+'?'+urlencode(get), data=urlencode(post))
-
-    def render(self, string, key=None):
+    def render(self, wikitext, key=None, **kwargs):
         """
         Turn markdown into html.
         """
 
-        if not key:
-            key = str(hash(string))
+        data = {"action": "parse", "text": wikitext, "prop": "text", "format": "json"}
+        headers = {'User-Agent': USER_AGENT}
+        r = requests.post(self.url, data=data, headers=headers)
+        if r.status_code != requests.codes.ok:
+            raise LookupError("Error rendering from the Wikipedia API. "
+                              "%s returned status code %s : %s" %
+                              (r.url, r.status_code, r.reason))
 
-        if key in self.cache:
-            return util.encode(self.cache[key])
-
-        # XXX: here we assume tha t the mediawiki project name is wikipedia.
-        get = dict(title="CSAIL_Wikipedia:Sandbox", action="edit")
-        post = self.post_data(dict(wpTextbox1=string, wpSave="Save page"),
-                              get, 'editForm')
-        get['action'] = 'submit'
-        get['printable'] = 'yes'
+        rendered = r.json()['parse']['text']['*']
+        assert(isinstance(rendered, unicode))  # TODO : remove for production
+        return rendered
 
 
-        ufd = self.uopen(get, post)
+class CachingRenderer(Renderer):
 
-        ret = ufd.read()
-        self.cache[key] = ret
+    def __init__(self, url="https://en.wikipedia.org/w/api.php"):
+        self.redis = redis.StrictRedis(host='localhost', port=6379, db=0,
+                                       decode_responses=True)
+        super(CachingRenderer, self).__init__(url)
 
-        return util.encode(ret)
+    def render(self, wikitext, key=None, expiry=Expiry.LONG):
+        if key is None:
+            key = hash(wikitext)
 
-WIKIBASE_RENDERER = SandboxRenderer()
+        dkey = u'renderer:' + key
+        content = self.redis.get(dkey)
+
+        if content is None:
+            content = super(CachingRenderer, self).render(wikitext, key=key)
+            self.redis.set(dkey, content)
+            if expiry is not None:
+                self.redis.expire(dkey, expiry)
+
+        return content
+
+WIKIBASE_RENDERER = CachingRenderer()

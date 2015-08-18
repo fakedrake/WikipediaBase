@@ -1,12 +1,11 @@
-import os
-
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.log import Logging
-from wikipediabase.util import (markup_categories,
+from wikipediabase.synonym_inducers import ForwardRedirectInducer
+from wikipediabase.util import (Expiry,
+                                markup_categories,
                                 fromstring,
                                 totext,
                                 memoized,
-                                url_get_dict,
                                 get_infobox)
 
 # XXX: also support images.
@@ -22,15 +21,16 @@ class Article(Logging):
         self._title = title
         self.fetcher = fetcher
         self.ibox = None
+        self.title_inducer = ForwardRedirectInducer()
 
     @memoized
     def url(self):
-        return self.fetcher.urlopen(self._title).geturl()
+        symbol = self.symbol().replace(" ", "_")
+        return u"https://en.wikipedia.org/wiki/%s" % symbol
 
+    @memoized
     def symbol(self):
-        url = self.url()
-        return url_get_dict(url).get('title') or \
-            os.path.basename(url)
+        return self.title_inducer.title(self._title, fetcher=self.fetcher)
 
     def _soup(self):
         if not hasattr(self, '__soup'):
@@ -64,19 +64,19 @@ class Article(Logging):
 
         raise Exception("No title found for '%s'" % self.symbol())
 
-    def markup_source(self):
+    def markup_source(self, expiry=Expiry.DEFAULT):
         """
         Markup source of the article.
         """
 
-        return self.fetcher.source(self._title)
+        return self.fetcher.source(self._title, expiry=expiry)
 
-    def html_source(self):
+    def html_source(self, expiry=Expiry.DEFAULT):
         """
         Markup source of the article.
         """
 
-        return self.fetcher.download(self._title)
+        return self.fetcher.download(self._title, expiry=expiry)
 
     def paragraphs(self):
         """
@@ -93,9 +93,9 @@ class Article(Logging):
         """
 
         s = self._soup()
-        xpath = ".//*[@id='mw-content-text']//span[@class='mw-headline']/.."
+        xpath = ".//*[@id='mw-content-text']//span[@class='mw-headline']/."
 
-        return ["".join(h.itertext())[:-len("[edit]")]
+        return [u"".join(h.itertext())
                 for h in s.findall(xpath)
                 if "".join(h.itertext())]
 

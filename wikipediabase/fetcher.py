@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 
-try:
-    import urllib2 as ul
-except:
-    import urllib as ul
-
-from urllib import urlencode
 import re
+import redis
+import requests
 
+import logging
 from wikipediabase.log import Logging
-import wikipediabase.util as util
+from wikipediabase.util import Expiry
+
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
-OFFLINE_PAGES = "./pages.sqlite"
+USER_AGENT = "WikipediaBase/1.0 " \
+             "(http://start.csail.mit.edu; start-admins@csail.mit.edu)"
 
 
 class BaseFetcher(Logging):
@@ -26,150 +27,95 @@ class BaseFetcher(Logging):
 
     priority = 0
 
-    def download(self, symbol, get=None):
+    def download(self, symbol, **kwargs):
         return symbol
 
-    def source(self, symbol, redirect=True):
+    def source(self, symbol, **kwargs):
         return symbol
 
-    def caching_fetch(self, dkey, callback, *args, **kwargs):
-        """
-        If you support caching use this.
-        """
 
-        return callback(*args, **kwargs)
-
-
-class WikipediaSiteFetcher(BaseFetcher):
+class Fetcher(BaseFetcher):
 
     priority = 1
 
-    def __init__(self, url="http://ashmore.csail.mit.edu:8080", base="mediawiki/index.php", **kw):
+    def __init__(self, url='https://en.wikipedia.org/w/index.php'):
         self.url = url.strip('/')
-        self.base = base.strip('/')
 
-    def get_wikisource(self, soup):
+    def urlopen(self, url, params):
+        headers = {'User-Agent': USER_AGENT}
+        r = requests.get(url, params=params, headers=headers)
+
+        if r.status_code != requests.codes.ok:
+            raise LookupError("Error fetching: %s. Status code %s : %s" %
+                              (r.url, r.status_code, r.reason))
+
+        page = r.text
+        assert(isinstance(page, unicode))  # TODO : remove for production
+        return page
+
+    def download(self, symbol, **kwargs):
         """
-        Get the source from an html soup of the edit page.
-        """
-        return util.totext(soup.find(".//*[@id='wpTextbox1']"))
-
-
-    def download(self, *args, **kwargs):
-        return self.urlopen(*args, **kwargs).read()
-
-    def urlopen(self, symbol, get=None, base=None):
-        """
-        Download a wikipedia article.
-
-        :param symbol: The wikipedia symbol we are interested in. Set
-        this to None to do different calls.
-        :param get: dictionary of the get request. eg. `{'action':'edit'}`
-        :returns: HTML code
+        Get the rendered HTML article of the symbol.
         """
 
-        if not get:
-            get = dict(title=symbol)
-        else:
-            get = get.copy()
-            if symbol is not None:
-                get.update(title=symbol)
+        params = {'action': 'view', 'title': symbol, 'redirect': 'yes'}
+        return self.urlopen(self.url, params)
 
-        url = "%s/%s?%s" % (self.url, base or self.base,
-                            urlencode(get))
-
-        try:
-            return ul.urlopen(url)
-        except ul.HTTPError:
-            raise LookupError("404 - Uropen args: %s" % repr(url))
-
-
-    def redirect_url(self, symbol):
-        return self.urlopen(symbol).geturl()
-
-    def source(self, symbol, get_request=None, redirect=True):
+    def source(self, symbol, **kwargs):
         """
-        Get the full wiki markup of the symbol.
+        Get the wikitext markup of the symbol.
         """
 
-        # Edit tag:
-        # <textarea tabindex="1" accesskey="," id="wpTextbox1"
-        # cols="80" rows="25" style="" lang="en" dir="ltr"
-        # name="wpTextbox1">
-        get_request = get_request or dict(action="edit")
-        html = self.download(symbol=symbol, get=get_request)
-        soup = util.fromstring(html)
+        params = {'action': 'raw', 'title': symbol}
+        page = self.urlopen(self.url, params)
 
-        try:
-            src = self.get_wikisource(soup)
-        except IndexError:
-            raise ValueError("Got invalid source page for article '%s'." %
-                             symbol)
+        # handle redirecions silently
+        redirect_match = re.search(REDIRECT_REGEX, page)
+        if redirect_match:
+            redirect = redirect_match.group(1)
+            self.redirect = redirect
+            self.log().debug("Redirecting '%s' to '%s'", symbol, redirect)
+            params['title'] = redirect
+            page = self.urlopen(self.url, params)
 
-        # Handle redirecions silently
-        redirect_match = re.search(REDIRECT_REGEX, src)
-
-        if redirect and redirect_match:
-            self.log().info("Redirecting to '%s'.", redirect_match.group(1))
-            src = self.download(symbol=redirect_match.group(1),
-                                get=get_request)
-
-        return src
+        return page
 
 
-class CachingSiteFetcher(WikipediaSiteFetcher):
+class CachingFetcher(Fetcher):
 
-    """
-    Caches pages in a json file and reads from there.
-    """
+    def __init__(self, url='https://en.wikipedia.org/w/index.php'):
+        self.redis = redis.StrictRedis(host='localhost', port=6379, db=0,
+                                       decode_responses=True)
+        super(CachingFetcher, self).__init__(url)
 
-    priority = 10
-    cache_file = OFFLINE_PAGES
+    def _caching_fetch(self, symbol, content_type, prefix, fetch,
+                       expiry=Expiry.DEFAULT):
+        dkey = prefix + symbol
+        content = self.redis.hget(dkey, content_type)
 
-    def __init__(self, *args, **kw):
-        """
-        The `offline` keyword arg will stop ot from looking pages up
-        online. The default is True.
-        """
+        if content is None:
+            content = fetch(symbol)
+            self.redis.hset(dkey, content_type, content)
+            if expiry is not None:
+                self.redis.expire(dkey, expiry)
 
-        self.offline = kw.get("offline", False)
-        self.cache_file = kw.get("cache_file", self.cache_file)
+        return content
 
-        super(CachingSiteFetcher, self).__init__(*args, **kw)
+    def source(self, symbol, expiry=Expiry.DEFAULT):
+        source = self._caching_fetch(symbol, 'source', 'article:',
+                                     super(CachingFetcher, self).source,
+                                     expiry=expiry)
 
-    def redirect_url(self, symbol):
-        return self.caching_fetch("REDIRECT:" + symbol,
-                                  lambda sym: super(CachingSiteFetcher,
-                                                    self).redirect_url(symbol), symbol)
+        assert(isinstance(source, unicode))  # TODO : remove for production
+        return source
 
-    def download(self, symbol, get=None, base=None):
-        dkey = "%s;%s" % (symbol, get) if not base else \
-               "%s:%s;%s" % (base, symbol, get)
-        callback = super(CachingSiteFetcher, self).download
-        return self.caching_fetch(dkey, callback, symbol, get=get, base=base)
+    def download(self, symbol, expiry=Expiry.DEFAULT):
+        rendered = self._caching_fetch(symbol, 'rendered', 'article:',
+                                       super(CachingFetcher, self).download,
+                                       expiry=expiry)
 
-
-    @property
-    def data(self):
-        return util._get_persistent_dict(self.cache_file)
-
-    def caching_fetch(self, dkey, callback, *args, **kwargs):
-        ret = None
-        dkey = util.encode(dkey)
-
-        if dkey in self.data:
-            ret = self.data[dkey]
-
-        if not self.offline and not ret:
-            ret = callback(*args, **kwargs)
-            if ret:
-                self.data[dkey] = ret
-
-        if ret is not None:
-            return util.encode(ret)
-
-        raise LookupError("Failed to find page '%s' (%s online)." %
-                          (dkey, "didnt look" if self.offline else "looked"))
+        assert(isinstance(rendered, unicode))  # TODO : remove for production
+        return rendered
 
 
 class StaticFetcher(BaseFetcher):
@@ -181,10 +127,10 @@ class StaticFetcher(BaseFetcher):
         self.html = html
         self.markup = markup
 
-    def download(self, *args, **kw):
+    def download(self, symbol, **kwargs):
         return self.html
 
-    def source(self, *args, **kw):
+    def source(self, symbol, **kwargs):
         return self.markup
 
-WIKIBASE_FETCHER = CachingSiteFetcher()
+WIKIBASE_FETCHER = CachingFetcher()

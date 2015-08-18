@@ -17,7 +17,7 @@ import warnings
 import overlay_parse
 
 from wikipediabase.log import Logging
-from wikipediabase.util import subclasses
+from wikipediabase.util import subclasses, output
 
 
 # For fully deterministic enchantments use this prioroty.
@@ -26,14 +26,17 @@ MAX_PRIORITY = 15
 
 def kv_pair(k, v):
     if isinstance(k, basestring):
-        return ":%s %s" % (k, v)
+        kv = u":%s %s" % (k, v)
+        return output(kv)
 
-    return "%s %s" % (k, v)
+    kv = u"%s %s" % (k, v)
+    return output(kv)
 
 
 def erepr(v):
     if isinstance(v, basestring):
-        return '"%s"' % v
+        e = u'"%s"' % v
+        return output(e)
 
     return repr(v)
 
@@ -101,23 +104,26 @@ class Enchanted(Logging):
         return val
 
     def __repr__(self):
-        return u"<%s object (%s)>" % (
+        r = u"<%s object (%s)>" % (
             self.__class__.__name__, kv_pair(self.tag_str(), self.val_str()))
+        return output(r)
 
     def __str__(self):
         if self.literal:
             return self._str()
 
-        return u"(%s)" % self._str().replace("\n", "")
+        s = u"(%s)" % self._str().replace("\n", "")
+        return output(s)
 
     def _str(self):
         if self:
-            return u"(%s)" % kv_pair(self.tag_str(), self.val_str())
+            s = u"(%s)" % kv_pair(self.tag_str(), self.val_str())
+            return output(s)
 
         return ''
 
     def val_str(self):
-        return unicode(self.val)
+        return output(unicode(self.val))
 
     def tag_str(self):
         return self.tag or "html"
@@ -139,7 +145,10 @@ class EnchantedString(Enchanted):
         return self.tag
 
     def val_str(self):
-        return u"\"%s\"" % re.sub(r"[[\]]", "", self.val)
+        v = re.sub(r"\[\d*\]", "", self.val) # remove references, e.g. [1]
+        v = re.sub(r"[[\]]", "", v) # remove wikimarkup links, e.g. [[Ruby]]
+        v = u"\"%s\"" % v
+        return output(v)
 
 
 class EnchantedList(Enchanted):

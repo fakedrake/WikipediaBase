@@ -33,8 +33,8 @@ class TestInfoboxTree(unittest.TestCase):
 
     def test_ibx_type_tree(self):
         tree = infobox_tree.ibx_type_tree()
-        self.assertEqual(len(tree['California State Legislature']),
-                         3, msg=repr(tree['California State Legislature']))
+        self.assertEqual(len(tree['California State Legislature district']),
+                         3, msg=repr(tree['California State Legislature district']))
         self.assertNotIn("party", tree["state gun laws"])
         self.assertIn(u'Other politics and government', tree["state gun laws"])
 

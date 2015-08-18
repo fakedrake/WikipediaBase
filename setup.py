@@ -1,5 +1,4 @@
 import re
-import multiprocessing
 from setuptools import setup
 
 init_py = open('wikipediabase/__init__.py').read()
@@ -27,7 +26,13 @@ setup(
         'unittest2 < 1.0.0',
         'overlay-parse',
         'lxml',
-        'sqlitedict'
+        'sqlitedict',
+        'requests',
+        'beautifulsoup4',
+        'redis',
+        'redis',
+        'hiredis',
+        'unidecode',
     ],
     dependency_links=[
         'git+https://github.com/fakedrake/overlay_parse#egg=overlay-parse',

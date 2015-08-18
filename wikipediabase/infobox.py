@@ -1,7 +1,8 @@
 import re
 import lxml.etree as ET
 
-from wikipediabase.util import (totext,
+from wikipediabase.util import (Expiry,
+                                totext,
                                 tostring,
                                 fromstring,
                                 get_meta_infobox,
@@ -23,7 +24,6 @@ class Infobox(Logging):
 
     # Various names under which you may find an infobox
     box_rx = ur"\b(infobox|Infobox|taxobox|Taxobox)\b"
-
 
     def __init__(self, symbol, title=None, fetcher=None):
         """
@@ -142,21 +142,21 @@ class Infobox(Logging):
 
         return list(self.markup_parsed_iter())
 
-    def markup_source(self):
+    def markup_source(self, expiry=Expiry.DEFAULT):
         """
         Get the markup source of this infobox.
         """
 
-        txt = self.fetcher.source(self.symbol)
+        txt = self.fetcher.source(self.symbol, expiry=expiry)
         return self._braces_markup(txt)
 
-    def html_source(self):
+    def html_source(self, expiry=Expiry.DEFAULT):
         """
         A div with all the infoboxes in it.
         """
 
         if not hasattr(self, '_html'):
-            self._html = self.fetcher.download(self.symbol)
+            self._html = self.fetcher.download(self.symbol, expiry=expiry)
 
         bs = fromstring(self._html)
         ret = ET.Element('div')
@@ -176,14 +176,14 @@ class Infobox(Logging):
 
         def escape_lists(val):
             if not val:
-                return ""
+                return u""
 
             return re.sub(
                 r"<\s*(/?\s*(br\s*/?|/?ul|/?li))\s*>", "&lt;\\1&gt;", val)
 
         def unescape_lists(val):
             if not val:
-                return ""
+                return u""
 
             val = re.sub(r"&lt;(/?\s*(br\s*/?|ul|li))&gt;", "<\\1>", val)
             return val
@@ -205,14 +205,12 @@ class Infobox(Logging):
                 # making brs into newlines, parse the rest of the
                 # tags, get the text back
                 key = totext(fromstring(tostring(e_key), True))
-                key = re.sub(ur"\s+", " ", key).strip()
+                key = re.sub(r"\s+", " ", key).strip()
                 val = escape_lists(tostring(e_val))
                 # Extract text
                 val = fromstring(val)
                 val = totext(val)
-
                 val = unescape_lists(val.strip())
-
                 tpairs.append((key, val))
 
         return tpairs

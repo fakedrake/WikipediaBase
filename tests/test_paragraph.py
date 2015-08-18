@@ -13,10 +13,8 @@ try:
 except ImportError:
     import unittest
 
-from .common import get_fetcher
-
 from wikipediabase import wikipediabase
-from wikipediabase.frontend import Frontend
+from wikipediabase.fetcher import WIKIBASE_FETCHER
 
 
 class TestParagraph(unittest.TestCase):
@@ -26,7 +24,7 @@ class TestParagraph(unittest.TestCase):
 
     def test_first_paren(self):
         self.assertEqual(wikipediabase('(get "Mary Shakespeare" "birth-date")',
-                                       fetcher=get_fetcher()),
+                                       fetcher=WIKIBASE_FETCHER),
                          "((:yyyymmdd 15370000))")
 
     def tearDown(self):

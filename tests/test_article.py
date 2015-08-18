@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from common import TEST_FETCHER_SETUP, MockURLOpen
+from common import MockURLOpen
 
 from wikipediabase.article import Article
 from wikipediabase import fetcher
@@ -22,34 +22,34 @@ from wikipediabase import fetcher
 class TestArticle(unittest.TestCase):
 
     def setUp(self):
-        self.ftchr = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
-        self.rtcl = Article("Astaroth", self.ftchr)
+        self.fetcher = fetcher.WIKIBASE_FETCHER
+        self.article = Article("Astaroth", self.fetcher)
 
     def test_html(self):
-        self.assertIn("<body", self.rtcl.html_source())
-        self.assertIn("Crowned Prince", self.rtcl.html_source())
+        self.assertIn("<body", self.article.html_source())
+        self.assertIn("Crowned Prince", self.article.html_source())
 
     def test_paragraphs(self):
-        self.assertEqual(len(list(self.rtcl.paragraphs())), 7)
+        self.assertEqual(len(list(self.article.paragraphs())), 7)
 
     def test_headings(self):
-        self.assertEqual(len(list(self.rtcl.headings())), 5)
+        self.assertEqual(len(list(self.article.headings())), 5)
         self.assertIn("Appearances in literature",
-                      self.rtcl.headings())
+                      self.article.headings())
 
     def test_infobox(self):
-        self.assertEqual(self.rtcl.infobox().types(), [])
+        self.assertEqual(self.article.infobox().types(), [])
 
     def test_complex(self):
-        rtcl = Article("Baal", self.ftchr)
-        self.assertEqual(rtcl.headings()[-1], "External links")
-        self.assertEqual(len(list(rtcl.headings())), 15)
+        article = Article("Baal", self.fetcher)
+        self.assertEqual(article.headings()[-1], "External links")
+        self.assertEqual(len(list(article.headings())), 17)
 
     # XXX: symbols are not used anyway but here is the test.
     # The symbols work, mocking
     def _test_symbol(self):
-        art = Article("Baal")
-        self.assertEqual(art.symbol(), "Baal")
+        article = Article("Baal")
+        self.assertEqual(article.symbol(), "Baal")
 
         redir = "http://fake_wikipedia.c0m/w/index.php?title=han_solo"
         with MockURLOpen(redir, "Han solo is a bitch."):
@@ -60,14 +60,13 @@ class TestArticle(unittest.TestCase):
             self.assertEqual(Article("Han Solo").symbol(), 'han_solo')
 
         # Test that we are back to normal
-        art = Article("Astaroth")
-        self.assertEqual(art.symbol(), "astaroth")
+        article = Article("Astaroth")
+        self.assertEqual(article.symbol(), "astaroth")
 
     def test_redirect(self):
         # Actually redirects the source
         self.assertGreater(len(Article("Barack Hussein Obama").markup_source()),
-                         30000)
-
+                           30000)
 
     def tearDown(self):
         pass
