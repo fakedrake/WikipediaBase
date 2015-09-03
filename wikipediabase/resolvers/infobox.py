@@ -22,21 +22,21 @@ class InfoboxResolver(BaseResolver):
         self.fetcher = kwargs.get('fetcher', WIKIBASE_FETCHER)
         self._tag = "html"
 
-    def resolve(self, article, attribute, cls=None):
+    def resolve(self, symbol, attr, cls=None):
         """
         Return the value of the attribute for the article.
         """
 
-        if "\n" in article:
+        if "\n" in symbol:
             # There are no newlines in article titles
             return None
 
-        if isinstance(attribute, Enchanted):
-            key, attr = attribute.tag, attribute.val
+        if isinstance(attr, Enchanted):
+            key, attr = attr.tag, attr.val
         else:
-            key, attr = None, attribute
+            key, attr = None, attr
 
-        ibox = get_infobox(article, self.fetcher)
+        ibox = get_infobox(symbol, self.fetcher)
 
         if ibox:
             ret = ibox.get(attr)
@@ -48,4 +48,4 @@ class InfoboxResolver(BaseResolver):
             self.log().warning("Could not find infobox attribute '%s'" % attr)
         else:
             self.log().warning("Could not find infobox for article '%s'"
-                               % article)
+                               % symbol)

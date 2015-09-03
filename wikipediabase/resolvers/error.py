@@ -14,12 +14,12 @@ class ErrorResolver(BaseResolver):
         return enchant('error', {'symbol': sym or 'attribute-value-not-found',
                                  'kw': {'reply': repl or 'No such attribute'}})
 
-    def resolve(self, article, attribute, cls=None):
+    def resolve(self, symbol, attr, cls=None):
         kb = get_knowledgebase()
 
-        if 'wikipedia-person' in kb.get_classes(article) and \
-           attribute.lower() == 'death-date' and \
-           kb.get(cls, article, 'birth-date'):
+        if 'wikipedia-person' in kb.get_classes(symbol) and \
+           attr.lower() == 'death-date' and \
+           kb.get(cls, symbol, 'birth-date'):
             return self._err("Currently alive")
 
         return self._err("Unknown")

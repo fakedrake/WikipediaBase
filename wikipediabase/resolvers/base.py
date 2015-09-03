@@ -19,17 +19,17 @@ class BaseResolver(Provider):
 
         self._tag = None
 
-    def resolve(self, article, attribute, **kw):
+    def resolve(self, symbol, attr, **kw):
         """
 
         Use your resources to resolve. Use provided methods if available
         or return None.
         """
-        if isinstance(attribute, Enchanted):
-            attr = attribute.val
+        if isinstance(attr, Enchanted):
+            attr = attr.val
         else:
-            attr = attribute
+            attr = attr
 
         attr = attr.lower()
         if attr in self._resources:
-            return self._resources[attr](article, attribute)
+            return self._resources[attr](symbol, attr)

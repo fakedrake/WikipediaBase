@@ -46,23 +46,23 @@ class LifespanParagraphResolver(BaseResolver):
 
         super(LifespanParagraphResolver, self).__init__(*args, **kwargs)
 
-    def resolve(self, article, attribute, **kw):
+    def resolve(self, symbol, attr, **kwargs):
         """
         Resolve birth and death dates based on the first paragraph.
         """
 
-        if isinstance(attribute, Enchanted):
-            attr = attribute.val.lower()
+        if isinstance(attr, Enchanted):
+            attr = attr.val.lower()
         else:
-            attr = attribute.lower()
+            attr = attr.lower()
 
         if attr == 'short-article':
-            return get_article(article).first_paragraph()
+            return get_article(symbol).first_paragraph()
 
         if attr not in ("birth-date", "death-date"):
             return None
 
-        art = get_article(article)
+        art = get_article(symbol)
 
         # The frst paragraph
         text = art.paragraphs()[0]
