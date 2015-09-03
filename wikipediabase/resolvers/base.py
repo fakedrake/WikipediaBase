@@ -8,7 +8,7 @@ class BaseResolver(Provider):
 
     priority = 1
 
-    def __init__(self, fetcher=None, compat=True, *args, **kwargs):
+    def __init__(self, fetcher=None, *args, **kwargs):
         """
         Provide a way to fetch articles. If no fetcher is provider
         fallback to BaseFetcher.
@@ -16,7 +16,6 @@ class BaseResolver(Provider):
 
         super(BaseResolver, self).__init__(*args, **kwargs)
         self.fetcher = fetcher or Fetcher()
-        self.compat = compat
 
         self._tag = None
 
