@@ -13,8 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from common import TEST_FETCHER_SETUP, MockURLOpen
-
+from common import MockUrlFd
 from wikipediabase.article import Article
 from wikipediabase import fetcher
 
@@ -22,7 +21,7 @@ from wikipediabase import fetcher
 class TestArticle(unittest.TestCase):
 
     def setUp(self):
-        self.ftchr = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
+        self.ftchr = fetcher.CachingSiteFetcher()
         self.rtcl = Article("Astaroth", self.ftchr)
 
     def test_html(self):

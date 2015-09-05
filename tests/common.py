@@ -1,58 +1,55 @@
 import os
 import wikipediabase.fetcher
+from wikipediabase.persistentkv import JsonPersistentDict
 from wikipediabase.fetcher import CachingSiteFetcher
+from wikipediabase.settings import *
+from wikipediabase.config import Configurable
 import urllib2 as urllib
+import json
 
-ALL_TEST_PAGES = []
-
-class MockURLOpen(object):
-    """
-    Always redirect to redirect_url and receive content.
-    """
-
-    def __init__(self, redirect_url, content):
-        self.redirect_url = redirect_url
-        self.content = content
-
-    def __enter__(self):
-        self.original = urllib.urlopen
-
-        class MyURLfd(object):
-            def __init__(self, _):
-                pass
-
-            def geturl(slf):
-                return self.redirect_url
-
-            def read(slf):
-                return self.content
-
-
-        urllib.urlopen = MyURLfd
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        urllib.urlopen = self.original
+real_urlopen = urllib.urlopen
 
 
 def data(fname):
-    return os.path.abspath('/'.join([__package__, 'data', fname]))
+    pkgpath = __package__ or os.path.abspath(os.path.curdir)
+    return os.path.abspath('/'.join([pkgpath, 'data', fname]))
 
+
+
+class MockUrlFd(Configurable):
+    def __init__(self, url, data=None):
+        self.key = json.dumps((url, data))
+        self.data = JsonPersistentDict(self.get_filename('pages.json'))
+        self.urlopen = real_urlopen(url, data)
+        self.url = url
+
+    def get_filename(self, fname):
+        return data(fname)
+
+    def geturl(self):
+        return self.url
+
+    def read(self):
+        ret = self.data.get(self.key)
+        if ret:
+            return ret
+
+        ret = self.urlopen.read()
+        self.data[self.key] = ret
+
+        return ret
+
+urllib.urlopen = MockUrlFd
 
 def read_data(fname):
     return open(data(fname)).read()
 
 
-def download_all(pages=ALL_TEST_PAGES):
-    f = CachingSiteFetcher(offline=False, cache_file=data("pages.db"))
+def download_all():
+    f = CachingSiteFetcher(offline=False, cache_file=data("pages.json"))
 
-    for p in pages:
+    for p in configuration.ref.test_pages:
         f.download(p)
         f.source(p)
-
-TEST_FETCHER_SETUP = dict(offline=False, cache_file=data("pages.db"))
-
-
-def get_fetcher():
-    return CachingSiteFetcher(**TEST_FETCHER_SETUP)
 
 wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')

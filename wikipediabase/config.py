@@ -150,7 +150,7 @@ class Configurable(object):
             lcs[attr] = val
             return
 
-        super(Configurable, self).__setattr__(key, val)
+        super(Configurable, self).__setattr__(attr, val)
 
     def __getattr__(self, attr):
         lcs = self.__dict__.get('local_config_scope', {})

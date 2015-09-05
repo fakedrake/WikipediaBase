@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from .common import TEST_FETCHER_SETUP, MockURLOpen
+from .common import TEST_FETCHER_SETUP, MockUrlFd
 
 from wikipediabase import fetcher
 
@@ -35,7 +35,7 @@ class TestFetcher(unittest.TestCase):
 
     def test_redirect(self):
         redir = "http://fake_wikipedia.c0m/w/index.php?title=han_solo"
-        with MockURLOpen(redir, "Han solo is a bitch."):
+        with MockUrlFd(redir, "Han solo is a bitch."):
             self.assertEqual(self.fetcher.redirect_url("hansolo"), redir)
 
     def tearDown(self):

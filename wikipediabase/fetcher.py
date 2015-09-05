@@ -10,6 +10,7 @@ import re
 
 import wikipediabase.util as util
 from wikipediabase.log import Logging
+from wikipediabase.config import Configurable
 from wikipediabase.settings import configuration
 
 
@@ -17,7 +18,7 @@ REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
 OFFLINE_PAGES = "./pages.sqlite"
 
 
-class BaseFetcher(Logging):
+class BaseFetcher(Logging, Configurable):
 
     """
     The base fetcher does not really fetch an article, it just assumes

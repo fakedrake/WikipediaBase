@@ -76,6 +76,31 @@ class EncodedDict(collections.MutableMapping):
             self.db[k] = v
 
 
+class JsonPersistentDict(EncodedDict):
+    """
+    Persistent dict using dbm. Will open or create filename.
+    """
+
+    def __init__(self, filename):
+        if not filename.endswith('.json'):
+            filename += '.json'
+
+        self.filename = filename
+        super(JsonPersistentDict, self).__init__(json.load(open(filename)))
+
+    def __del__(self):
+        json.dump(self.db, open(self.filename, 'w'))
+        super(JsonPersistentDict, self).__del__()
+
+    def _encode_key(self, key):
+        if isinstance(key, unicode):
+            return key.encode('unicode_escape')
+
+        return str(key)
+
+    def _decode_key(self, key):
+        return key.decode('unicode_escape')
+
 class DbmPersistentDict(EncodedDict):
     """
     Persistent dict using dbm. Will open or create filename.
