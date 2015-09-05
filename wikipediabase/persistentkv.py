@@ -86,11 +86,18 @@ class JsonPersistentDict(EncodedDict):
             filename += '.json'
 
         self.filename = filename
-        super(JsonPersistentDict, self).__init__(json.load(open(filename)))
+        self.dirty = False
+        Super(JsonPersistentDict, self).__init__(json.load(open(filename)))
 
     def __del__(self):
-        json.dump(self.db, open(self.filename, 'w'))
+        if self.dirty:
+            json.dump(self.db, open(self.filename, 'w'))
+
         super(JsonPersistentDict, self).__del__()
+
+    def __setitem__(self, key, val):
+        self.dirty = True
+        return super(JsonPersistentDict, self).__setitem__(key, val)
 
     def _encode_key(self, key):
         if isinstance(key, unicode):
