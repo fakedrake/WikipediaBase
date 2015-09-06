@@ -43,7 +43,8 @@ class TestArticle(unittest.TestCase):
     def test_complex(self):
         article = Article("Baal", self.fetcher)
         self.assertEqual(article.headings()[-1], "External links")
-        self.assertEqual(len(list(article.headings())), 17)
+        # TODO : is this a good test? The number of headings keeps changing
+        self.assertEqual(len(list(article.headings())), 21)
 
     # XXX: symbols are not used anyway but here is the test.
     # The symbols work, mocking
