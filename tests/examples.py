@@ -180,9 +180,9 @@ DEGENERATE_EXAMPLES = [
      '#t'),
     ('(get "wikipedia-term" "Purchasing power parity" (:calculated "PROPER"))',
      '#f'),
-    ('(get "Lamb of God (band)" "PROPER")',
+    ('(get "wikipedia-musical-artist" "Lamb of God (band)" "PROPER")',
      '#t'),
-    ('(get "Board game" "PROPER")',
+    ('(get "wikipedia-term" "Board game" "PROPER")',
      '#f'),
 
     # This means plural or singular I guess

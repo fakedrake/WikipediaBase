@@ -70,13 +70,11 @@ class TestResolvers(unittest.TestCase):
                       str(self.simple_resolver.resolve("Barack obama", "url")))
 
     def test_infobox(self):
-        # Disable compatibility mode: no extra tag info on result.
-        self.ibresolver.compat = False
-
-        band_name = self.fe.eval('(get "%s" "Name")' % "Def_Leppard_EP")
+        band_name = self.fe.eval('(get "wikipedia-album" "%s" "Name")' %
+                                 "Def_Leppard_EP")
         self.assertEqual(band_name, '((:html "The Def Leppard E.P."))')
 
-    def test_compat(self):
+    def test_get(self):
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES):
             self.assertEqual(ans, rx, msg=msg)
 
@@ -84,15 +82,15 @@ class TestResolvers(unittest.TestCase):
         for ans, rx, msg in self._ans_match(DEGENERATE_EXAMPLES, All()):
             self.assertEqual(ans, rx, msg=msg)
 
-    def test_compat_not(self):
+    def test_get_not(self):
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT):
             self.assertNotEqual(ans, rx, msg=msg)
 
-    def test_compat_rx(self):
+    def test_get_rx(self):
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_RX):
             self.assertRegexpMatches(ans, rx, msg=msg)
 
-    def test_compat_not_rx(self):
+    def test_get_not_rx(self):
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT_RX):
             self.assertNotRegexpMatches(ans, rx, msg=msg)
 
@@ -108,7 +106,7 @@ class TestResolvers(unittest.TestCase):
         self.assertIs(first_paren(txt_none), None)
 
     def test_error_resolver(self):
-        err = self.kb.get('Bill Clinton', 'death-date')
+        err = self.kb.get('wikipedia-president', 'Bill Clinton', 'death-date')
         err = self.kb.get('wikipedia-person', 'Barack Obama', 'death-date')
         self.assertEqual(str(err),
                       '(((error attribute-value-not-found :reply '

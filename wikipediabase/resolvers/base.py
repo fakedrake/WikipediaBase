@@ -8,7 +8,7 @@ class BaseResolver(Provider):
 
     priority = 1
 
-    def __init__(self, fetcher=None, compat=True, *args, **kwargs):
+    def __init__(self, fetcher=None, *args, **kwargs):
         """
         Provide a way to fetch articles. If no fetcher is provider
         fallback to BaseFetcher.
@@ -16,21 +16,20 @@ class BaseResolver(Provider):
 
         super(BaseResolver, self).__init__(*args, **kwargs)
         self.fetcher = fetcher or Fetcher()
-        self.compat = compat
 
         self._tag = None
 
-    def resolve(self, article, attribute, **kw):
+    def resolve(self, symbol, attr, **kw):
         """
 
         Use your resources to resolve. Use provided methods if available
         or return None.
         """
-        if isinstance(attribute, Enchanted):
-            attr = attribute.val
+        if isinstance(attr, Enchanted):
+            attr = attr.val
         else:
-            attr = attribute
+            attr = attr
 
         attr = attr.lower()
         if attr in self._resources:
-            return self._resources[attr](article, attribute)
+            return self._resources[attr](symbol, attr)
