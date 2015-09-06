@@ -39,38 +39,23 @@ class KnowledgeBase(Provider):
         key = lambda a: len(' '.join(get_article(a).paragraphs()))
         return enchant(None, sorted(args, reverse=True, key=key))
 
-    @provide()
-    def get(self, v1, v2, v3=None):
+    @provide(name='get')
+    def get(self, cls, symbol, attr):
         """
-        Iterate of the provided attribute resolvers. The wikipedia class
-        in the question which would be v2 if all 3 args are present is
-        obsolete.
+        Gets the value of a symbol's attribute.
+
+        :param cls: Wikipedia class of the symbol
+        :param symbol: the Wikipedia article
+        :param attr: the attribute to get
+        :returns: the attribute's value or an error, enchanted
         """
-
-        if v3 is not None:
-            article, attr = v2, v3
-        else:
-            article, attr = v1, v2
-
-        ret = self._get(article, attr, compat=bool(v3))
-
-        # It probably is enchated but give it a chance.
-        return enchant(None, ret)
-
-    def _get(self, article, attr, compat):
-        """
-        In compatibility mode _get returns a tuple of the resolver gives
-        to the answer (for now 'code' or 'html') and the actual
-        answer.
-        """
-
-        # Attribute is wrapped into a dict just until we retrieve the
-        # keys.
         for ar in self.resolvers:
-            res = ar.resolve(article, attr)
-            # Errors enchantments should get returned.
+            res = ar.resolve(symbol, attr, cls=cls)
             if res is not None:
-                return res
+                break
+
+        # probably already enchanted, but try anyway
+        return enchant(None, res)
 
     @provide(name="get-classes")
     def get_classes(self, symbol):
