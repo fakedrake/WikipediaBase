@@ -66,10 +66,16 @@ class ConfigRef(object):
         tip[key] = val
 
 
-    def __and__(self, config_ref):
-        return MultiLensConfigRef([self, config_ref])
+    def __and__(self, argument):
+        """
+        Return a multilens that will pass argument as an extra argument to
+        the lens. Argument will be derefernced if it is a reference
+        before being passed.
+        """
 
-    def lens(self, lens, *args, **kwargs):
+        return MultiLensConfigRef([self, argument])
+
+    def lens(self, lens):
         """
         Return a ConfigRef that when checked will use the provided
         lens function to deref. Eg
@@ -94,9 +100,9 @@ class ConfigRef(object):
 
         """
 
-        return LensConfigRef(parent=self, lens=lens, *args, **kwargs)
+        return LensConfigRef(self, lens)
 
-    def deref(self, *args, **argv):
+    def deref(self):
         """
         Dereference the config ref that acts like a pointer. If it's a
         lazy ref evaluate it first.
@@ -112,11 +118,12 @@ class ConfigRef(object):
             ret = reduce(lambda obj, key: obj[key],
                          self._path,
                          self._config)
-except KeyError, e:
-    raise KeyError("%s" % '.'.join(self._path))
 
-        if isinstance(ret, LazyItem):
-            return ret.deref()
+        except KeyError, e:
+            raise KeyError("%s" % '.'.join(self._path))
+
+        if isinstance(ret, BaseItem):
+            return ret.eval()
 
         return ret
 
@@ -133,11 +140,9 @@ class LensConfigRef(ConfigRef):
     >>> Configuration({'hello': {'there': 2}}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2).there.deref()
     2
     """
-    def __init__(self, parent, lens, *args, **kwargs):
+    def __init__(self, parent, lens):
         self._parent = parent
         self._lens = lens
-        self._args = args
-        self._kwargs = kwargs
 
     @property
     def _config(self):
@@ -148,14 +153,14 @@ class LensConfigRef(ConfigRef):
         return self._parent._path
 
     def deref(self):
-        return self._lens(self._parent.deref(), *self._args, **self._kwargs)
+        return self._lens(self._parent.deref())
 
 class MultiLensConfigRef(ConfigRef):
     """
-    Combine many lenses together.
+    Many arguments to a lens
     """
 
-    def __init__(self, parents, lens=None):
+    def __init__(self, arguments, lens=None):
         self._lens = lens
         self._parents = parents
 
@@ -168,11 +173,17 @@ class MultiLensConfigRef(ConfigRef):
 
         return MultiLensConfigRef(self._parents, lens=lens)
 
+    def eval_parent(self, parent):
+        if isinstance(parent, ConfigRef):
+            return parent.deref()
+
+        return parent
+
     def deref(self):
         if self._lens is None:
             raise Exception("Did not define lens.")
 
-        return self._lens(*[p.deref() for p in self._parents])
+        return self._lens(*[self.eval_parent(p) for p in self._parents])
 
 class Configurable(object):
     """
@@ -183,6 +194,10 @@ class Configurable(object):
     """
 
     def __setattr__(self, attr, val):
+        """
+        If the attribute is a ConfigRef set it in the
+        local_config_scope. Otherwise set it anywhere.
+        """
         if self.__dict__.get('local_config_scope', None) is None:
             self.__dict__['local_config_scope'] = {}
 
@@ -194,6 +209,11 @@ class Configurable(object):
         self.__dict__[attr] = val
 
     def __getattr__(self, attr):
+        """
+        If the attribute is available in the local_config_scope, take it
+        from there and deref it.
+        """
+
         lcs = self.__dict__.get('local_config_scope', {})
         if attr in lcs:
             return lcs[attr].deref()
@@ -240,9 +260,9 @@ class Configuration(object):
         # Make sure we have not been seached before
         if blacklist is None:
             blacklist = set([self])
-else:
-    if self in blacklist:
-        return default
+        else:
+            if self in blacklist:
+                return default
 
             blacklist.add(self)
 
@@ -253,8 +273,8 @@ else:
         for c in self._children:
             if isinstance(c, Configuration):
                 val = c.get(key, None, blacklist)
-else:
-    val = c.get(key, None)
+            else:
+                val = c.get(key, None)
 
             if val:
                 return val
@@ -273,7 +293,7 @@ class BaseItem(object):
     def eval(self):
         raise NotImplementedError("Subclass this")
 
-class InterfacesItem(BaseItem):
+class SubclassesItem(BaseItem):
     """
     A factory for subclasses. The point of this is that imported
     modules may create subclasses that implementa basic interfaces. We
@@ -349,7 +369,7 @@ class LazyItem(BaseItem):
         """
 
         self.constructor = constructor
-        self.derefereced = False
+        self.dereferenced = False
         self.value = None
 
     def eval(self):
@@ -362,4 +382,8 @@ class LazyItem(BaseItem):
 
 # A global configuration that everyone can use
 configuration = Configuration()
-__all__ = ['LazyItem', 'InterfacesItem', 'Configuration', 'Configurable']
+__all__ = ['LazyItem',
+           'SubclassesItem',
+           'Configuration',
+           'Configurable',
+           'configuration']

@@ -1,6 +1,7 @@
 from wikipediabase.enchantments import Enchanted
 from wikipediabase.fetcher import CachingSiteFetcher
 from wikipediabase.provider import Provider
+from wikipediabase.config import configuration
 
 MIN_PRIORITY = 0
 
@@ -8,14 +9,14 @@ class BaseResolver(Provider):
 
     priority = 1
 
-    def __init__(self, fetcher=None, compat=True, *args, **kwargs):
+    def __init__(self, compat=True, configuration=configuration):
         """
         Provide a way to fetch articles. If no fetcher is provider
         fallback to BaseFetcher.
         """
 
-        super(BaseResolver, self).__init__(*args, **kwargs)
-        self.fetcher = fetcher or CachingSiteFetcher()
+        super(BaseResolver, self).__init__(configuration=configuration)
+        self.fetcher = configuration.ref.fetcher
         self.compat = compat
 
         self._tag = None

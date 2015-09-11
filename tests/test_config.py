@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase.config import Configuration, MethodConfiguration, SubclassesFactory, Configurable
+from wikipediabase.config import *
 
 class TestConfig(unittest.TestCase):
 
@@ -42,14 +42,6 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(conf['a'], 1)
         self.assertEqual(conf['b'], 2)
 
-    def test_method(self):
-        conf = MethodConfiguration()
-        conf['a'] = lambda : 1
-        conf['b'] = 2
-
-        self.assertEqual(conf['a'], 1)
-        self.assertEqual(conf['b'], 2)
-
     def test_keys(self):
         conf = Configuration({'a': 1, 'b': 2})
         self.assertEqual(conf.keys(), ['a','b'])
@@ -70,8 +62,8 @@ class TestConfig(unittest.TestCase):
             def __init__(self):
                 self.name = 'D'
 
-        sf = SubclassesFactory(A)
-        self.assertEqual([i.name for i in sf()], ['B', 'C'])
+        sf = SubclassesItem(A)
+        self.assertEqual([i.name for i in sf.eval()], ['B', 'C'])
 
         # Also classes defined later
         class E(B):
@@ -125,7 +117,8 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(Configuration({'hello': 1}).ref.hello.deref(), 1)
 
         # Lens closure with extra args
-        self.assertEqual(Configuration({'num': 1}).subtract.lens(lambda n, s: n-s, 1).deref(), 0)
+        conf = Configuration({'num': 1, 'subtract': 1})
+        self.assertEqual((conf.ref.num & 1).lens(lambda n, s: n-s).deref(), 0)
 
     def test_multilenses(self):
         cfg = Configuration({'a': 1, 'b':2, 'c':3})

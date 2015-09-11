@@ -49,5 +49,5 @@ def download_all():
         f.download(p)
         f.source(p)
 
-wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')
+# wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')
 configuration.ref.test.urldata = JsonPersistentDict(data('pages.json'))

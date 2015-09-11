@@ -2,38 +2,28 @@
 
 from itertools import chain
 
+from wikipediabase.config import configuration
 from wikipediabase.provider import Provider, provide
-from wikipediabase.fetcher import WIKIBASE_FETCHER
-from wikipediabase.infobox import Infobox
-from wikipediabase.enchantments import enchant
-from wikipediabase.resolvers import WIKIBASE_RESOLVERS
-from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
-from wikipediabase.synonym_inducers import WIKIBASE_INDUCERS
 from wikipediabase.util import get_article, get_infobox
 
 
 class KnowledgeBase(Provider):
+    """
+    Use this to interface with START.
+    """
 
-    def __init__(self, *args, **kw):
-        """
-        Accepted parapameters are:
+    def __init__(self, configuration=configuration):
 
-        - frontend (default: None)
-        - fetcher (default: WIKIBASE_FETCHER)
-        - resolvers (default: WIKIBASE_RESOLVERS)
-        - classifiers (default: WIKIBASE_CLASSIFIERS)
-        """
-
-        super(KnowledgeBase, self).__init__(*args, **kw)
+        super(KnowledgeBase, self).__init__(configuration)
         self.frontend = kw.get('frontend')
 
         if self.frontend:
             self.provide_to(self.frontend)
 
-        self.fetcher = kw.get('fetcher', WIKIBASE_FETCHER)
-        self.resolvers = kw.get('resolvers', WIKIBASE_RESOLVERS)
-        self.classifiers = kw.get('classifiers', WIKIBASE_CLASSIFIERS)
-        self.synonym_inducers = kw.get('synonym_inducers', WIKIBASE_INDUCERS)
+        self.fetcher = configuration.ref.fetcher
+        self.resolvers = configuration.ref.resolvers
+        self.classifiers = configuration.ref.classifiers
+        self.synonym_inducers = configuration.ref.synonym_inducers
 
     @provide(name='sort-symbols')
     def sort_symbols(self, *args):

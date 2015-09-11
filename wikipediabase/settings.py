@@ -11,9 +11,9 @@ configuration.ref.remote.base = 'mediawiki/index.php'
 def get_persistent_dict(filename):
     return
 
-import wikipediabase.presistentkv as pkv
+import wikipediabase.persistentkv as pkv
 configuration.ref.cache.path = '~/.wikipediabase/'
-configuration.ref.cache.pages = LazyItem(lambda: pkv.DbmPersistentDict(configuration.ref.cache.path + 'pages'))
+configuration.ref.cache.pages = LazyItem(lambda: pkv.DbmPersistentDict(configuration.ref.cache.path.deref() + 'pages'))
 
 # Logging. Use lenses for this:
 #    self.log = config.ref.log.lens(lambda log, this: log(this), self)
@@ -21,7 +21,7 @@ from wikipediabase.log import log_gen
 configuration.ref.log = log_gen
 
 # Fetcher
-import wikipediabase.fetcher
+from wikipediabase.fetcher import CachingSiteFetcher
 configuration.ref.fetcher = LazyItem(lambda : CachingSiteFetcher())
 
 # Renderer

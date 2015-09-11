@@ -9,6 +9,7 @@ after_success:
 notifications:
   email:
     - cperivol@csail.mit.edu
+    - sfelshin@csail.mit.edu
 
   on_success: always
   on_failure: always

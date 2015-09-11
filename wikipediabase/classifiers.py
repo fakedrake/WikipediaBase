@@ -22,8 +22,8 @@ class BaseClassifier(Configurable):
     def classify(self, symbol, configuration=configuration):
         raise NotImplemented("Abstract function.")
 
-    def __call__(self, symbol, *av, **kw):
-        return self.classify(symbol, *av, **kw)
+    def __call__(self, *args, **kw):
+        return self.classify(*args, **kw)
 
 
 class StaticClassifier(BaseClassifier):

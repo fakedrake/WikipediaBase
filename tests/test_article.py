@@ -22,7 +22,7 @@ class TestArticle(unittest.TestCase):
 
     def setUp(self):
         self.ftchr = fetcher.CachingSiteFetcher()
-        self.rtcl = Article("Astaroth", self.ftchr)
+        self.rtcl = Article("Astaroth")
 
     def test_html(self):
         self.assertIn("<body", self.rtcl.html_source())
@@ -40,7 +40,7 @@ class TestArticle(unittest.TestCase):
         self.assertEqual(self.rtcl.infobox().types(), [])
 
     def test_complex(self):
-        rtcl = Article("Baal", self.ftchr)
+        rtcl = Article("Baal")
         self.assertEqual(rtcl.headings()[-1], "External links")
         self.assertEqual(len(list(rtcl.headings())), 15)
 

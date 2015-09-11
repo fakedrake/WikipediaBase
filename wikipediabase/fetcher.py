@@ -9,6 +9,7 @@ from urllib import urlencode
 import re
 
 from wikipediabase.config import Configurable, configuration
+import wikipediabase.util as util
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"

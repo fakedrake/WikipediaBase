@@ -70,7 +70,6 @@ class SandboxRenderer(Configurable):
         ufd = self.uopen(get, post)
 
         ret = ufd.read()
-        if key:
-            self.cache[key] = ret
+        self.cache[key] = ret
 
         return util.encode(ret)

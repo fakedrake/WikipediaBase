@@ -42,7 +42,7 @@ class MetaInfobox(Infobox):
         self.renderer = renderer or WIKIBASE_RENDERER
 
         mu = self.markup_source()
-        ftchr = StaticFetcher(self.renderer.render(mu, self.title), mu)
+        ftchr = StaticFetcher(self.renderer.render(mu, key=self.title), mu)
         super(MetaInfobox, self).__init__(symbol, title=title, fetcher=ftchr, **kw)
 
     def attributes(self):
