@@ -19,12 +19,9 @@ def data(fname):
 class MockUrlFd(Configurable):
     def __init__(self, url, data=None):
         self.key = json.dumps((url, data))
-        self.data = JsonPersistentDict(self.get_filename('pages.json'))
+        self.data = configuration.ref.test.urldata
         self.urlopen = real_urlopen(url, data)
         self.url = url
-
-    def get_filename(self, fname):
-        return data(fname)
 
     def geturl(self):
         return self.url
@@ -53,3 +50,4 @@ def download_all():
         f.source(p)
 
 wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')
+configuration.ref.test.urldata = JsonPersistentDict(data('pages.json'))

@@ -8,8 +8,7 @@ from urllib import urlencode
 import wikipediabase.fetcher
 import wikipediabase.util as util
 
-from wikipediabase.config import Configurable
-from wikipediabase.settings import configuration, interfaces
+from wikipediabase.config import Configurable, configuration, interfaces
 
 
 class SandboxRenderer(Configurable):
@@ -75,6 +74,3 @@ class SandboxRenderer(Configurable):
             self.cache[key] = ret
 
         return util.encode(ret)
-
-WIKIBASE_RENDERER = SandboxRenderer()
-interfaces['renderer'] = WIKIBASE_RENDERER

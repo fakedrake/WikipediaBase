@@ -3,15 +3,31 @@ Basically a tree of dicts whereby you can access all children from
 a root dict. Children are prioritized by the order they are added.
 """
 
+# XXX: refactor this to be so: Configuration is one type. It can
+# produce and contain different types of ConfigItems (like methods or
+# subclass generators, closures, lazy items etc). Then on the client
+# side (Configuratble) we create different types of references to
+# those items like lens references that modify an item, multilens that
+# modify multiple items.
+#
+# The default configuration object should also be defined here and
+# populated in settings.py. Besides that it should be immutable and
+# children added to modify it on a per-module basis. This is because
+# different modules might need different instances of
+# Configurables. They need to not worry that other imported modules
+# will accidentaly modify their state while trying to modify their own
+# state. We could enforce this programmatically but this kind of
+# patronizing behavior produces monstrosities like Java.
+
 from random import random
 from itertools import chain
 
-class ConfigItem(object):
+class ConfigRef(object):
     """
     Convenience class to provide configurations that change
-    dynamically. Basically a reference to a configuration item that is
+    dynamically. Basically a reference to a configuration ref that is
     dereferenced on the fly. To evaluate something over the return
-    value (eg. clear whitespaces) each time the item is taken use
+    value (eg. clear whitespaces) each time the ref is taken use
     lenses.
     """
 
@@ -24,12 +40,12 @@ class ConfigItem(object):
 
     def __getattr__(self, key):
         """
-        Get a new ConfigItem that can be dereferenced.
+        Get a new ConfigRef that can be dereferenced.
         """
         if key.startswith('_'):
             return self.__dict__[key]
 
-        return ConfigItem(config=self._config, path=self._path + [key])
+        return ConfigRef(config=self._config, path=self._path + [key])
 
     def __setattr__(self, key, val):
         """
@@ -38,7 +54,7 @@ class ConfigItem(object):
         """
 
         if key.startswith('_'):
-            return super(ConfigItem, self).__setattr__(key, val)
+            return super(ConfigRef, self).__setattr__(key, val)
 
         tip = self._config
         for k in self._path:
@@ -50,12 +66,12 @@ class ConfigItem(object):
         tip[key] = val
 
 
-    def __and__(self, config_item):
-        return MultiLensConfigItem([self, config_item])
+    def __and__(self, config_ref):
+        return MultiLensConfigRef([self, config_ref])
 
-    def lens(self, lens):
+    def lens(self, lens, *args, **kwargs):
         """
-        Return a ConfigItem that when checked will use the provided
+        Return a ConfigRef that when checked will use the provided
         lens function to deref. Eg
 
         >>> class A(Configurable):
@@ -70,33 +86,58 @@ class ConfigItem(object):
 
         This can be used for example to remove trailing whitespaces
         from config strings.
+
+        If you need a closure pass them as args, kwargs and the lens
+        will be evaluated like so:
+
+           lens_callback(config_item, *args, **kwargs)
+
         """
 
-        return LensConfigItem(parent=self, lens=lens)
+        return LensConfigRef(parent=self, lens=lens, *args, **kwargs)
 
-    def deref(self, lens=None):
+    def deref(self, *args, **argv):
+        """
+        Dereference the config ref that acts like a pointer. If it's a
+        lazy ref evaluate it first.
+        """
+
+        # Each config ref knows it's path and the config that path
+        # refers to so just follow the path starting from the config
+        # object. Remember that the config object is just a dict of
+        # dicts.
+
+        ret = None
         try:
-            return reduce(lambda obj, key: obj[key], self._path, self._config)
-        except KeyError, e:
-            raise KeyError("%s" % '.'.join(self._path))
+            ret = reduce(lambda obj, key: obj[key],
+                         self._path,
+                         self._config)
+except KeyError, e:
+    raise KeyError("%s" % '.'.join(self._path))
 
+        if isinstance(ret, LazyItem):
+            return ret.deref()
 
-class LensConfigItem(ConfigItem):
+        return ret
+
+class LensConfigRef(ConfigRef):
     """
     Here is a demostrative example on how this is used:
 
     >>> Configuration({'hello': {'there': 2}}).ref.hello
-    <__main__.ConfigItem object at 0x1074dfb50>
+    <__main__.ConfigRef object at 0x1074dfb50>
     >>> Configuration({'hello': 1}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2).deref()
     4
     >>> Configuration({'hello': 1}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2)
-    <__main__.LensConfigItem object at 0x1074dfb10>
+    <__main__.LensConfigRef object at 0x1074dfb10>
     >>> Configuration({'hello': {'there': 2}}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2).there.deref()
     2
     """
-    def __init__(self, parent, lens):
+    def __init__(self, parent, lens, *args, **kwargs):
         self._parent = parent
         self._lens = lens
+        self._args = args
+        self._kwargs = kwargs
 
     @property
     def _config(self):
@@ -107,9 +148,9 @@ class LensConfigItem(ConfigItem):
         return self._parent._path
 
     def deref(self):
-        return self._lens(self._parent.deref())
+        return self._lens(self._parent.deref(), *self._args, **self._kwargs)
 
-class MultiLensConfigItem(ConfigItem):
+class MultiLensConfigRef(ConfigRef):
     """
     Combine many lenses together.
     """
@@ -118,14 +159,14 @@ class MultiLensConfigItem(ConfigItem):
         self._lens = lens
         self._parents = parents
 
-    def __and__(self, config_item):
-        return MultiLensConfigItem(self._parents + [config_item])
+    def __and__(self, config_ref):
+        return MultiLensConfigRef(self._parents + [config_ref])
 
     def lens(self, lens):
         if self._lens is not None:
-            return super(MultiLensConfigItem, self).lens(lens)
+            return super(MultiLensConfigRef, self).lens(lens)
 
-        return MultiLensConfigItem(self._parents, lens=lens)
+        return MultiLensConfigRef(self._parents, lens=lens)
 
     def deref(self):
         if self._lens is None:
@@ -146,18 +187,18 @@ class Configurable(object):
             self.__dict__['local_config_scope'] = {}
 
         lcs = self.__dict__['local_config_scope']
-        if isinstance(val, ConfigItem):
+        if isinstance(val, ConfigRef):
             lcs[attr] = val
             return
 
-        super(Configurable, self).__setattr__(attr, val)
+        self.__dict__[attr] = val
 
     def __getattr__(self, attr):
         lcs = self.__dict__.get('local_config_scope', {})
         if attr in lcs:
             return lcs[attr].deref()
 
-        return super(Configurable, self).__getattr__(attr)
+        return self.__dict__[attr]
 
 
 class Configuration(object):
@@ -171,7 +212,7 @@ class Configuration(object):
         self._local = local or {}
         self._children = []
         self._id = random()
-        self.ref = ConfigItem(self)
+        self.ref = ConfigRef(self)
 
     def __hash__(self):
         return self._id
@@ -199,9 +240,9 @@ class Configuration(object):
         # Make sure we have not been seached before
         if blacklist is None:
             blacklist = set([self])
-        else:
-            if self in blacklist:
-                return default
+else:
+    if self in blacklist:
+        return default
 
             blacklist.add(self)
 
@@ -212,8 +253,8 @@ class Configuration(object):
         for c in self._children:
             if isinstance(c, Configuration):
                 val = c.get(key, None, blacklist)
-            else:
-                val = c.get(key, None)
+else:
+    val = c.get(key, None)
 
             if val:
                 return val
@@ -227,26 +268,12 @@ class Configuration(object):
 
         return ret
 
+# Items
+class BaseItem(object):
+    def eval(self):
+        raise NotImplementedError("Subclass this")
 
-class MethodConfiguration(Configuration):
-    """
-    If a value of a key is a method then we should call the method
-    itself.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(MethodConfiguration, self).__init__(*args, **kwargs)
-        class Local(dict):
-            def get(self, key, default=None):
-                val = dict.get(self, key, default)
-                if hasattr(val, '__call__'):
-                    return val()
-
-                return val
-
-        self._local = Local()
-
-class SubclassesFactory(object):
+class InterfacesItem(BaseItem):
     """
     A factory for subclasses. The point of this is that imported
     modules may create subclasses that implementa basic interfaces. We
@@ -286,8 +313,7 @@ class SubclassesFactory(object):
         self.instances_dict[cls] = ret
         return ret
 
-
-    def __call__(self, **kw):
+    def eval(self):
         """
         Do the actual work of getting what was defined in init.
         """
@@ -309,3 +335,31 @@ class SubclassesFactory(object):
 
         return [self.get_instance(C, **kw) for C in clss
                 if not C.__name__.startswith("_")]
+
+
+class LazyItem(BaseItem):
+    """
+    An ref that is not evaluated until it's first dereference.
+    """
+
+    def __init__(self, constructor):
+        """
+        The consgructor is called once when the ref is first
+        dereferenced.
+        """
+
+        self.constructor = constructor
+        self.derefereced = False
+        self.value = None
+
+    def eval(self):
+        if self.dereferenced:
+            return self.value
+
+        self.value = self.constructor()
+        self.dereferenced = True
+        return self.value
+
+# A global configuration that everyone can use
+configuration = Configuration()
+__all__ = ['LazyItem', 'InterfacesItem', 'Configuration', 'Configurable']

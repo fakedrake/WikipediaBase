@@ -124,6 +124,9 @@ class TestConfig(unittest.TestCase):
         # Non lensed stuff still works
         self.assertEqual(Configuration({'hello': 1}).ref.hello.deref(), 1)
 
+        # Lens closure with extra args
+        self.assertEqual(Configuration({'num': 1}).subtract.lens(lambda n, s: n-s, 1).deref(), 0)
+
     def test_multilenses(self):
         cfg = Configuration({'a': 1, 'b':2, 'c':3})
         multilens = (cfg.ref.a & cfg.ref.b & cfg.ref.c).lens(lambda a, b, c: a+b+c)

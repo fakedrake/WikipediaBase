@@ -6,15 +6,17 @@ from wikipediabase.util import (totext,
                                 fromstring,
                                 get_meta_infobox,
                                 get_article)
-from wikipediabase.log import Logging
+
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.infobox_tree import ibx_type_superclasses
+from wikipediabase.config import Configurable, configuration
+
 
 INFOBOX_ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_0-9]+)\s*=" \
                           "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
 
 
-class Infobox(Logging):
+class Infobox(Configurable):
 
     """
     The interface with attributes accepts and provides attributes with
@@ -25,7 +27,7 @@ class Infobox(Logging):
     box_rx = ur"\b(infobox|Infobox|taxobox|Taxobox)\b"
 
 
-    def __init__(self, symbol, title=None, fetcher=None):
+    def __init__(self, symbol, title=None, configuration=configuration):
         """
         It is a good idea to provide a fetcher as caching will be done
         much better.
@@ -36,7 +38,7 @@ class Infobox(Logging):
         if title is not None:
             self.title = title
 
-        self.fetcher = fetcher or WIKIBASE_FETCHER
+        self.fetcher = configuration.ref.fetcher
 
     def __nonzero__(self):
         return bool(self.fetcher.download(self.symbol))

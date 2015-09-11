@@ -87,7 +87,7 @@ class JsonPersistentDict(EncodedDict):
 
         self.filename = filename
         self.dirty = False
-        Super(JsonPersistentDict, self).__init__(json.load(open(filename)))
+        super(JsonPersistentDict, self).__init__(json.load(open(filename)))
 
     def __del__(self):
         if self.dirty:

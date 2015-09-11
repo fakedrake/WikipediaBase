@@ -1,1 +1,1 @@
-#init
+import test_config

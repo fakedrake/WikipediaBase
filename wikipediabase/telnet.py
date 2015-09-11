@@ -8,10 +8,9 @@ import socket
 import select
 import threading
 
-from wikipediabase.log import Logging
+from wikipediabase.settings import Configurable, configuration
 
-
-class TelnetServer(Logging):
+class TelnetServer(Configurable):
 
     """
     The telnet server.

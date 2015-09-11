@@ -1,21 +1,32 @@
-from wikipediabase.config import Configuration, MethodConfiguration
+from wikipediabase.config import *
 
-# A global configuration that everyone can use
-configuration = Configuration()
+# Do everything offline
+configuration.ref.offline = True
 
 # Wikipedia mirror
 configuration.ref.remote.url = 'http://ashmore.csail.mit.edu:8080'
 configuration.ref.remote.base = 'mediawiki/index.php'
 
 # Caching
-configuration.ref.cache.path = '~/.wikipediabase/'
-configuration.ref.cache.rendered_pages = 'rendered'
-configuration.ref.cache.downloaded_pages = 'downloaded'
+def get_persistent_dict(filename):
+    return
 
-# Register all interfaces. See the test for how to do it.
-interfaces = MethodConfiguration()
-configuration.add_child(interfaces)
+import wikipediabase.presistentkv as pkv
+configuration.ref.cache.path = '~/.wikipediabase/'
+configuration.ref.cache.pages = LazyItem(lambda: pkv.DbmPersistentDict(configuration.ref.cache.path + 'pages'))
+
+# Logging. Use lenses for this:
+#    self.log = config.ref.log.lens(lambda log, this: log(this), self)
+from wikipediabase.log import log_gen
+configuration.ref.log = log_gen
+
+# Fetcher
+import wikipediabase.fetcher
+configuration.ref.fetcher = LazyItem(lambda : CachingSiteFetcher())
+
+# Renderer
+configuration.ref.renderer = LazyItem(lambda : SandboxRenderer())
 
 # Note: For testing add child configurations insted of editing these
 
-__all__ = ['configuration', 'interfaces']
+__all__ = ['configuration']

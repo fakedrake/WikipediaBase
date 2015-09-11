@@ -1,8 +1,5 @@
 import logging
 
-
-class Logging(object):
-
-    def log(self):
-        return logging.getLogger('.'.join((self.__class__.__module__,
-                                           self.__class__.__name__)))
+def loggen(obj):
+    return logging.getLogger('.'.join((obj.__class__.__module__,
+                                       obj.__class__.__name__)))

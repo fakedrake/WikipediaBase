@@ -1,8 +1,7 @@
 from itertools import chain
 
-from wikipediabase.log import Logging
 from wikipediabase.util import memoized
-
+from wikipediabase.config import Configurable
 
 def provide(name=None, memoize=True):
     """
@@ -47,7 +46,7 @@ class ProviderMeta(type):
         return type.__new__(meta, clsname, bases, newDict)
 
 
-class Provider(Logging):
+class Provider(Configurable):
 
     """
     Can provide a dictionary of resources managed by name. Resources

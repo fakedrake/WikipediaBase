@@ -8,17 +8,14 @@ except:
 from urllib import urlencode
 import re
 
-import wikipediabase.util as util
-from wikipediabase.log import Logging
-from wikipediabase.config import Configurable
-from wikipediabase.settings import configuration
+from wikipediabase.config import Configurable, configuration
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
 OFFLINE_PAGES = "./pages.sqlite"
 
 
-class BaseFetcher(Logging, Configurable):
+class BaseFetcher(Configurable):
 
     """
     The base fetcher does not really fetch an article, it just assumes
@@ -27,6 +24,10 @@ class BaseFetcher(Logging, Configurable):
     """
 
     priority = 0
+
+    def __init__(self, configuration=configuration):
+        self.log = self.config.ref.log.lens(lambda log, this: log(this),
+                                            self)
 
     def download(self, symbol, get=None):
         return symbol
@@ -46,7 +47,7 @@ class WikipediaSiteFetcher(BaseFetcher):
 
     priority = 1
 
-    def __init__(self, configuration=configuration, **kw):
+    def __init__(self, configuration=configuration):
         self.config = configuration
         self.url = self.config.ref.remote.url.lens(lambda x: x.strip('/'))
         self.base = self.config.ref.remote.base.lens(lambda x: x.strip('/'))
@@ -113,7 +114,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         redirect_match = re.search(REDIRECT_REGEX, src)
 
         if redirect and redirect_match:
-            self.log().info("Redirecting to '%s'.", redirect_match.group(1))
+            self.log.info("Redirecting to '%s'.", redirect_match.group(1))
             src = self.download(symbol=redirect_match.group(1),
                                 get=get_request)
 
@@ -129,16 +130,16 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
     priority = 10
     cache_file = OFFLINE_PAGES
 
-    def __init__(self, *args, **kw):
+    def __init__(self, configuration=configuration):
         """
         The `offline` keyword arg will stop ot from looking pages up
         online. The default is True.
         """
 
-        self.offline = kw.get("offline", False)
-        self.cache_file = kw.get("cache_file", self.cache_file)
+        self.offline = configuration.ref.offline
+        self.data = configuration.ref.cache.pages
 
-        super(CachingSiteFetcher, self).__init__(*args, **kw)
+        super(CachingSiteFetcher, self).__init__(configuration)
 
     def redirect_url(self, symbol):
         return self.caching_fetch("REDIRECT:" + symbol,
@@ -150,11 +151,6 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
                "%s:%s;%s" % (base, symbol, get)
         callback = super(CachingSiteFetcher, self).download
         return self.caching_fetch(dkey, callback, symbol, get=get, base=base)
-
-
-    @property
-    def data(self):
-        return util._get_persistent_dict(self.cache_file)
 
     def caching_fetch(self, dkey, callback, *args, **kwargs):
         ret = None
@@ -189,8 +185,3 @@ class StaticFetcher(BaseFetcher):
 
     def source(self, *args, **kw):
         return self.markup
-
-WIKIBASE_FETCHER = CachingSiteFetcher()
-
-from wikipediabase.settings import configuration
-configuration.ref.fetcher = WIKIBASE_FETCHER

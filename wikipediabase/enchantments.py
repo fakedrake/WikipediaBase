@@ -16,7 +16,7 @@ import warnings
 
 import overlay_parse
 
-from wikipediabase.log import Logging
+from wikipediabase.config import configuration, Configurable
 from wikipediabase.util import subclasses
 
 
@@ -51,7 +51,7 @@ def mid_priority():
 
 MID_PRIORITY = mid_priority()
 
-class Enchanted(Logging):
+class Enchanted(Configurable):
 
     """
     An enchanted object's string representation is something that

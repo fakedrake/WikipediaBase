@@ -1,7 +1,6 @@
 import os
 
-from wikipediabase.fetcher import WIKIBASE_FETCHER
-from wikipediabase.log import Logging
+from wikipediabase.config import Configurable, configuration
 from wikipediabase.util import (markup_categories,
                                 fromstring,
                                 totext,
@@ -10,7 +9,7 @@ from wikipediabase.util import (markup_categories,
                                 get_infobox)
 
 # XXX: also support images.
-class Article(Logging):
+class Article(Configurable):
 
     """
     This is meant to be a wrapper around a fetcher. I do not use
@@ -18,9 +17,9 @@ class Article(Logging):
     abstraction.
     """
 
-    def __init__(self, title, fetcher=WIKIBASE_FETCHER):
+    def __init__(self, title, configuration=configuration):
         self._title = title
-        self.fetcher = fetcher
+        self.fetcher = configuration.ref.fetcher
         self.ibox = None
 
     @memoized
