@@ -28,6 +28,10 @@ class TestArticle(unittest.TestCase):
         self.assertIn("<body", self.rtcl.html_source())
         self.assertIn("Crowned Prince", self.rtcl.html_source())
 
+    def test_fetcher(self):
+        from wikipediabase.fetcher import BaseFetcher
+        self.assertIsInstance(self.rtcl.fetcher, BaseFetcher)
+
     def test_paragraphs(self):
         self.assertEqual(len(list(self.rtcl.paragraphs())), 7)
 

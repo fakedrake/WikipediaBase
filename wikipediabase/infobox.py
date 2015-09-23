@@ -7,8 +7,6 @@ from wikipediabase.util import (totext,
                                 get_meta_infobox,
                                 get_article)
 
-from wikipediabase.fetcher import WIKIBASE_FETCHER
-from wikipediabase.infobox_tree import ibx_type_superclasses
 from wikipediabase.config import Configurable, configuration
 
 
@@ -37,7 +35,8 @@ class Infobox(Configurable):
         if title is not None:
             self.title = title
 
-        self.fetcher = configuration.ref.fetcher
+        self.fetcher = configuration.ref.fetcher.with_args(configuration=configuration)
+        self.infobox_types = configuration.ref.infobox_types.with_args(configuration=configuration)
 
     def __nonzero__(self):
         return bool(self.fetcher.download(self.symbol))

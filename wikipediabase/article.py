@@ -19,8 +19,9 @@ class Article(Configurable):
 
     def __init__(self, title, configuration=configuration):
         self._title = title
-        self.fetcher = configuration.ref.fetcher
+        self.fetcher = configuration.ref.fetcher.with_args(configuration=configuration)
         self.ibox = None
+        self.__soup = None
 
     @memoized
     def url(self):
@@ -32,7 +33,7 @@ class Article(Configurable):
             os.path.basename(url)
 
     def _soup(self):
-        if not hasattr(self, '__soup'):
+        if self.__soup is None:
             self.__soup = fromstring(self.html_source())
 
         return self.__soup

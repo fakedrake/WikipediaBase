@@ -11,7 +11,9 @@ import json
 from sqlitedict import SqliteDict
 import os
 
-class EncodedDict(collections.MutableMapping):
+from wikipediabase.config import Configurable, configuration
+
+class EncodedDict(collections.MutableMapping, Configurable):
     """
     Subclass this and provide any of the following (see
     implementatiokn for signatures)
@@ -87,7 +89,13 @@ class JsonPersistentDict(EncodedDict):
 
         self.filename = filename
         self.dirty = False
-        super(JsonPersistentDict, self).__init__(json.load(open(filename)))
+        fd = None
+        try:
+            fd = open(filename)
+        except:
+            pass
+
+        super(JsonPersistentDict, self).__init__(json.load(fd) if fd else {})
 
     def __del__(self):
         if self.dirty:
@@ -113,7 +121,8 @@ class DbmPersistentDict(EncodedDict):
     Persistent dict using dbm. Will open or create filename.
     """
 
-    def __init__(self, filename):
+    def __init__(self, filename=None, configuration=configuration):
+        self.filename = configuration.ref.cache.path.lens(lambda x: x + (filename or 'default.dbm'))
         flag = 'w' if os.path.exists(filename) else 'n'
 
         try:
@@ -121,7 +130,7 @@ class DbmPersistentDict(EncodedDict):
         except:
             raise IOError("Failed dbm.open('%s', '%s')" % (filename, flag))
 
-        super(DbmPersistentDict, self).__init__(databasex)
+        super(DbmPersistentDict, self).__init__(database)
 
     def _encode_key(self, key):
         # Asciify

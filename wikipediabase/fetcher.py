@@ -83,10 +83,11 @@ class WikipediaSiteFetcher(BaseFetcher):
         url = "%s/%s?%s" % (self.url, base or self.base,
                             urlencode(get))
 
-        try:
-            return ul.urlopen(url)
-        except ul.HTTPError:
-            raise LookupError("404 - Uropen args: %s" % repr(url))
+        return ul.urlopen(url)
+        # try:
+        #     return ul.urlopen(url)
+        # except ul.HTTPError:
+        #     raise LookupError("404 - Uropen args: %s" % repr(url))
 
 
     def redirect_url(self, symbol):
@@ -115,7 +116,6 @@ class WikipediaSiteFetcher(BaseFetcher):
         redirect_match = re.search(REDIRECT_REGEX, src)
 
         if redirect and redirect_match:
-            self.log.info("Redirecting to '%s'.", redirect_match.group(1))
             src = self.download(symbol=redirect_match.group(1),
                                 get=get_request)
 

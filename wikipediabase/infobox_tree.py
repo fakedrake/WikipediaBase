@@ -1,75 +1,105 @@
 import re
 from itertools import chain
 
-from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.config import configuration, Configurable, LazyItem
 
-MW_HEADING_RX = map(re.compile, [
-    ur"\s*==([\w\s]+)==",
-    ur"\s*===([\w\s]+)===",
-    ur"\s*====([\w\s]+)====",
-    ur"\* \[\[Template:Infobox ([\w\s]*)\]\]",
-    ur"\*\* \[\[Template:Infobox ([\w\s]*)\]\]",
-    # Not there but just in case
-    ur"\*\*\* \[\[Template:Infobox ([\w\s]*)\]\]",
-])
-
-
-def ibx_tree(src, prefix=None, form=None):
+class InfoboxSuperclasses(Configurable):
     """
-    [(item-name, [parents, ...]), ...]
+    A dict-like map ibox-name -> [categories]. It retrieves the page at
 
-    There are times when item-name will be in parents
+    https://en.wikipedia.org/wiki/Wikipedia:List_of_infoboxes
 
-    You can also provide a prefix path in case you need a different
-    root.
-
-    You also have the chance to change the form of the category
+    And generates a tree structure. The infobox type supercategores
+    are the parents of the node's parsed tree.
     """
 
-    stack = (prefix or []) + ([None] * len(MW_HEADING_RX))
-    queue = []
-    offset = len(prefix or [])
+    def __init__(self, configuraion=configuration):
+        self.category_rx = configuration.ref.mediawiki.infobox_category_rx
+        self.infobox_rxs = configuration.ref.mediawiki.infobox_infobox_rxs
 
-    for l in src.split(u"\n"):
+        self.fetcher = configuration.ref.fetcher
+        self.src = LazyItem(lambda:self.fetcher.source("Wikipedia:List_of_infoboxes"))
 
-        for d, r in enumerate(MW_HEADING_RX, offset):
-            m = r.match(l)
-            if m:
-                if form:
-                    it = form(m.group(1), l)
-                else:
-                    it = m.group(1)
-                for i, _ in enumerate(stack[d:], d):
-                    stack[i] = None
+        # Poor person's lazy seq
+        self.typedict = {}
+        self.typeiter = self.type_tree()
 
-                stack[d] = it
-                if d > offset + 2:
-                    queue.append((it,
-                                  [i for i in stack[:d] if i is not None]))
+    def type_tree(self):
+        for key, val in self.category_header_infobox(self.src):
+            self.typedict[key] = val
+            yield key, val
 
+    def __getitem__(self, key):
+        if key in self.typedict:
+            return self.typedict[key]
+
+        while True:
+            try:
+                type_, parents_ = next(self.typeiter)
+            except TypeError:
                 break
 
-    return queue
+            if type_ == key:
+                return parents_
 
+    def get_categories(self, source):
+        """
+        (category_name, category_source) pairs
+        """
+        return [(m.group(1), self.fetcher.source(m.group(1)))
+                for m in re.finditer(r'$\s*{{.*}}', source, re.MULTILINE)]
 
-def ibx_type_tree(fetcher=None, form=None):
-    if hasattr(ibx_type_tree, "ret"):
-        return ibx_type_tree.ret
+    def header_levels(self, source):
+        head_rx = re.finditer(r"^\s*(=+)([^=]+)(=+)\s*$", source, re.MULTILINE)
+        heads = [(len(m.group(1)), m.group(2), (m.start(), m.end()))
+                    for m in head_rx if m.group(1) == m.group(3)]
+        return self.levels(heads, source)
 
-    if not fetcher:
-        fetcher = WIKIBASE_FETCHER
+    def header_lists(self, source):
+        return self.lists(self.header_levels(source))
 
-    src = fetcher.source("Wikipedia:List_of_infoboxes")
-    titles = map(lambda x: x.split("}}", 1)[0],
-                 src.split(u"{{Wikipedia:List of infoboxes/")[1:])
-    symbols = (u"Wikipedia:List_of_infoboxes/" + i
-               for i in titles)
-    tuples = chain.from_iterable((ibx_tree(fetcher.source(sym),
-                                           form=form)
-                                  for sym, tit in zip(symbols, titles)))
-    ibx_type_tree.ret = dict(tuples)
-    return ibx_type_tree.ret
+    def infobox_levels(self, source):
+        list_rx = re.finditer(r"^\s*(\*+)\s*\[\[Template:Infobox (.+)\]\]",
+                              source, re.MULTILINE)
+        ibxs = [(len(m.group(1)), m.group(2), (m.start(), m.end()))
+                    for m in list_rx]
+        return ((lvl, name, name) for lvl, name, _ in self.levels(ibxs, source))
 
-ibx_type_superclasses = ibx_type_tree
+    def infobox_lists(self, source):
+        ret = self.lists(self.infobox_levels(source))
+        # Skip the space between the first item and top
+        next(ret)
+        return ret
 
-__all__ = ["ibx_type_superclasses", "ibx_type_tree", "ibx_tree"]
+    def category_header_infobox(self, source):
+        for ch, ct in self.get_categories(source):
+            for hhs, ht in self.header_lists(ct):
+                for iht, ihs in self.infobox_lists(ht):
+                    yield (ihs, list(set([ch] + hhs + iht)))
+
+    def levels(self, items, source):
+        """
+        Given [(level, name, (start, end))] and source create
+        [(level, name, data)]
+        """
+        before = (0, None, (0,0))
+        after = (0, None, (len(source),len(source)))
+
+        for cur, nxt in zip([before] + items, items + [after]):
+            _, _, (end, _) = nxt
+            level, title, (_, start) = cur
+            yield level, title and title.strip(" "), \
+                source[start: end].strip("[ \n]")
+
+    def lists(self, levels):
+        """
+        Given the output ov levels produce
+        [([headers], data)]
+        """
+        last_list = []
+        for lvl, head, data in levels:
+            prefix = last_list[:lvl-1] if lvl > 0 else []
+            inter = [None] * (lvl - len(last_list) - 1)
+            postfix = [head] if head else []
+            last_list = prefix + inter + postfix
+            yield last_list, data

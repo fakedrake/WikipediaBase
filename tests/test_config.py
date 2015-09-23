@@ -28,19 +28,18 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(conf.get('b', 3), 3)
 
     def test_children(self):
-        conf = Configuration()
-        child0 = Configuration({'a':1, 'b': 2})
-        child1 = {'a':2, 'c': 3}
-        conf['d'] = 4
-        conf.add_child(child0)
-        conf.add_child(child1)
-        self.assertEqual(conf['a'], 2)
-        self.assertEqual(conf['b'], 2)
-        self.assertEqual(conf['c'], 3)
-        self.assertEqual(conf['d'], 4)
-        conf.remove_child(child1)
-        self.assertEqual(conf['a'], 1)
-        self.assertEqual(conf['b'], 2)
+        root = Configuration({'isroot': True})
+        default = root.child({'isroot': False})
+        test = default.child({'type': 'test'})
+        libconfig = default.child({'type': 'lib'})
+        appconfig = libconfig.child({'type': 'app'})
+
+        self.assertEqual(libconfig['type'], 'lib')
+        self.assertEqual(appconfig['type'], 'app')
+        self.assertEqual(test['type'], 'test')
+        self.assertEqual(test['isroot'], False)
+        self.assertEqual(appconfig['isroot'], False)
+        self.assertEqual(root['isroot'], True)
 
     def test_keys(self):
         conf = Configuration({'a': 1, 'b': 2})
@@ -76,11 +75,11 @@ class TestConfig(unittest.TestCase):
             def __init__(self):
                 self.name = 'F'
 
-        self.assertEqual([i.name for i in sf()], ['F', 'B', 'C', 'E'])
+        self.assertEqual([i.name for i in sf.eval()], ['F', 'B', 'C', 'E'])
 
         # Also caching: we wont get a new instance each time:
-        sf()[0].name = 'new_name'
-        self.assertEqual([i.name for i in sf()], ['new_name', 'B', 'C', 'E'])
+        sf.eval()[0].name = 'new_name'
+        self.assertEqual([i.name for i in sf.eval()], ['new_name', 'B', 'C', 'E'])
 
     def test_references(self):
         this = self
@@ -109,9 +108,12 @@ class TestConfig(unittest.TestCase):
         # Multiple lenses can be stacked
         self.assertEqual(Configuration({'hello': 1}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2).deref(), 4)
 
-        # Lenses do not affect the abuility to create further
+        # Lenses do not affect the ability to create further
         # references
-        self.assertEqual(Configuration({'hello': 1, 'hi': {'there': 0}}).ref.hi.lens(lambda x: x+1).lens(lambda x: x+2).there.deref(), 0)
+        cfg = Configuration({'hello': 1, 'hi': {'there': 0}})
+        lens1 = cfg.ref.hi.there.lens(lambda x: x+1)
+        lens2 = lens1.lens(lambda x: x+2)
+        self.assertEqual(lens2.deref(), 3)
 
         # Non lensed stuff still works
         self.assertEqual(Configuration({'hello': 1}).ref.hello.deref(), 1)

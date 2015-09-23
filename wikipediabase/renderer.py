@@ -8,7 +8,7 @@ from urllib import urlencode
 import wikipediabase.fetcher
 import wikipediabase.util as util
 
-from wikipediabase.config import Configurable, configuration, interfaces
+from wikipediabase.config import Configurable, configuration
 
 
 class SandboxRenderer(Configurable):

@@ -1,6 +1,24 @@
 """
-Basically a tree of dicts whereby you can access all children from
-a root dict. Children are prioritized by the order they are added.
+There are two ways to think of the configuration scheme introduced
+here: One is in terms of the Reader monad and another is in terms of a
+server/client.
+
+Reader monad
+============
+
+A few words about the reader monad. Reader defines a way of borrowing
+data from the future. Since we are defining a procedure of doing
+things it is reasonable to expect that the configuration be extracted
+procedurally. One way to do that is with the reader monad. We define a
+special procedure in which some values are not set but are promised to
+be set when the procedure runs. This procedure is a Configurable
+sub-class and the value promises are ConfigRefs. We define the entire
+procedure as if refs are already defined.
+
+This is a parallel to Haskell's do-blocks.
+- Configurables are like do-blocks that return Readers
+- ConfigRefs or Configurations are Reader monads
+- Config
 """
 
 # XXX: refactor this to be so: Configuration is one type. It can
@@ -102,7 +120,11 @@ class ConfigRef(object):
 
         return LensConfigRef(self, lens)
 
-    def deref(self):
+    def with_args(self, *args, **kwargs):
+        return ShallowLensConfigRef(self,
+                                    lambda i: i.with_args(*args, **kwargs))
+
+    def deref(self, eval_items=True):
         """
         Dereference the config ref that acts like a pointer. If it's a
         lazy ref evaluate it first.
@@ -122,10 +144,11 @@ class ConfigRef(object):
         except KeyError, e:
             raise KeyError("%s" % '.'.join(self._path))
 
-        if isinstance(ret, BaseItem):
+        if isinstance(ret, BaseItem) and eval_items:
             return ret.eval()
 
         return ret
+
 
 class LensConfigRef(ConfigRef):
     """
@@ -152,8 +175,22 @@ class LensConfigRef(ConfigRef):
     def _path(self):
         return self._parent._path
 
-    def deref(self):
-        return self._lens(self._parent.deref())
+    def deref(self, eval_item=True):
+        return self._lens(self._parent.deref(eval_item))
+
+class ShallowLensConfigRef(LensConfigRef):
+    """
+    For internal use. Like a lens only it does not deref before
+    applying lens.
+    """
+    def deref(self, eval_item=True):
+        item = self._lens(self._parent.deref(False))
+
+        if eval_item and isinstance(item, BaseItem):
+            return item.eval()
+
+        return item
+
 
 class MultiLensConfigRef(ConfigRef):
     """
@@ -162,28 +199,29 @@ class MultiLensConfigRef(ConfigRef):
 
     def __init__(self, arguments, lens=None):
         self._lens = lens
-        self._parents = parents
+        self._arguments = arguments
 
-    def __and__(self, config_ref):
-        return MultiLensConfigRef(self._parents + [config_ref])
+    def __and__(self, arg):
+        return MultiLensConfigRef(self._arguments + [arg])
 
     def lens(self, lens):
         if self._lens is not None:
             return super(MultiLensConfigRef, self).lens(lens)
 
-        return MultiLensConfigRef(self._parents, lens=lens)
+        return MultiLensConfigRef(self._arguments, lens=lens)
 
-    def eval_parent(self, parent):
-        if isinstance(parent, ConfigRef):
-            return parent.deref()
+    def eval_argument(self, argument, eval_item):
+        if isinstance(argument, ConfigRef):
+            return argument.deref(eval_item)
 
-        return parent
+        return argument
 
-    def deref(self):
+    def deref(self, eval_item=True):
         if self._lens is None:
             raise Exception("Did not define lens.")
 
-        return self._lens(*[self.eval_parent(p) for p in self._parents])
+        return self._lens(*[self.eval_argument(p, eval_item)
+                            for p in self._arguments])
 
 class Configurable(object):
     """
@@ -215,10 +253,15 @@ class Configurable(object):
         """
 
         lcs = self.__dict__.get('local_config_scope', {})
+
         if attr in lcs:
             return lcs[attr].deref()
 
-        return self.__dict__[attr]
+        try:
+            return self.__dict__[attr]
+        except:
+            raise AttributeError("'%s' has no attribute '%s'" %
+                                 (str(self.__class__), attr))
 
 
 class Configuration(object):
@@ -228,9 +271,9 @@ class Configuration(object):
     child gets prescedence over a previous child.
     """
 
-    def __init__(self, local=None):
+    def __init__(self, local=None, parent=None):
         self._local = local or {}
-        self._children = []
+        self._parent = parent
         self._id = random()
         self.ref = ConfigRef(self)
 
@@ -240,46 +283,25 @@ class Configuration(object):
     def __contains__(self, val):
         return val in list(self.keys())
 
-    def remove_child(self, child_conf):
-        self._children = [c for c in self._children if c is not child_conf]
-        return self._children
-
-    def add_child(self, child_conf):
-        self._children.insert(0, child_conf)
-        return self._children
+    def child(self, data):
+        return Configuration(local=data, parent=self)
 
     def keys(self):
-        return list(chain.from_iterable((c.keys() for c in self._children))) + \
-            self._local.keys()
+        return list(set((self._parent.keys() if self._parent else []) + \
+                        self._local.keys()))
 
     def __setitem__(self, key, val):
         self._local[key] = val
 
-    def get(self, key, default=None, blacklist=None):
+    def get(self, key, default=None):
+        if key in self._local:
+            return self._local[key]
 
-        # Make sure we have not been seached before
-        if blacklist is None:
-            blacklist = set([self])
-        else:
-            if self in blacklist:
-                return default
-
-            blacklist.add(self)
-
-        ret = self._local.get(key, None)
-        if ret is not None:
-            return ret
-
-        for c in self._children:
-            if isinstance(c, Configuration):
-                val = c.get(key, None, blacklist)
-            else:
-                val = c.get(key, None)
-
-            if val:
-                return val
+        if self._parent:
+            return self._parent.get(key, default)
 
         return default
+
 
     def __getitem__(self, key):
         ret = self.get(key, None)
@@ -293,23 +315,93 @@ class BaseItem(object):
     def eval(self):
         raise NotImplementedError("Subclass this")
 
-class SubclassesItem(BaseItem):
+class LazyItem(BaseItem):
+    """
+    An ref that is not evaluated until it's first dereference. Then
+    you can call it with with_args
+    """
+
+    def __init__(self, constructor, *args, **kwargs):
+        """
+        The consgructor is called once when the ref is first
+        dereferenced. the dereferenced attribute is false and will be
+        true when the item is realized. Set it to a callable to make
+        ypur own deref policy.
+        """
+
+        self.constructor = constructor
+        self.value = None
+        self._dereferenced = False
+        self.value_args = self.immutable_args(*args, **kwargs)
+
+    def dereferenced(self):
+        return self._dereferenced
+
+    @staticmethod
+    def immutable_args(*args, **kw):
+        """
+        Immutable and hashable versions of arguments. For objects this
+        only keeps references.
+        """
+        return (tuple(args), tuple(kw.iteritems()))
+
+    def eval(self):
+        if self.dereferenced():
+            return self.value
+
+        args, kwargs = self.value_args
+        args = list(args)
+        kwargs = dict(kwargs)
+
+        self.value = self.constructor(*args, **kwargs)
+        self._dereferenced = True
+        return self.value
+
+class VersionedItem(LazyItem):
+    """
+    A LazyItem that can create and remember different versions of
+    itself with with_args
+    """
+    def __init__(self, constructor, *args, **kwargs):
+        super(VersionedItem, self).__init__(constructor, *args, **kwargs)
+        self.value_versions = {}
+
+    def new_item(self, *args, **kw):
+        return LazyItem(self.constructor, *args, **kw)
+
+    def with_args(self, *args, **kw):
+        """
+        If there is no change in the arguments return self, otherwise
+        create a new LazyItem.
+        """
+
+        ret = self
+        immutable_args = self.immutable_args(*args, **kw)
+        if self.value_args != self.immutable_args(*args, **kw):
+            ret = self.new_item(*args, **kw)
+            self.value_versions[immutable_args] = ret
+
+        return ret
+
+
+class SubclassesItem(VersionedItem):
     """
     A factory for subclasses. The point of this is that imported
     modules may create subclasses that implementa basic interfaces. We
     want to include those on demand.
     """
 
-    def __init__(self, cls, instantiate=True):
+    def __init__(self, cls, instantiate=True, **kw):
         """
         Provide the class that we will on-demand get the subclasses of. If
         instantate is true. Get instances of that class. Instances are
         created once and cached.
         """
 
+        super(SubclassesItem, self).__init__(self._constructor, **kw)
         self.cls = cls
         self.instantiate = instantiate
-        self.instances_dict = {}
+        self.instance_dict = {}
 
     def all_subclasses(self, cls, including=True):
         """
@@ -321,19 +413,18 @@ class SubclassesItem(BaseItem):
             list(chain.from_iterable((self.all_subclasses(c) for
                                       c in cls.__subclasses__())))
 
-    def get_instance(self, cls, **kw):
-        """
-        Create an instance of a class and cache it.
-        """
-        ret = self.instances_dict.get(cls, None)
-        if ret is not None:
-            return ret
+    def get_instance(self, cls, *args, **kw):
+        if cls in self.instance_dict:
+            return self.instance_dict[cls]
 
-        ret = cls(**kw)
-        self.instances_dict[cls] = ret
+        ret = cls(*args, **kw)
+        self.instance_dict[cls] = ret
         return ret
 
-    def eval(self):
+    def dereferenced(self):
+        return set(self.all_subclasses(self.cls)) == set(self.instance_dict.keys())
+
+    def _constructor(self, *args, **kwargs):
         """
         Do the actual work of getting what was defined in init.
         """
@@ -349,40 +440,21 @@ class SubclassesItem(BaseItem):
 
         clss = sorted(rcls, key=lambda c: c.priority, reverse=True)
 
+        # Return the list
         if not self.instantiate:
             return [C for C in clss
                     if not C.__name__.startswith("_")]
 
-        return [self.get_instance(C, **kw) for C in clss
+        return [self.get_instance(C, *args, **kwargs) for C in clss
                 if not C.__name__.startswith("_")]
 
 
-class LazyItem(BaseItem):
-    """
-    An ref that is not evaluated until it's first dereference.
-    """
 
-    def __init__(self, constructor):
-        """
-        The consgructor is called once when the ref is first
-        dereferenced.
-        """
-
-        self.constructor = constructor
-        self.dereferenced = False
-        self.value = None
-
-    def eval(self):
-        if self.dereferenced:
-            return self.value
-
-        self.value = self.constructor()
-        self.dereferenced = True
-        return self.value
 
 # A global configuration that everyone can use
 configuration = Configuration()
 __all__ = ['LazyItem',
+           'VersionedItem',
            'SubclassesItem',
            'Configuration',
            'Configurable',

@@ -3,8 +3,12 @@ import wikipediabase.fetcher
 from wikipediabase.persistentkv import JsonPersistentDict
 from wikipediabase.fetcher import CachingSiteFetcher
 from wikipediabase.settings import *
-from wikipediabase.config import Configurable
-import urllib2 as urllib
+from wikipediabase.config import Configurable, configuration
+try:
+    import urllib2 as urllib
+except:
+    import urllib as urllib
+
 import json
 
 real_urlopen = urllib.urlopen
@@ -18,21 +22,23 @@ def data(fname):
 
 class MockUrlFd(Configurable):
     def __init__(self, url, data=None):
-        self.key = json.dumps((url, data))
-        self.data = configuration.ref.test.urldata
-        self.urlopen = real_urlopen(url, data)
+        self.cache = configuration.ref.test.offline_cache
+        self.post_data = data
         self.url = url
+
+    def key(self):
+        return json.dumps((self.url, self.post_data))
 
     def geturl(self):
         return self.url
 
     def read(self):
-        ret = self.data.get(self.key)
+        ret = self.cache.get(self.key())
         if ret:
             return ret
 
-        ret = self.urlopen.read()
-        self.data[self.key] = ret
+        ret = real_urlopen(self.url, data=self.post_data).read()
+        self.cache[self.key] = ret
 
         return ret
 
@@ -50,4 +56,6 @@ def download_all():
         f.source(p)
 
 # wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')
-configuration.ref.test.urldata = JsonPersistentDict(data('pages.json'))
+configuration.ref.test.offline_cache = JsonPersistentDict(data('pages.json'))
+configuration.ref.cache.pages = dict()
+configuration.ref.offline = False

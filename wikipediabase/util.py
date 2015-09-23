@@ -274,7 +274,8 @@ def string_reduce(string):
 
 def encode(txt):
     # return txt.decode('utf-8')
-    return unicode(txt.decode("utf-8", errors='ignore'))
+    # return unicode(txt.decode("utf-8", errors='ignore'))
+    return txt
 
 def markup_unlink(markup):
     return re.sub(r"\[+(.*\||)(?P<content>.*?)\]+", r'\g<content>', markup)

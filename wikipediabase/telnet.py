@@ -8,7 +8,7 @@ import socket
 import select
 import threading
 
-from wikipediabase.settings import Configurable, configuration
+from wikipediabase.config import Configurable, configuration
 
 class TelnetServer(Configurable):
 

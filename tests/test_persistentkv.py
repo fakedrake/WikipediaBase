@@ -46,6 +46,13 @@ class TestPersistentkv(unittest.TestCase):
         with self.assertRaises(KeyError):
             bo = ps['hello'] == "yes"
 
+    def internal_test_database(self, pkv_type, filename):
+        # TODO:
+        # Create a dbm database with a config pointing to data
+        # Check that the file was created.
+        # Destroy and reopen and see that the values were kept
+        # Call this from test_* functions to test
+
     def tearDown(self):
         os.remove(DATABASE)
 
