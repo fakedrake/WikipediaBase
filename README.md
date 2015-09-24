@@ -3,10 +3,10 @@
 
 # wikipediabase
 
-[![Build Status](https://secure.travis-ci.org/fakedrake/WikipediaBase.png)](http://travis-ci.org/fakedrake/WikipediaBase)
+[![Build Status](https://travis-ci.org/infolab-csail/WikipediaBase.svg?branch=master)](https://travis-ci.org/infolab-csail/WikipediaBase)
 [![Stories in Ready](https://badge.waffle.io/fakedrake/wikipediabase.png?label=ready)](https://waffle.io/fakedrake/wikipediabase) [![pypi version](https://badge.fury.io/py/wikipediabase.png)](http://badge.fury.io/py/wikipediabase)
 [![# of downloads](https://pypip.in/d/wikipediabase/badge.png)](https://crate.io/packages/wikipediabase?version=latest)
-[![code coverage](https://coveralls.io/repos/fakedrake/wikipediabase/badge.png?branch=master)](https://coveralls.io/r/fakedrake/wikipediabase?branch=master)
+[![Coverage Status](https://coveralls.io/repos/infolab-csail/WikipediaBase/badge.svg?branch=master&service=github)](https://coveralls.io/github/infolab-csail/WikipediaBase?branch=master)
 
 ## Overview
 
