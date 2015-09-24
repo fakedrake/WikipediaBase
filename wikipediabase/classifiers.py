@@ -12,10 +12,10 @@ from wikipediabase.config import Configurable, configuration
 
 # Return a LIST of classes
 class BaseClassifier(Configurable):
-
     """
     Given a symbol provide some classes for it.
     """
+
     priority = 0
     fetcher = None
 
@@ -44,7 +44,7 @@ class InfoboxClassifier(BaseClassifier):
 class _CategoryClassifier(BaseClassifier):
 
     def classify(self, symbol, configuration=configuration):
-        article = get_article(symbol, configuration)
+        article = get_article(symbol, configuration=configuration)
         return article.categories()
 
 
@@ -87,6 +87,5 @@ class PersonClassifier(BaseClassifier):
                 ret += ['wikipedia-female']
 
         return ret
-
 
 WIKIBASE_CLASSIFIERS = subclasses(BaseClassifier)

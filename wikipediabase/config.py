@@ -360,7 +360,7 @@ class LazyItem(BaseItem):
 class VersionedItem(LazyItem):
     """
     A LazyItem that can create and remember different versions of
-    itself with with_args
+    itself with with_args. This is also useful as an object cache.
     """
     def __init__(self, constructor, *args, **kwargs):
         super(VersionedItem, self).__init__(constructor, *args, **kwargs)
@@ -447,9 +447,6 @@ class SubclassesItem(VersionedItem):
 
         return [self.get_instance(C, *args, **kwargs) for C in clss
                 if not C.__name__.startswith("_")]
-
-
-
 
 # A global configuration that everyone can use
 configuration = Configuration()

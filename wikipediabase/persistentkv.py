@@ -93,7 +93,7 @@ class JsonPersistentDict(EncodedDict):
     Persistent dict using dbm. Will open or create filename.
     """
 
-    def __init__(self, filename):
+    def __init__(self, filename, configuration=configuration):
         if not filename.endswith('.json'):
             filename += '.json'
 
@@ -157,7 +157,7 @@ class DbmPersistentDict(EncodedDict):
 
 
 class SqlitePersistentDict(EncodedDict):
-    def __init__(self, filename):
+    def __init__(self, filename, configuraion=configuration):
         if not filename.endswith('.sqlite'):
             filename += '.sqlite'
 
