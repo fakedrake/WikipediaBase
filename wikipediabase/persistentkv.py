@@ -6,7 +6,7 @@ and/or values. This is an abstraction for these kinds of quirks.
 from itertools import imap
 
 import collections
-import gdbm as dbm
+import dumbdbm as dbm
 import json
 from sqlitedict import SqliteDict
 import os
@@ -24,8 +24,10 @@ class EncodedDict(collections.MutableMapping, Configurable):
     - _decode_key.
     """
 
-    def __init__(self, wrapped=None):
+    def __init__(self, wrapped=None, configuration=configuration):
         self.db = wrapped if wrapped is not None else dict()
+        self.transactions = 0
+        self.sync_period = configuration.ref.cache.sync_period
 
     def _encode_key(self, key):
         """
@@ -40,9 +42,14 @@ class EncodedDict(collections.MutableMapping, Configurable):
         return key
 
     def __del__(self):
+        self.sync()
         del self.db
 
     def __setitem__(self, key, val):
+        self.transactions += 1
+        if self.transactions % self.sync_period:
+            self.sync()
+
         self.db[self._encode_key(key)] = val
 
     def __getitem__(self, key):
@@ -77,6 +84,9 @@ class EncodedDict(collections.MutableMapping, Configurable):
         for k,v in json.load(open(filename)):
             self.db[k] = v
 
+    def sync(self):
+        pass
+
 
 class JsonPersistentDict(EncodedDict):
     """
@@ -91,17 +101,19 @@ class JsonPersistentDict(EncodedDict):
         self.dirty = False
         fd = None
         try:
-            fd = open(filename)
+            fd = open(self.filename)
         except:
             pass
 
         super(JsonPersistentDict, self).__init__(json.load(fd) if fd else {})
 
-    def __del__(self):
+    def sync(self):
+        print "Dumping:", len(self.db.keys())
         if self.dirty:
             json.dump(self.db, open(self.filename, 'w'))
 
-        super(JsonPersistentDict, self).__del__()
+
+        super(JsonPersistentDict, self).sync()
 
     def __setitem__(self, key, val):
         self.dirty = True
@@ -130,7 +142,7 @@ class DbmPersistentDict(EncodedDict):
         except:
             raise IOError("Failed dbm.open('%s', '%s')" % (filename, flag))
 
-        super(DbmPersistentDict, self).__init__(database)
+        super(DbmPersistentDict, self).__init__(database, configuration=configuration)
 
     def _encode_key(self, key):
         # Asciify
@@ -152,9 +164,9 @@ class SqlitePersistentDict(EncodedDict):
         db = SqliteDict(filename)
         super(SqlitePersistentDict, self).__init__(db)
 
-    def __del__(self):
+    def sync(self):
         self.db.close()
-        super(SqlitePersistentDict, self).__del__()
+        super(SqlitePersistentDict, self).sync()
 
 
 """

@@ -1,6 +1,6 @@
 import os
 import wikipediabase.fetcher
-from wikipediabase.persistentkv import JsonPersistentDict
+from wikipediabase.persistentkv import DbmPersistentDict
 from wikipediabase.fetcher import CachingSiteFetcher
 from wikipediabase.settings import *
 from wikipediabase.config import Configurable, configuration
@@ -33,13 +33,13 @@ class MockUrlFd(Configurable):
         return self.url
 
     def read(self):
-        ret = self.cache.get(self.key())
+        key = self.key()
+        ret = self.cache.get(key)
         if ret:
             return ret
 
         ret = real_urlopen(self.url, data=self.post_data).read()
-        self.cache[self.key] = ret
-
+        self.cache[key] = ret
         return ret
 
 urllib.urlopen = MockUrlFd
@@ -56,6 +56,6 @@ def download_all():
         f.source(p)
 
 # wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')
-configuration.ref.test.offline_cache = JsonPersistentDict(data('pages.json'))
+configuration.ref.test.offline_cache = DbmPersistentDict(data('pages.dumbdbm'))
 configuration.ref.cache.pages = dict()
 configuration.ref.offline = False

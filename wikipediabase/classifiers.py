@@ -28,7 +28,7 @@ class BaseClassifier(Configurable):
 
 class StaticClassifier(BaseClassifier):
 
-    def classify(self, symbol, fetcher=None):
+    def classify(self, symbol, configuration=configuration):
         return ['wikipedia-term']
 
 
@@ -76,7 +76,7 @@ class PersonClassifier(BaseClassifier):
 
         return male_words > female_words
 
-    def classify(self, symbol, configuration):
+    def classify(self, symbol, configuration=configuration):
         ret = []
         if self.is_person(symbol):
             ret += ['wikipedia-person']
