@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from .common import TEST_FETCHER_SETUP, MockUrlFd
+from tests.common import MockUrlFd, testcfg
 
 from wikipediabase import fetcher
 
@@ -21,7 +21,7 @@ from wikipediabase import fetcher
 class TestFetcher(unittest.TestCase):
 
     def setUp(self):
-        self.fetcher = fetcher.CachingSiteFetcher(**TEST_FETCHER_SETUP)
+        self.fetcher = fetcher.CachingSiteFetcher(testcfg)
 
     def test_html(self):
         # Remember, this probably needs internet.

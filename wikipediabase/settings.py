@@ -47,6 +47,9 @@ configuration.ref.classifiers = SubclassesItem(BaseClassifier, configuration=con
 # True if we want newlines instead of <br/>
 configuration.ref.strings.literal_newlines = False
 
+from wikipediabase.web_string import LxmlString
+configuration.ref.strings.xml_string_class = LxmlString
+
 ## Object caches
 from wikipediabase.infobox import Infobox
 configuration.ref.object_cache.infoboxes = VersionedItem(Infobox,

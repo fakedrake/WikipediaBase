@@ -18,9 +18,12 @@ class Article(Configurable):
 
     def __init__(self, title, configuration=configuration):
         self._title = title
+        self.config = configuration
         self.fetcher = configuration.ref.fetcher.with_args(configuration=configuration)
+        self.xml_string = configuration.ref.strings.xml_string_class
+
         self.ibox = None
-        self.__soup = None
+        self._xml = None
         self._url = None
 
     def url(self):
@@ -34,18 +37,18 @@ class Article(Configurable):
         return url_get_dict(url).get('title') or \
             os.path.basename(url)
 
-    def _soup(self):
-        if self.__soup is None:
-            self.__soup = fromstring(self.html_source())
+    def xml(self):
+        if self._xml is None:
+            self._xml = self.xml_string(self.html_source())
 
-        return self.__soup
+        return self._xml
 
     def categories(self):
         return markup_categories(self.markup_source())
 
     def infobox(self):
         if not self.ibox:
-            self.ibox = get_infobox(self.title(), fetcher=self.fetcher)
+            self.ibox = get_infobox(self.title(), configuration=self.config)
 
         return self.ibox
 
@@ -60,9 +63,9 @@ class Article(Configurable):
         # fetcher to resolve redirects and a cirular recursion will
         # occur
 
-        heading = self._soup().get_element_by_id('firstHeading')
+        heading = next(self.xml().xpath(".//*[@id='firstHeading']"))
         if heading is not None:
-            return totext(heading).strip()
+            return heading.text().strip()
 
         raise Exception("No title found for '%s'" % self.symbol())
 
@@ -85,21 +88,21 @@ class Article(Configurable):
         Generate paragraphs.
         """
 
-        return ["".join(p.itertext()) for p in
-                self._soup().findall(".//*[@id='mw-content-text']/p")
-                if "".join(p.itertext())]
+        return [p.text() for p in
+                self.xml().xpath(".//*[@id='mw-content-text']/p")
+                if p.text()]
 
     def headings(self):
         """
         Generate all the headings in a DFS fashion.
         """
 
-        s = self._soup()
+        xml = self.xml()
         xpath = ".//*[@id='mw-content-text']//span[@class='mw-headline']/.."
 
-        return ["".join(h.itertext())[:-len("[edit]")]
-                for h in s.findall(xpath)
-                if "".join(h.itertext())]
+        return [h.text()[:-len("[edit]")]
+                for h in xml.xpath(xpath)
+                if h.text()]
 
     def first_paragraph(self):
         for p in self.paragraphs():

@@ -1,11 +1,14 @@
 import re
 import multiprocessing
 from setuptools import setup
+import sys, os
 
 init_py = open('wikipediabase/__init__.py').read()
 metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", init_py))
 metadata['doc'] = re.findall('"""(.+)"""', init_py)[0]
 
+import tests
+print "PATH:", dir(tests)
 setup(
     name='wikipediabase',
     version=metadata['version'],

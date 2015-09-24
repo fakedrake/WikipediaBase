@@ -49,15 +49,15 @@ class WikipediaSiteFetcher(BaseFetcher):
     priority = 1
 
     def __init__(self, configuration=configuration):
-        self.config = configuration
-        self.url = self.config.ref.remote.url.lens(lambda x: x.strip('/'))
-        self.base = self.config.ref.remote.base.lens(lambda x: x.strip('/'))
+        self.xml_string = configuration.ref.strings.xml_string_class
+        self.url = configuration.ref.remote.url.lens(lambda x: x.strip('/'))
+        self.base = configuration.ref.remote.base.lens(lambda x: x.strip('/'))
 
-    def get_wikisource(self, soup):
+    def get_wikisource(self, xml_string):
         """
         Get the source from an html soup of the edit page.
         """
-        return util.totext(soup.find(".//*[@id='wpTextbox1']"))
+        return next(xml_string.xpath(".//*[@id='wpTextbox1']")).text()
 
 
     def download(self, *args, **kwargs):
@@ -104,10 +104,10 @@ class WikipediaSiteFetcher(BaseFetcher):
         # name="wpTextbox1">
         get_request = get_request or dict(action="edit")
         html = self.download(symbol=symbol, get=get_request)
-        soup = util.fromstring(html)
+        xml = self.xml_string(html)
 
         try:
-            src = self.get_wikisource(soup)
+            src = self.get_wikisource(xml)
         except IndexError:
             raise ValueError("Got invalid source page for article '%s'." %
                              symbol)

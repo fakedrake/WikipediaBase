@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from common import MockUrlFd
+from common import MockUrlFd, testcfg
 from wikipediabase.article import Article
 from wikipediabase import fetcher
 
@@ -21,8 +21,8 @@ from wikipediabase import fetcher
 class TestArticle(unittest.TestCase):
 
     def setUp(self):
-        self.ftchr = fetcher.CachingSiteFetcher()
-        self.rtcl = Article("Astaroth")
+        self.ftchr = fetcher.CachingSiteFetcher(testcfg)
+        self.rtcl = Article("Astaroth", testcfg)
 
     def test_html(self):
         self.assertIn("<body", self.rtcl.html_source())
@@ -44,14 +44,14 @@ class TestArticle(unittest.TestCase):
         self.assertEqual(self.rtcl.infobox().types(), [])
 
     def test_complex(self):
-        rtcl = Article("Baal")
+        rtcl = Article("Baal", configuration=testcfg)
         self.assertEqual(rtcl.headings()[-1], "External links")
         self.assertEqual(len(list(rtcl.headings())), 15)
 
     # XXX: symbols are not used anyway but here is the test.
     # The symbols work, mocking
     def _test_symbol(self):
-        art = Article("Baal")
+        art = Article("Baal", configuration=testcfg)
         self.assertEqual(art.symbol(), "Baal")
 
         redir = "http://fake_wikipedia.c0m/w/index.php?title=han_solo"
@@ -60,7 +60,7 @@ class TestArticle(unittest.TestCase):
 
         redir = "http://fake_wikipedia.c0m/w/han_solo"
         with MockURLOpen(redir, "NOONE CALL HAN SOLO A BITCH."):
-            self.assertEqual(Article("Han Solo").symbol(), 'han_solo')
+            self.assertEqual(Article("Han Solo", configuration=testcfg).symbol(), 'han_solo')
 
         # Test that we are back to normal
         art = Article("Astaroth")
@@ -68,7 +68,8 @@ class TestArticle(unittest.TestCase):
 
     def test_redirect(self):
         # Actually redirects the source
-        self.assertGreater(len(Article("Barack Hussein Obama").markup_source()),
+        self.assertGreater(len(Article("Barack Hussein Obama", configuration=testcfg).
+                               markup_source()),
                          30000)
 
 

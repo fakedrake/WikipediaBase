@@ -12,6 +12,7 @@ except:
 import json
 
 real_urlopen = urllib.urlopen
+testcfg = configuration.child()
 
 
 def data(fname):
@@ -19,10 +20,9 @@ def data(fname):
     return os.path.abspath('/'.join([pkgpath, 'data', fname]))
 
 
-
 class MockUrlFd(Configurable):
     def __init__(self, url, data=None):
-        self.cache = configuration.ref.test.offline_cache
+        self.cache = testcfg.ref.test.offline_cache
         self.post_data = data
         self.url = url
 
@@ -56,6 +56,6 @@ def download_all():
         f.source(p)
 
 # wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')
-configuration.ref.test.offline_cache = DbmPersistentDict(data('pages.dumbdbm'))
-configuration.ref.cache.pages = dict()
-configuration.ref.offline = False
+testcfg.ref.test.offline_cache = DbmPersistentDict(data('pages.dumbdbm'))
+testcfg.ref.cache.pages = dict()
+testcfg.ref.offline = False
