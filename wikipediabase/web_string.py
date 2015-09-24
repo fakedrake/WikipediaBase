@@ -64,6 +64,10 @@ class UrlString(WebString):
 
 
 class XmlString(WebString):
+    """
+    Interface to xml strings to avoid do close entanglement with lxml.
+    """
+
     def __init__(self, data, configuraion=configuraion):
         super(XmlString, self).__init__(data, configuraion=configuraion)
         self.literal_newlines = configuration.ref.strings.literal_newlines
@@ -88,7 +92,8 @@ class XmlString(WebString):
 
 class LxmlString(XmlString):
     """
-    An lxml string
+    An lxml xmlstring implementation. It is a very thin wrapper but it
+    is lazy with actually creating the lxml element.
     """
 
     def __init__(self, data, configuraion=configuraion):
@@ -118,6 +123,9 @@ class LxmlString(XmlString):
         """
         self.soup().text_content()
 
+    def xpath(self, xpath):
+        return (LxmlString(i) for i in self.soup().findall(xpath))
+
     def soup(self):
         """
         Get an lxml soup.
@@ -136,6 +144,10 @@ class LxmlString(XmlString):
 
 
 class MarkupString(WebString):
+    """
+    Some basic mediawiki parsing stuff.
+    """
+
     def __init__(self, data, configuraion=configuraion):
         super(HtmlString, self).__init__(data, configuraion=configuraion)
 
