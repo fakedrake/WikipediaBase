@@ -34,9 +34,8 @@ class TestFetcher(unittest.TestCase):
         self.assertIn("{{Infobox", src)
 
     def test_redirect(self):
-        redir = "http://fake_wikipedia.c0m/w/index.php?title=han_solo"
-        with MockUrlFd(redir, "Han solo is a bitch."):
-            self.assertEqual(self.fetcher.redirect_url("hansolo"), redir)
+        redir = "http://ashmore.csail.mit.edu:8080/mediawiki/index.php?title=hansolo"
+        self.assertEqual(self.fetcher.redirect_url("hansolo"), redir)
 
     def tearDown(self):
         pass
