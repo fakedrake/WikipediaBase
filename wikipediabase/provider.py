@@ -1,6 +1,5 @@
 from itertools import chain
 
-from wikipediabase.util import memoized
 from wikipediabase.config import Configurable
 
 def provide(name=None, memoize=True):
@@ -12,10 +11,7 @@ def provide(name=None, memoize=True):
 
     def decorator(fn):
         fn._provided = name.lower() if name else name
-        if memoize:
-            return memoized(fn)
-        else:
-            return fn
+        return fn
 
     return decorator
 

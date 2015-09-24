@@ -157,7 +157,7 @@ class DbmPersistentDict(EncodedDict):
 
 
 class SqlitePersistentDict(EncodedDict):
-    def __init__(self, filename, configuraion=configuration):
+    def __init__(self, filename, configuration=configuration):
         if not filename.endswith('.sqlite'):
             filename += '.sqlite'
 

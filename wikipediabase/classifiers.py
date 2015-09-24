@@ -87,5 +87,3 @@ class PersonClassifier(BaseClassifier):
                 ret += ['wikipedia-female']
 
         return ret
-
-WIKIBASE_CLASSIFIERS = subclasses(BaseClassifier)

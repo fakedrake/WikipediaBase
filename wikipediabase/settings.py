@@ -36,6 +36,12 @@ configuration.ref.renderer = VersionedItem(SandboxRenderer)
 from wikipediabase.infobox_tree import InfoboxSuperclasses
 configuration.ref.infobox_types = VersionedItem(InfoboxSuperclasses)
 
+## Classifiers
+from wikipediabase.classifiers import BaseClassifier
+configuration.ref.classifiers = SubclassesItem(BaseClassifier, configuration=configuration)
+
+## Classifiers
+
 ## String manipulation
 
 # True if we want newlines instead of <br/>
@@ -44,7 +50,7 @@ configuration.ref.strings.literal_newlines = False
 ## Object caches
 from wikipediabase.infobox import Infobox
 configuration.ref.object_cache.infoboxes = VersionedItem(Infobox,
-                                                         configuration=cnfiguration)
+                                                         configuration=configuration)
 
 from wikipediabase.article import Article
 configuration.ref.object_cache.articles = VersionedItem(Article,
@@ -56,7 +62,7 @@ configuration.ref.object_cache.knowledgebases = VersionedItem(KnowledgeBase,
 
 from wikipediabase.infobox_scraper import MetaInfobox
 configuration.ref.object_cache.meta_infoboxes = VersionedItem(MetaInfobox,
-                                                              configuration=cnfiguration)
+                                                              configuration=configuration)
 
 configuration.ref.object_cache.persistent_dict = VersionedItem(pkv.DbmPersistentDict,
                                                                filename='default')

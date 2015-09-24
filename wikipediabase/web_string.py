@@ -1,26 +1,28 @@
 import re
 import os
+from urllib import urlencode
 
 import lxml.etree as ET
 import copy
 import lxml
 from lxml import html
 
+from wikipediabase.config import Configurable, configuration
 
 class WebString(Configurable):
     """
     A type to handle string related stuff
     """
 
-    def __init__(self, data, configuraion=configuraion):
+    def __init__(self, data, configuration=configuration):
         self.data = data
 
     def __str__(self):
         return self.data
 
 class SymbolString(WebString):
-    def __init__(self, data, configuraion=configuraion):
-        super(SymbolString, self).__init__(data, configuraion=configuraion)
+    def __init__(self, data, configuration=configuration):
+        super(SymbolString, self).__init__(data, configuration=configuration)
 
     def reduced(self):
         """
@@ -30,37 +32,63 @@ class SymbolString(WebString):
         # symbol '"The Reckonning"' but we reduce user input as well.
 
         # First remove quotes so the stopwords turn up at the front
-        ret = re.sub(ur"([\W\s]+)", " ", string, flags=re.U|re.I).strip().lower()
+        ret = re.sub(ur"([\W\s]+)", " ", self.literal(),
+                     flags=re.U|re.I).strip().lower()
         return re.sub(ur"(^the|^a|^an)\b", "", ret, flags=re.U).strip()
 
     def literal(self):
-        return self.data
+        return re.sub(r"(\s+|_)", " ", self.data)
+
+    def url_friendly(self):
+        return re.sub(r"\s+", "_", self.data.lower())
 
     def __str__(self):
         return self.literal()
 
-    def url(self):
-        return UrlString(self.literal())
+    def url(self, *args, **kw):
+        return UrlString(self.literal(), *args, **kw)
 
 class UrlString(WebString):
     """
     Construct urls to a mediawiki instance.
     """
     def __init__(self, symbol, edit=False, configuration=configuration):
-        super(UrlString, self).__init__(symbol, configuraion=configuraion)
-        self.edit = False
-        self.symbol = self.data
+        super(UrlString, self).__init__(symbol, configuration=configuration)
+
+        self.configuration = configuration
+        self.url = (configuration.ref.remote.url & \
+                    configuration.ref.remote.base).lens(lambda a,b: a+'/'+b)
+        self.edit = edit
+
+    def get_data(self):
+        ret = {'title': self.symbol().url_friendly()}
+        if self.edit:
+            ret['action'] = 'edit'
+
+        return ret
+
+    def raw(self):
+        return "%s?%s" % (self.url, urlencode(self.get_data()))
 
     @classmethod
     def from_url(cls, url, configuration=configuration):
-        base, get = url.split('?')
-        kv = dict((seq_pairs.split('=') for seq_pairs in get.split('&')))
-        edit = kv.get('action') == 'edit'
-        title = kv.get('title', os.path.basename(url))
-        return cls(title, edit=edit, confiuration=confiuration)
+        try:
+            base, get = url.split('?')
+        except ValueError:
+            base, get = url, None
 
-    def symbol(self, configuration=configuration):
-        return SymbolString(self.symbol, configuration=configuration)
+        kv = dict()
+        if get is not None:
+            kv = dict((seq_pairs.split('=') for seq_pairs in get.split('&')))
+
+        edit = (kv.get('action') == 'edit')
+        title = kv.get('title', os.path.basename(url))
+
+        return cls(title, edit=edit, configuration=configuration)
+
+    def symbol(self, configuration=None):
+        cfg = configuration or self.configuration
+        return SymbolString(self.data, configuration=cfg)
 
 
 class XmlString(WebString):
@@ -68,8 +96,8 @@ class XmlString(WebString):
     Interface to xml strings to avoid do close entanglement with lxml.
     """
 
-    def __init__(self, data, configuraion=configuraion):
-        super(XmlString, self).__init__(data, configuraion=configuraion)
+    def __init__(self, data, configuration=configuration):
+        super(XmlString, self).__init__(data, configuration=configuration)
         self.literal_newlines = configuration.ref.strings.literal_newlines
 
     def raw(self):
@@ -96,20 +124,20 @@ class LxmlString(XmlString):
     is lazy with actually creating the lxml element.
     """
 
-    def __init__(self, data, configuraion=configuraion):
+    def __init__(self, data, configuration=configuration):
         """
         Data can either be a string or an lxml element.
         """
 
-        super(HtmlString, self).__init__(data, configuraion=configuraion)
+        super(LxmlString, self).__init__(data, configuration=configuration)
 
         self._soup = None
         self._data = None
         if isinstance(self.data, lxml.etree._Element):
-            self._soup = data
+            self._soup = self.data
 
         else:
-            self._raw = data
+            self._raw = self.data
 
     def raw(self):
         if self._raw is not None:
@@ -121,7 +149,7 @@ class LxmlString(XmlString):
         """
         The unrendered text.
         """
-        self.soup().text_content()
+        return self.soup().text_content()
 
     def xpath(self, xpath):
         return (LxmlString(i) for i in self.soup().findall(xpath))
@@ -142,14 +170,16 @@ class LxmlString(XmlString):
         self._soup = html.fromstring(self._raw)
         return self._soup
 
-
 class MarkupString(WebString):
     """
     Some basic mediawiki parsing stuff.
     """
 
-    def __init__(self, data, configuraion=configuraion):
-        super(HtmlString, self).__init__(data, configuraion=configuraion)
+    def __init__(self, data, configuration=configuration):
+        super(HtmlString, self).__init__(data, configuration=configuration)
+
+    def raw(self):
+        return self.data
 
     def unlink(self):
         """
@@ -157,3 +187,16 @@ class MarkupString(WebString):
         """
         return re.sub(r"\[+(.*\||)(?P<content>.*?)\]+", r'\g<content>',
                       self.data)
+
+
+class MarkupOverlay(MarkupString):
+    def __init__(self, rng, parent, configuration=configuration):
+        super(HtmlString, self).__init__("", configuration=configuration)
+        self.start, self.end = rng
+        self.parent = parent
+
+    def raw(self, rng=None):
+        return self.parent.raw(rng)
+
+    def modify_range(self, rng):
+        return rng

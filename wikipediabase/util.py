@@ -11,6 +11,8 @@ import copy
 import lxml
 from lxml import html
 
+from wikipediabase.config import configuration
+
 # General tools
 # XXX: Plug in here for permanent memoization. You may need to do some
 # garbage collection here.
@@ -18,35 +20,6 @@ from lxml import html
 # XXX: I deepcopy objects. If you disable that be very
 # careful. However use this only on out facing functions.
 DEEPCOPY = True
-def memoized(fn):
-    @functools.wraps(fn)
-    def wrap(*args, **kw):
-        try:
-            kwkey = hash(tuple(kw.items()))
-            argkey = hash(args)
-            key = hash((kwkey, argkey))
-except TypeError:
-    return wrap(*args, **kw)
-
-
-        if key in wrap.memoized:
-            if DEEPCOPY:
-                return copy.deepcopy(wrap.memoized[key])
-else:
-    return wrap.memoized[key]
-
-        ret = fn(*args, **kw)
-        wrap.memoized[key] = copy.deepcopy(ret)
-        return ret
-
-    wrap.memoized = dict()
-    # I dont worry too much about the rest of the signature but I
-    # really need the name.
-    if hasattr(fn, '_provided'):
-        wrap.__name__ = fn.__name__
-        wrap._provided = fn._provided
-
-    return wrap
 
 def iwindow(seq, n):
     """
@@ -66,25 +39,24 @@ def iwindow(seq, n):
 
 def get_meta_infobox(symbol, configuration=configuration):
     configuration.ref.object_cache.meta_infoboxes.with_args(symbol,
-                                                            configuration=configuration)
+                                                            configuration=configuration).deref()
 
 def get_infobox(symbol, configuration=configuration):
-    return configuration.ref.object_cache.infoboxes.with_args(symbol, configuration=configuration)
+    return configuration.ref.object_cache.infoboxes.with_args(symbol, configuration=configuration).deref()
 
 def get_article(symbol, fetcher=None):
-    return configuration.ref.object_cache.infoboxes.with_args(symbol, configuration=configuration)
+    return configuration.ref.object_cache.infoboxes.with_args(symbol, configuration=configuration).deref()
 
 
 def get_knowledgebase(configuration=configuration):
-    configuration.ref.object_cache.knowledgebases.with_args(configuration=configuration)
-    return ret
+    return configuration.ref.object_cache.knowledgebases.with_args(configuration=configuration).deref()
 
-def _get_persistent_dict(filename=DBM_FILE):
+def _get_persistent_dict(filename=None):
     """
     A dict that syncs with persistent data storage.
     """
     return configuration.ref.object_cache.persistent_dict.with_args(filename,
-                                                                    configuration=configuration)
+                                                                    configuration=configuration).deref()
 
 def markup_categories(wiki_markup):
     """
@@ -169,16 +141,6 @@ def fromstring(txt, literal_newlines=False):
         ret = html.fromstring(txt)
         # Keep a separate copy in the cache
         fromstring.memoized[txt] = copy.deepcopy(ret)
-
-def expand(fn, ite):
-    return reduce(lambda a,b: a+b, [fn(i) for i in ite])
-
-def concat(*args):
-
-    return reduce(lambda a,b: a+b,
-                  [list(i) if isinstance(i, list) else [i]
-                   for i in args])
-
 
 def url_get_dict(url):
     ret = urlparse(url)

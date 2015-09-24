@@ -4,7 +4,6 @@ from wikipediabase.config import Configurable, configuration
 from wikipediabase.util import (markup_categories,
                                 fromstring,
                                 totext,
-                                memoized,
                                 url_get_dict,
                                 get_infobox)
 
@@ -22,10 +21,13 @@ class Article(Configurable):
         self.fetcher = configuration.ref.fetcher.with_args(configuration=configuration)
         self.ibox = None
         self.__soup = None
+        self._url = None
 
-    @memoized
     def url(self):
-        return self.fetcher.urlopen(self._title).geturl()
+        if self._url is None:
+            self._url = self.fetcher.urlopen(self._title).geturl()
+
+        return self._url
 
     def symbol(self):
         url = self.url()

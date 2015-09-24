@@ -13,7 +13,7 @@ class InfoboxSuperclasses(Configurable):
     are the parents of the node's parsed tree.
     """
 
-    def __init__(self, configuraion=configuration):
+    def __init__(self, configuration=configuration):
         self.category_rx = configuration.ref.mediawiki.infobox_category_rx
         self.infobox_rxs = configuration.ref.mediawiki.infobox_infobox_rxs
 

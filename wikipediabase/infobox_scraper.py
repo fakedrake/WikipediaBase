@@ -4,10 +4,10 @@ Screape the attributes out of infoboxes.
 
 import re
 
-from wikipediabase.renderer import WIKIBASE_RENDERER
 from wikipediabase.fetcher import StaticFetcher
 from wikipediabase.infobox import Infobox
 from wikipediabase.util import string_reduce, get_article
+from wikipediabase.config import configuration
 
 class MetaInfobox(Infobox):
     """
@@ -26,7 +26,7 @@ class MetaInfobox(Infobox):
 
     """
 
-    def __init__(self, infobox_type, fetcher=None, renderer=None, **kw):
+    def __init__(self, infobox_type, fetcher=None, configuration=configuration):
         infobox_type = infobox_type.strip()
         if not infobox_type.startswith("Template:"):
             symbol, title = "Template:" + infobox_type, infobox_type
@@ -39,11 +39,15 @@ class MetaInfobox(Infobox):
 
         # Infobox or ambox
         self.type = title.split("_")[0]
-        self.renderer = renderer or WIKIBASE_RENDERER
+        self.renderer = configuration.ref.renderer
+        self.fetcher = configuration.ref.fetcher
 
+        # Create an infobox that will read the result of a renderer
         mu = self.markup_source()
-        ftchr = StaticFetcher(self.renderer.render(mu, key=self.title), mu)
-        super(MetaInfobox, self).__init__(symbol, title=title, fetcher=ftchr, **kw)
+        infobox_cfg = configuration.child()
+        infobox_cfg.ref.fetcher = StaticFetcher(
+            self.renderer.render(mu, key=self.title), mu)
+        super(MetaInfobox, self).__init__(symbol, configuration=infobox_cfg)
 
     def attributes(self):
         """

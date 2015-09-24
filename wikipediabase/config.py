@@ -283,8 +283,8 @@ class Configuration(object):
     def __contains__(self, val):
         return val in list(self.keys())
 
-    def child(self, data):
-        return Configuration(local=data, parent=self)
+    def child(self, data=None):
+        return Configuration(local=data or {}, parent=self)
 
     def keys(self):
         return list(set((self._parent.keys() if self._parent else []) + \
