@@ -12,11 +12,3 @@ script:
     - coverage run setup.py test
 after_success:
     - coveralls
-notifications:
-  email:
-    - alvarom@csail.mit.edu
-    - cperivol@csail.mit.edu
-    - sfelshin@csail.mit.edu
-
-  on_success: always
-  on_failure: always
