@@ -4,14 +4,14 @@
 # wikipediabase
 
 [![Build Status](https://travis-ci.org/infolab-csail/WikipediaBase.svg?branch=master)](https://travis-ci.org/infolab-csail/WikipediaBase)
-[![Stories in Ready](https://badge.waffle.io/fakedrake/wikipediabase.png?label=ready)](https://waffle.io/fakedrake/wikipediabase) [![pypi version](https://badge.fury.io/py/wikipediabase.png)](http://badge.fury.io/py/wikipediabase)
+[![Stories in Ready](https://badge.waffle.io/infolab-csail/WikipediaBase.svg?label=ready&title=Ready)](http://waffle.io/infolab-csail/WikipediaBase)
 [![# of downloads](https://pypip.in/d/wikipediabase/badge.png)](https://crate.io/packages/wikipediabase?version=latest)
 [![Coverage Status](https://coveralls.io/repos/infolab-csail/WikipediaBase/badge.svg?branch=master&service=github)](https://coveralls.io/github/infolab-csail/WikipediaBase?branch=master)
 
 ## Overview
 
 Wikipedia backend interface for
-[InfoLab's START](http://start.mit.edu). It an answer s-expression
+[InfoLab's START](http://start.mit.edu). It answers s-expression
 queries via Telnet.
 
 ## Usage
