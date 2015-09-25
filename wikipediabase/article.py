@@ -39,7 +39,7 @@ class Article(Configurable):
 
     def xml(self):
         if self._xml is None:
-            self._xml = self.xml_string(self.html_source())
+            self._xml = self.html_source()
 
         return self._xml
 
@@ -81,7 +81,7 @@ class Article(Configurable):
         Markup source of the article.
         """
 
-        return self.fetcher.download(self._title)
+        return self.xml_string(self.fetcher.download(self._title))
 
     def paragraphs(self):
         """

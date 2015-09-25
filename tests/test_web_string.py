@@ -23,11 +23,24 @@ class TestWebString(unittest.TestCase):
         pass
 
     def test_lxml_string(self):
-        lxmlstr = web_string.LxmlString('<a><b id="bid">b body</b> after b</a>')
-        self.assertEqual(lxmlstr.raw(), '<a><b id="bid">b body</b> after b</a>')
+        lxmlstr = web_string.LxmlString('<a attr="val"><b id="bid">b body</b> after b</a>')
+        self.assertEqual(lxmlstr.raw(), '<a attr="val"><b id="bid">b body</b> after b</a>')
         self.assertEqual(lxmlstr.text(), "b body after b")
+        self.assertEqual(lxmlstr.get('attr'), "val")
+        self.assertEqual(lxmlstr.get('attr1'), None)
+        self.assertEqual(lxmlstr.get('attr1', "default"), "default")
         self.assertEqual([e.text() for e in lxmlstr.xpath(".//*[@id='bid']")],
                          ["b body"])
+        self.assertEqual(lxmlstr.ignoring(['b']).text(),
+                         '<b id="bid">b body</b> after b')
+
+    def test_ignoring_xpath(self):
+        lxmlstr = web_string.LxmlString('<a><b>b body<c>c body</c></b></a>')
+        # Find results of ignoring should still ignore
+        self.assertEqual(next(lxmlstr.ignoring(['c']).xpath('.//b')).text(),
+                         'b body<c>c body</c>')
+        self.assertEqual(next(lxmlstr.xpath('.//b')).text(),
+                         'b bodyc body')
 
     def test_url_string(self):
         example_url = web_string.UrlString.from_url("example.com/title/a_title")

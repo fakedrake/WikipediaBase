@@ -17,6 +17,7 @@ def get_persistent_dict(filename):
 import wikipediabase.persistentkv as pkv
 configuration.ref.cache.sync_period = 5 # In transactions
 configuration.ref.cache.path = os.getenv('HOME') + '/.wikipediabase/'
+configuration.ref.cache.rendered_pages = VersionedItem(pkv.DbmPersistentDict, filename='rendered_pages')
 configuration.ref.cache.persistent_dict = VersionedItem(pkv.DbmPersistentDict, filename='pages')
 
 # Logging. Use lenses for this:
@@ -47,8 +48,9 @@ configuration.ref.classifiers = SubclassesItem(BaseClassifier, configuration=con
 # True if we want newlines instead of <br/>
 configuration.ref.strings.literal_newlines = False
 
-from wikipediabase.web_string import LxmlString
+from wikipediabase.web_string import LxmlString, SymbolString
 configuration.ref.strings.xml_string_class = LxmlString
+configuration.ref.strings.symbol_string_class = SymbolString
 
 ## Object caches
 from wikipediabase.infobox import Infobox

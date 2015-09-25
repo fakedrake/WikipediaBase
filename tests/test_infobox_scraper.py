@@ -46,11 +46,11 @@ class TestMetaInfobox(unittest.TestCase):
 
     def test_attributes(self):
         self.assertIn((u'Native\xc2\xa0name', '!!!!!native_name!!!!!'),
-                      self.ibx.html_parsed())
+                      list(self.ibx.html_parsed()))
 
     def test_rendered_keys(self):
-        self.assertEqual(self.ibx.rendered_keys()['native_name'],
-                         u'Native\xc2\xa0name')
+        self.assertEqual(self.ibx.rendered_keys().get('native_name'),
+                         u'Native\xc2\xa0name', self.ibx.rendered_keys())
 
 
     def tearDown(self):

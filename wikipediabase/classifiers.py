@@ -16,8 +16,8 @@ class BaseClassifier(Configurable):
     Given a symbol provide some classes for it.
     """
 
-    priority = 0
-    fetcher = None
+    def __init__(self, configuration=configuration):
+        self.configuration = configuration
 
     def classify(self, symbol, configuration=configuration):
         raise NotImplemented("Abstract function.")
@@ -35,10 +35,8 @@ class StaticClassifier(BaseClassifier):
 class InfoboxClassifier(BaseClassifier):
 
     def classify(self, symbol, configuration=configuration):
-        ibox = get_infobox(symbol, configuration)
-        types = ibox.start_types()
-
-        return types
+        types = configuration.ref.infobox_types.deref()
+        return types[re.sub(r"Template:Infobox\s*", "", str(symbol), re.I)]
 
 
 class _CategoryClassifier(BaseClassifier):

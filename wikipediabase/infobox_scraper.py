@@ -27,27 +27,18 @@ class MetaInfobox(Infobox):
     """
 
     def __init__(self, infobox_type, fetcher=None, configuration=configuration):
-        infobox_type = infobox_type.strip()
-        if not infobox_type.startswith("Template:"):
-            symbol, title = "Template:" + infobox_type, infobox_type
-
-        else:
-            symbol, title = infobox_type, infobox_type.replace("Template:", "")
-
-        self.title = string_reduce(title).replace(" ", "_")
-        self.symbol = symbol
+        childcfg = configuration.child()
+        super(MetaInfobox, self).__init__(infobox_type, configuration=childcfg)
 
         # Infobox or ambox
-        self.type = title.split("_")[0]
-        self.renderer = configuration.ref.renderer
-        self.fetcher = configuration.ref.fetcher
+        self.type = self.symbol.literal().split(" ")[0]
+        self.renderer = configuration.ref.renderer.with_args(
+            configuration=configuration)
 
         # Create an infobox that will read the result of a renderer
         mu = self.markup_source()
-        infobox_cfg = configuration.child()
-        infobox_cfg.ref.fetcher = StaticFetcher(
-            self.renderer.render(mu, key=self.title), mu)
-        super(MetaInfobox, self).__init__(symbol, configuration=infobox_cfg)
+        childcfg.ref.fetcher = StaticFetcher(
+            self.renderer.render(mu, key=self.title()), mu)
 
     def attributes(self):
         """
@@ -56,7 +47,7 @@ class MetaInfobox(Infobox):
 
         # There will always be an example in the documentation but
         # there may be more than one.
-        ibxes = get_article(self.symbol + '/doc').markup_source()
+        ibxes = get_article(self.symbol.url_friendly() + '/doc').markup_source()
         return [i for i \
                 in set(re.findall(r"^\s*|\s*([a-zA-Z_\-]+)\s*=", ibxes)) if i]
 
@@ -67,13 +58,13 @@ class MetaInfobox(Infobox):
         contains all the equivalent attributes to itself.
         """
 
-        return '{{' + self.title.capitalize().replace("_", " ") + "\n" + \
+        return '{{' + self.title().capitalize().replace("_", " ") + "\n" + \
             '\n'.join(["| %s = !!!!!%s!!!!!" % (attr, attr) for \
                        attr in self.attributes()]) + \
             "\n}}\n"
 
     def html_source(self):
-        return self.renderer.render(self.markup_source())
+        return self.xml_string(self.renderer.render(self.markup_source()))
 
     def rendered_keys(self):
         """
@@ -83,7 +74,7 @@ class MetaInfobox(Infobox):
 
         ret = dict()
         for k, v in self.html_parsed():
-            for m in re.finditer("!!!!!([^!]+)!!!!!", v):
-                ret[m.group(1)] = k
+            for m in re.finditer("!!!!!([^!]+)!!!!!", v.text()):
+                ret[m.group(1)] = k.text()
 
         return ret

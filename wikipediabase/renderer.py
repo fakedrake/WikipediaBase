@@ -16,22 +16,23 @@ class SandboxRenderer(Configurable):
     Use the wikipedia site sandbox to render mediawiki markup.
     """
 
-    def __init__(self, config=configuration):
+    def __init__(self, configuration=configuration):
         """
         Provide a fetcher an I ll figure out how to render stuff from
         there or actually provide a url.
         """
 
-        self.cache = config.ref.cache.rendered_pages.lens(util._get_persistent_dict)
-        self.url = (config.ref.remote.url & config.ref.remote.base) \
+        self.cache = configuration.ref.cache.rendered_pages
+        self.xml_string = configuration.ref.strings.xml_string_class
+        self.url = (configuration.ref.remote.url & configuration.ref.remote.base) \
             .lens(lambda u,b: u+'/'+b)
 
     def post_data(self, data, get, form_id):
         """
         Get a dict with the default post data.
         """
-        soup = util.fromstring(self.uopen(get).read())
-        inputs = soup.findall(".//input")
+        soup = self.xml_string(self.uopen(get).read())
+        inputs = soup.xpath(".//input")
         fields = dict([(i.get('name'), i.get('value')) for i in inputs
                        if i.get('type') != 'submit' and i.get('value')])
 

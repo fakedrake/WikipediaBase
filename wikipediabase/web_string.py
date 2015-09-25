@@ -1,5 +1,6 @@
 import re
 import os
+import types
 from urllib import urlencode
 
 import lxml.etree as ET
@@ -16,13 +17,32 @@ class WebString(Configurable):
 
     def __init__(self, data, configuration=configuration):
         self.data = data
+        self.configuration = configuration
 
     def __str__(self):
         return self.data
 
+    def __contains__(self, item):
+        return item in str(self)
+
 class SymbolString(WebString):
     def __init__(self, data, configuration=configuration):
         super(SymbolString, self).__init__(data, configuration=configuration)
+
+
+        self.prefix =  None
+        self.symbol = re.sub(r"\s*:\s*", ":", self.data)
+        self.symbol = re.sub(r"\s+", " ", self.symbol).strip()
+
+        if ':' in self.symbol:
+            self.prefix, self.symbol = self.data.split(':', 1)
+
+    def prefixed(self):
+        if self.prefix:
+            return self.prefix + ':' + self.symbol
+
+        return self.symbol
+
 
     def reduced(self):
         """
@@ -36,11 +56,11 @@ class SymbolString(WebString):
                      flags=re.U|re.I).strip().lower()
         return re.sub(ur"(^the|^a|^an)\b", "", ret, flags=re.U).strip()
 
-    def literal(self):
-        return re.sub(r"(\s+|_)", " ", self.data)
-
     def url_friendly(self):
-        return re.sub(r"\s+", "_", self.data.lower())
+        return re.sub(r"\s+", "_", self.prefixed().lower())
+
+    def literal(self):
+        return re.sub(r"(\s+|_)", " ", self.symbol)
 
     def __str__(self):
         return self.literal()
@@ -74,6 +94,7 @@ class UrlString(WebString):
     def from_url(cls, url, configuration=configuration):
         try:
             base, get = url.split('?')
+
         except ValueError:
             base, get = url, None
 
@@ -98,7 +119,18 @@ class XmlString(WebString):
 
     def __init__(self, data, configuration=configuration):
         super(XmlString, self).__init__(data, configuration=configuration)
-        self.literal_newlines = configuration.ref.strings.literal_newlines
+
+    def ignoring(self, tags):
+        """
+        A new one that ignores these tags
+        """
+        raise NotImplemented
+
+    def get(self, attr):
+        """
+        Get xml attribute.
+        """
+        raise NotImplemented
 
     def raw(self):
         """
@@ -118,57 +150,115 @@ class XmlString(WebString):
         """
         raise NotImplemented
 
+class LxmlStringState(object):
+    _soup = None
+    _text = None
+    _raw = None
+
+
 class LxmlString(XmlString):
     """
     An lxml xmlstring implementation. It is a very thin wrapper but it
     is lazy with actually creating the lxml element.
     """
 
-    def __init__(self, data, configuration=configuration):
+    def __init__(self, data=None, configuration=configuration):
         """
-        Data can either be a string or an lxml element.
+        Data can either be a string (raw) or an lxml element (soup) or
+        state object (state)
         """
-
         super(LxmlString, self).__init__(data, configuration=configuration)
 
-        self._soup = None
-        self._data = None
-        if isinstance(self.data, lxml.etree._Element):
-            self._soup = self.data
+        if isinstance(self.data, LxmlStringState):
+            self.state = data
+            return
 
-        else:
-            self._raw = self.data
+        self.state = LxmlStringState()
+        if isinstance(self.data, lxml.etree._Element):
+            self.state._soup = self.data
+            return
+
+        if isinstance(self.data, types.StringType):
+            self.state._raw = self.data
+            return
+
+        raise ValueError("Bad type of data '%s'" % type(data))
+
 
     def raw(self):
-        if self._raw is not None:
-            return self._raw
+        if self.state._raw is None:
+            self.state._raw = ET.tostring(self.soup(),
+                                          method='html', encoding='utf-8')
 
-        return ET.tostring(self.soup(), method='html', encoding='utf-8')
+        return self.state._raw
 
     def text(self):
         """
         The unrendered text.
         """
-        return self.soup().text_content()
+        if self.state._text is None:
+            self.state._text = self.soup().text_content().strip()
+
+        return self.state._text
 
     def xpath(self, xpath):
-        return (LxmlString(i) for i in self.soup().findall(xpath))
+        return (LxmlString(soup, configuration=self.configuration)
+                for soup in self.soup().findall(xpath))
+
+    def get(self, key, default=None):
+        return self.soup().get(key, default)
+
+    def ignoring(self, tags):
+        return LxmlIgnoringString(self.raw(), tags=tags,
+                                  configuration=self.configuration)
 
     def soup(self):
         """
         Get an lxml soup.
         """
-        if self._soup is not None:
-            return self._soup
-
-        if self._raw is None:
+        if self.state._raw is None and self.state._soup is None:
             raise ValueError("No useful info to create soup.")
 
-        if self.literal_newlines:
-            self._raw = re.sub('<\s*br\s*/?>',"\n", self._raw)
+        if self.state._soup is not None:
+            return self.state._soup
 
-        self._soup = html.fromstring(self._raw)
-        return self._soup
+
+        self.state._soup = html.fromstring(self.raw())
+        return self.state._soup
+
+class LxmlIgnoringString(LxmlString):
+    def __init__(self, data, configuration=configuration, tags=None,
+                 trusted_state=False):
+        super(LxmlIgnoringString, self).__init__(data, configuration=configuration)
+        self.tags = tags or []
+
+        if trusted_state:
+            return
+
+        raw = self.raw()
+        self.state = LxmlStringState()
+
+        rx = r'<(%s)>' % self.tag_rx_internal()
+        self.state._raw = re.sub(rx, r'&lt;\1&gt;', raw)
+
+    def tag_rx_internal(self):
+        return "/?\s*{tag}(:?{attr})*\s*/?".format(tag=r'|'.join(self.tags),
+                                                   attr=r'\s+\w+=".*?"')
+
+    def text(self):
+        ret = super(LxmlIgnoringString, self).text()
+        rx = r'&lt;(%s)&gt;' % self.tag_rx_internal()
+        self.state._text = re.sub(rx, r'<\1>', ret)
+        return self.state._text
+
+    def xpath(self, xpath):
+        objs = super(LxmlIgnoringString, self).xpath(xpath)
+        return (LxmlIgnoringString(o.state,
+                                   trusted_state=True,
+                                   tags=self.tags,
+                                   configuration=self.configuration)
+                for o in objs)
+
 
 class MarkupString(WebString):
     """

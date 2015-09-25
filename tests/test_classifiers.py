@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-import common
+from common import testcfg
 from wikipediabase import classifiers as cls
 
 
@@ -23,7 +23,7 @@ class TestClassifiers(unittest.TestCase):
         pass
 
     def test_person(self):
-        c = cls.PersonClassifier()
+        c = cls.PersonClassifier(testcfg)
         self.assertIn('wikipedia-person', c('Bill Clinton'))
         self.assertIn('wikipedia-male', c('Bill Clinton'))
         self.assertIn('wikipedia-person', c('Mary Shakespeare'))

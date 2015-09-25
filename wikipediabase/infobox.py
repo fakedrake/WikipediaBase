@@ -31,15 +31,24 @@ class Infobox(Configurable):
         much better.
         """
 
-        self.symbol = self.title = symbol
-        if title is not None:
-            self.title = title
+        self.configuration = configuration
+        self.symbol_string = configuration.ref.strings.symbol_string_class
+        self.xml_string = configuration.ref.strings.xml_string_class
 
-        self.fetcher = configuration.ref.fetcher.with_args(configuration=configuration)
-        self.infobox_types = configuration.ref.infobox_types.with_args(configuration=configuration)
+        self.fetcher = configuration.ref.fetcher.with_args(
+            configuration=configuration)
+        self.infobox_types = configuration.ref.infobox_types.with_args(
+            configuration=configuration)
+
+        self.symbol = self.symbol_string(symbol)
+        self._html = None
+
+
+    def title(self):
+        return self.symbol.literal()
 
     def __nonzero__(self):
-        return bool(self.fetcher.download(self.symbol))
+        return bool(self.fetcher.download(self.symbol.url_friendly()))
 
     @staticmethod
     def __tt(tmpl):
@@ -65,28 +74,12 @@ class Infobox(Configurable):
 
                 if extend:
                     title = get_article(dominant,
-                                        self.fetcher).title()
+                                        configuration=self.configuration).title()
 
                     if self.__tt(dominant) != self.__tt(title):
                         types.append(title)
 
         return types
-
-    def start_types(self):
-        types = self.types(extend=True)
-        ret = types[:]
-
-        if not hasattr(self, "_sc"):
-            self._sc = ibx_type_superclasses()
-
-        for t in types:
-            try:
-                # In case of redirections this may fail
-                ret.extend(self._sc[t.replace("Template:Infobox ", "")])
-            except KeyError:
-                pass
-
-        return map(self.__tt, ret)
 
     def get(self, key, source=None):
         """
@@ -102,9 +95,9 @@ class Infobox(Configurable):
 
         if source is None or source == 'html':
             for k, v in self.html_parsed():
-                if k.lower().replace(u".", u"") == html_key or \
+                if k.text().lower().replace(u".", u"") == html_key or \
                    k == rendered_key:
-                    return v
+                    return v.text()
 
         # Then look into the markup
         for k, v in self.markup_parsed_iter():
@@ -148,7 +141,7 @@ class Infobox(Configurable):
         Get the markup source of this infobox.
         """
 
-        txt = self.fetcher.source(self.symbol)
+        txt = self.fetcher.source(self.symbol.url_friendly())
         return self._braces_markup(txt)
 
     def html_source(self):
@@ -156,18 +149,19 @@ class Infobox(Configurable):
         A div with all the infoboxes in it.
         """
 
-        if not hasattr(self, '_html'):
-            self._html = self.fetcher.download(self.symbol)
+        if self._html is not None:
+            return self._html
 
-        bs = fromstring(self._html)
-        ret = ET.Element('div')
-        ret.extend([t for t in bs.findall(".//table")
-                    if 'infobox' in t.get('class', '')])
+        html = self.fetcher.download(self.symbol.url_friendly())
+        bs = self.xml_string(html)
+        self._html = self.xml_string(
+            '\n'.join([t.raw() for t in bs.xpath(".//table")
+                       if 'infobox' in t.get('class', '')]))
 
-        return ret
+        return self._html
 
     def rendered(self):
-        return totext(self.html_source())
+        return self.html_source().text()
 
     def html_parsed(self):
         """
@@ -175,48 +169,24 @@ class Infobox(Configurable):
         pairs.
         """
 
-        def escape_lists(val):
-            if not val:
-                return ""
+        ignore_tags = ['br', 'ul', 'li']
+        soup = self.html_source()
 
-            return re.sub(
-                r"<\s*(/?\s*(br\s*/?|/?ul|/?li))\s*>", "&lt;\\1&gt;", val)
+        if isinstance(soup, str):
+            import pdb; pdb.set_trace()
 
-        def unescape_lists(val):
-            if not val:
-                return ""
 
-            val = re.sub(r"&lt;(/?\s*(br\s*/?|ul|li))&gt;", "<\\1>", val)
-            return val
-
-        soup = fromstring(self.html_source())
         # Render all tags except <ul> and <li> and <br>. Escape them
         # in some way and then reparse
-
-        tpairs = []
-
-        for row in soup.findall('.//tr'):
+        for row in soup.xpath('.//tr'):
             try:
-                e_key, e_val = row.findall('./*')[:2]
+                key, val = list(row.ignoring(ignore_tags).xpath('./*'))[:2]
+
             except ValueError:
                 continue
 
-            if e_key is not None and e_val is not None:
-                # Turn the key into xml string, parse the other tags
-                # making brs into newlines, parse the rest of the
-                # tags, get the text back
-                key = totext(fromstring(tostring(e_key), True))
-                key = re.sub(ur"\s+", " ", key).strip()
-                val = escape_lists(tostring(e_val))
-                # Extract text
-                val = fromstring(val)
-                val = totext(val)
+            yield key, val
 
-                val = unescape_lists(val.strip())
-
-                tpairs.append((key, val))
-
-        return tpairs
 
     def _braces_markup(self, txt):
         """
@@ -227,11 +197,9 @@ class Infobox(Configurable):
         ibs = -1
         braces = 0
         rngs = []
+        token_regex = "((?P<open>{{)\s*(?P<ibox>%s)?|(?P<close>}}))" % self.box_rx
 
-        for m in re.finditer(
-                "((?P<open>{{)\s*(?P<ibox>%s)?|(?P<close>}}))" % self.box_rx,
-                txt):
-
+        for m in re.finditer(token_regex, txt):
             if m.group('open'):
                 # If we are counting just continue, dont count outside
                 # of iboxes
@@ -239,12 +207,12 @@ class Infobox(Configurable):
                     braces += 1
                     continue
 
+            if m.group('ibox') and braces == 0:
                 # If we are not counting we better start and mark our
                 # position
-                if m.group('ibox') and braces == 0:
-                    braces = 1
-                    ibs = m.start('open')
-                    self.type = m.group('ibox')
+                braces = 1
+                ibs = m.start('open')
+                self.type = m.group('ibox')
 
             elif m.group('close') and braces > 0:
                 braces -= 1

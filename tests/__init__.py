@@ -1,1 +1,1 @@
-import test_article
+import test_infobox

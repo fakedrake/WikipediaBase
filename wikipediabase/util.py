@@ -38,14 +38,14 @@ def iwindow(seq, n):
 
 
 def get_meta_infobox(symbol, configuration=configuration):
-    configuration.ref.object_cache.meta_infoboxes.with_args(symbol,
-                                                            configuration=configuration).deref()
+    return configuration.ref.object_cache.meta_infoboxes.with_args(symbol,
+                                                                   configuration=configuration).deref()
 
 def get_infobox(symbol, configuration=configuration):
     return configuration.ref.object_cache.infoboxes.with_args(symbol, configuration=configuration).deref()
 
-def get_article(symbol, fetcher=None):
-    return configuration.ref.object_cache.infoboxes.with_args(symbol, configuration=configuration).deref()
+def get_article(symbol, configuration=configuration):
+    return configuration.ref.object_cache.articles.with_args(symbol, configuration=configuration).deref()
 
 
 def get_knowledgebase(configuration=configuration):

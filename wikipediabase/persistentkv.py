@@ -41,6 +41,9 @@ class EncodedDict(collections.MutableMapping, Configurable):
         """
         return key
 
+    def __hash__(self):
+        return hash(self.db)
+
     def __del__(self):
         self.sync()
         del self.db
@@ -144,6 +147,10 @@ class DbmPersistentDict(EncodedDict):
 
         super(DbmPersistentDict, self).__init__(database, configuration=configuration)
 
+    def __hash__(self):
+        # Basically unique for the current run
+        return hash(repr(self))
+
     def _encode_key(self, key):
         # Asciify
         if isinstance(key, unicode):
@@ -192,9 +199,6 @@ Keep this around in case anyone considers changing to sqlite.
 XXX: see how gdbm does when data is larger than memory. Also check out
 bsddb
 """
-
-# PersistentDict = SqlitePersistentDict
-PersistentDict = DbmPersistentDict
 
 def benchmark_write(dic, times=100000):
     for i in xrange(times):
