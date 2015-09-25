@@ -18,7 +18,7 @@ class ErrorResolver(BaseResolver):
         kb = get_knowledgebase()
 
         if 'wikipedia-person' in kb.get_classes(symbol) and \
-           attr.lower() == 'death-date' and \
+           attr.lower().startswith('death-') and \
            kb.get(cls, symbol, 'birth-date'):
             return self._err("Currently alive")
 

@@ -193,6 +193,8 @@ DEGENERATE_EXAMPLES = [
 
     ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
      '(((error attribute-value-not-found :reply "Currently alive")))'),
+    ('(get "wikipedia-person" "Barack Obama" "DEATH-PLACE")',
+     '(((error attribute-value-not-found :reply "Currently alive")))'),
 ]
 
 WIKI_EXAMPLES_NOT = [
