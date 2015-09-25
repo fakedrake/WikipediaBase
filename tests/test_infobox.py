@@ -28,7 +28,7 @@ class TestInfobox(unittest.TestCase):
         self.assertIn("| name = Led Zeppelin", ibox.markup_source())
 
     def test_infobox_markup_raw(self):
-        ibox = get_infobox("Bill Clinton", self.fetcher)
+        ibox = get_infobox("Winston Churchill", self.fetcher)
         self.assertIn("|death_place ", ibox.markup_source())
 
     def test_infobox_html_raw(self):
@@ -40,7 +40,7 @@ class TestInfobox(unittest.TestCase):
         self.assertIn(("Origin", "Sydney, Australia"), ibox.html_parsed())
 
     def test_rendered_keys(self):
-        clinton = get_infobox("Bill Clinton", self.fetcher)
+        clinton = get_infobox("Winston Churchill", self.fetcher)
         self.assertEqual("Died", clinton.rendered_keys().get("death_place"))
 
         bridge = get_infobox("Brooklyn Bridge", self.fetcher)
@@ -51,7 +51,7 @@ class TestInfobox(unittest.TestCase):
         self.assertEqual(ibox.get("origin"), "London, England")
 
     def test_attributes(self):
-        ibox = get_infobox("Bill Clinton", self.fetcher)
+        ibox = get_infobox("Winston Churchill", self.fetcher)
         self.assertIn("death-place",
                       [k for k, v in ibox.markup_parsed_iter()])
 
