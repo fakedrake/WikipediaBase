@@ -84,7 +84,7 @@ def get_meta_infobox(symbol, fetcher=None):
     Get an infobox that only has keys and not values. A quick and
     dirty way avoid parsing the values of an infobox.
     """
-    from wikipediabase.infobox_scraper import MetaInfobox
+    from wikipediabase.metainfobox import MetaInfobox
 
     return _context_get(symbol, "rendered_infobox", MetaInfobox, fetcher)
 

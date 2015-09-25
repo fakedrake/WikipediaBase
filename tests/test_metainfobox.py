@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-test_infobox_scraper
+test_metainfobox
 ----------------------------------
 
-Tests for `infobox_scraper` module.
+Tests for `metainfobox` module.
 """
 
 try:
@@ -13,7 +13,7 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase.infobox_scraper import _clean_attribute, MetaInfobox
+from wikipediabase.metainfobox import _clean_attribute, MetaInfobox
 from wikipediabase.util import get_meta_infobox
 
 class TestMetaInfobox(unittest.TestCase):
