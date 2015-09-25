@@ -138,9 +138,10 @@ class MetaInfobox(Infobox):
         A list of the markup attributes. Attributes are extracted by looking
         at template documentation subpages and pages.
         """
-        attributes = self._best_attributes()
         # deduplicate and remove empty string
-        attributes = [_clean_attribute(a) for a in set(attributes) if a]
+        attributes = self._best_attributes()
+        attributes = [_clean_attribute(a) for a in attributes if a]
+        attributes = list(set(attributes))
         return attributes
 
     def markup_source(self):
