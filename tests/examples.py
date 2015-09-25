@@ -53,12 +53,12 @@ WIKI_EXAMPLES = [
      '((:yyyymmdd 19610804))'),
     ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
      # 'nil'),
-     '(((error attribute-value-not-found :reply "Currently alive")))'),
+     '((error attribute-value-not-found :reply "Currently alive"))'),
     ('(get "wikipedia-person" "Jamie Glover" "BIRTH-DATE")',
      '((:yyyymmdd 19690710))'),
     ('(get "wikipedia-person" "Jamie Glover" "DEATH-DATE")',
      #  'nil'),
-     '(((error attribute-value-not-found :reply "Currently alive")))'),
+     '((error attribute-value-not-found :reply "Currently alive"))'),
     ('(get "wikipedia-person" "John Lennon" "BIRTH-DATE")',
      '((:yyyymmdd 19401009))'),
     ('(get "wikipedia-person" "John Lennon" "DEATH-DATE")',
@@ -192,9 +192,9 @@ DEGENERATE_EXAMPLES = [
      '#t'),
 
     ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
-     '(((error attribute-value-not-found :reply "Currently alive")))'),
+     '((error attribute-value-not-found :reply "Currently alive"))'),
     ('(get "wikipedia-person" "Barack Obama" "DEATH-PLACE")',
-     '(((error attribute-value-not-found :reply "Currently alive")))'),
+     '((error attribute-value-not-found :reply "Currently alive"))'),
 ]
 
 WIKI_EXAMPLES_NOT = [

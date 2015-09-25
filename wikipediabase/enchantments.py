@@ -328,7 +328,7 @@ class EnchantedError(EnchantedStringDict):
             )
 
         # Useless 3ple parens needed.
-        return "((error {symbol} {keys}))".format(
+        return "(error {symbol} {keys})".format(
             symbol=self.val['symbol'],
             keys=self._plist(self.val['kw'].iteritems()))
 
