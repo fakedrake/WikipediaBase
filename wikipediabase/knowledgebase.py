@@ -94,7 +94,7 @@ class KnowledgeBase(Provider):
 
         ret = []
         for k, v in ibox.markup_parsed_iter():
-            rendered = ibox.rendered_keys().get(k.replace('-', '_'))
+            rendered = ibox.rendered_attributes().get(k.replace('-', '_'))
             tmp = enchant(None, dict(code=k.upper(),
                                      rendered=rendered))
 

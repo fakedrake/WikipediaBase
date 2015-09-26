@@ -15,13 +15,6 @@ TEMPLATE_DATA_REGEX = re.compile(r"<templatedata>(.*?)</templatedata>",
                                  flags=re.M | re.S)
 
 
-def _clean_attribute(a):
-    a = a.strip()
-    while a[-1].isdigit():
-        a = a[:-1]
-    return a
-
-
 class MetaInfobox(Infobox):
 
     """
@@ -51,8 +44,8 @@ class MetaInfobox(Infobox):
         prefix = "Template:"
         infobox_type = infobox_type.strip()
         if not infobox_type.startswith(prefix):
-            raise ValueError("'%s' is not a valid Infobox template docpage "
-                             "name. This function expects infobox_type to have "
+            raise ValueError("'%s' is not a valid Infobox template name. "
+                             "This function expects infobox_type to have "
                              "format 'Template:Infobox <class>'."
                              % infobox_type)
 
@@ -63,6 +56,43 @@ class MetaInfobox(Infobox):
         fetcher = StaticFetcher(self.renderer.render(mu, key=self.title), mu)
         super(MetaInfobox, self).__init__(self.symbol, title=self.title,
                                           fetcher=fetcher, **kw)
+
+    def attributes(self):
+        """
+        A list of the markup attributes. Attributes are extracted by looking
+        at template documentation subpages and pages.
+        """
+        # deduplicate and remove empty string
+        attributes = self._best_attributes()
+        attributes = [self._clean_attribute(a) for a in attributes if a]
+        attributes = list(set(attributes))
+        return attributes
+
+    def markup_source(self):
+        """
+        Markup of the meta infobox. Each attribute has a value that
+        contains all possible attributes for this type of infobox.
+        """
+
+        return '{{' + self.symbol.replace("Template:", "") + "\n" + \
+            '\n'.join(["| %s = !!!!!%s!!!!!" % (attr, attr) for
+                       attr in self.attributes()]) + \
+            "\n}}\n"
+
+    def html_source(self):
+        return self.renderer.render(self.markup_source(), key=self.title)
+
+    def rendered_attributes(self):
+        """
+        A dictionary mapping unrendered markup attributes to rendered HTML 
+        attributes
+        """
+        attrs = dict()
+        for k, v in self.html_parsed():
+            for m in re.finditer("!!!!!([^!]+)!!!!!", v):
+                attrs[m.group(1)] = k
+
+        return attrs
 
     def _best_attributes(self):
         """
@@ -133,40 +163,8 @@ class MetaInfobox(Infobox):
     def _attributes_from_html(self, html):
         return re.findall(ATTRIBUTE_REGEX, html)
 
-    def attributes(self):
-        """
-        A list of the markup attributes. Attributes are extracted by looking
-        at template documentation subpages and pages.
-        """
-        # deduplicate and remove empty string
-        attributes = self._best_attributes()
-        attributes = [_clean_attribute(a) for a in attributes if a]
-        attributes = list(set(attributes))
-        return attributes
-
-    def markup_source(self):
-        """
-        Markup of the meta infobox. Each attribute has a value that
-        contains all possible attributes for this type of infobox.
-        """
-
-        return '{{' + self.symbol.replace("Template:", "") + "\n" + \
-            '\n'.join(["| %s = !!!!!%s!!!!!" % (attr, attr) for
-                       attr in self.attributes()]) + \
-            "\n}}\n"
-
-    def html_source(self):
-        return self.renderer.render(self.markup_source(), key=self.title)
-
-    def rendered_keys(self):
-        """
-        A dictionary mapping markup keys to the html they were rendered
-        to.
-        """
-
-        ret = dict()
-        for k, v in self.html_parsed():
-            for m in re.finditer("!!!!!([^!]+)!!!!!", v):
-                ret[m.group(1)] = k
-
-        return ret
+    def _clean_attribute(self, attr):
+        attr = attr.strip()
+        while attr[-1].isdigit():
+            attr = attr[:-1]
+        return attr

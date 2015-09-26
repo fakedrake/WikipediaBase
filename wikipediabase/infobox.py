@@ -89,20 +89,20 @@ class Infobox(Logging):
 
     def get(self, key, source=None):
         """
-        - First try plain markup keys
-        - Then translating each markup's tanslations
+        - First try plain markup attributes
+        - Then translating each markup's translations
         """
 
         # Look into html first. The results here are much more
         # readable.
         html_key = key.lower().replace(u"-", u" ")
         markup_key = key.lower().replace(u"-", u"_")
-        rendered_key = self.rendered_keys().get(markup_key)
+        rendered_attr = self.rendered_attributes().get(markup_key)
 
         if source is None or source == 'html':
             for k, v in self.html_parsed():
                 if k.lower().replace(u".", u"") == html_key or \
-                   k == rendered_key:
+                   k == rendered_attr:
                     return v
 
         # Then look into the markup
@@ -110,17 +110,17 @@ class Infobox(Logging):
             if k.replace("-", "_") == markup_key:
                 return v
 
-    def rendered_keys(self):
-        # Populate the rendered keys dict
-        if hasattr(self, '_rendered_keys'):
-            return self._rendered_keys
+    def rendered_attributes(self):
+        # Populate the rendered attributes dict
+        if hasattr(self, '_rendered_attributes'):
+            return self._rendered_attributes
 
-        self._rendered_keys = dict()
+        self._rendered_attributes = dict()
         for infobox_type in reversed(self.types()):
             ibx = get_meta_infobox(infobox_type)
-            self._rendered_keys.update(ibx.rendered_keys())
+            self._rendered_attributes.update(ibx.rendered_attributes())
 
-        return self._rendered_keys
+        return self._rendered_attributes
 
     def markup_parsed_iter(self):
         """

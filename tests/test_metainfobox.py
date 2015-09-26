@@ -13,8 +13,9 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase.metainfobox import _clean_attribute, MetaInfobox
+from wikipediabase.metainfobox import MetaInfobox
 from wikipediabase.util import get_meta_infobox
+
 
 class TestMetaInfobox(unittest.TestCase):
 
@@ -23,18 +24,20 @@ class TestMetaInfobox(unittest.TestCase):
 
     def test_clean_attribute(self):
         dirty = "  attr12 "
-        self.assertEqual(_clean_attribute(dirty), "attr")
+        self.assertEqual(self.ibx._clean_attribute(dirty), "attr")
 
     def test_newlines(self):
-        self.assertEqual(get_meta_infobox('Template:Infobox weapon').rendered_keys()['secondary_armament'], "Secondary armament")
+        ibx = get_meta_infobox('Template:Infobox weapon')
+        attr = ibx.rendered_attributes()['secondary_armament']
+        self.assertEqual(attr, "Secondary armament")
 
     def test_musician(self):
         di = get_meta_infobox('Template:Infobox musical artist')
-        self.assertEqual(di.rendered_keys()['origin'], "Origin")
+        self.assertEqual(di.rendered_attributes()['origin'], "Origin")
 
     def test_regression_officeholder(self):
         mibx = get_meta_infobox('Template:Infobox officeholder')
-        self.assertEqual("Died", mibx.rendered_keys().get("death_place"))
+        self.assertEqual("Died", mibx.rendered_attributes().get("death_place"))
 
     def test_getting_by_symbol(self):
         di = get_meta_infobox('Template:Infobox musical artist')
@@ -50,12 +53,9 @@ class TestMetaInfobox(unittest.TestCase):
         self.assertIn((u'Native\xa0name', '!!!!!native_name!!!!!'),
                       self.ibx.html_parsed())
 
-    def test_rendered_keys(self):
-        self.assertEqual(self.ibx.rendered_keys()['native_name'],
+    def test_rendered_attributes(self):
+        self.assertEqual(self.ibx.rendered_attributes()['native_name'],
                          u'Native\xa0name')
-
-    def tearDown(self):
-        pass
 
 if __name__ == '__main__':
     unittest.main()
