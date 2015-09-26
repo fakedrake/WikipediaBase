@@ -87,27 +87,26 @@ class Infobox(Logging):
 
         return map(self.__tt, ret)
 
-    def get(self, key, source=None):
+    def get(self, attr, source=None):
         """
         - First try plain markup attributes
         - Then translating each markup's translations
         """
 
-        # Look into html first. The results here are much more
-        # readable.
-        html_key = key.lower().replace(u"-", u" ")
-        markup_key = key.lower().replace(u"-", u"_")
-        rendered_attr = self.rendered_attributes().get(markup_key)
+        # Look into html first. The results here are much more readable
+        html_attr = attr.lower().replace(u"-", u" ")
+        markup_attr = attr.lower().replace(u"-", u"_")
+        rendered_attr = self.rendered_attributes().get(markup_attr)
 
         if source is None or source == 'html':
             for k, v in self.html_parsed():
-                if k.lower().replace(u".", u"") == html_key or \
+                if k.lower().replace(u".", u"") == html_attr or \
                    k == rendered_attr:
                     return v
 
         # Then look into the markup
         for k, v in self.markup_parsed_iter():
-            if k.replace("-", "_") == markup_key:
+            if k.replace("-", "_") == markup_attr:
                 return v
 
     def rendered_attributes(self):
