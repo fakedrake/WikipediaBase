@@ -38,7 +38,7 @@ class Infobox(Logging):
         self.fetcher = fetcher or WIKIBASE_FETCHER
 
     def __nonzero__(self):
-        return bool(self.fetcher.download(self.symbol))
+        return bool(self.fetcher.html_source(self.symbol))
 
     @staticmethod
     def __tt(tmpl):
@@ -147,7 +147,7 @@ class Infobox(Logging):
         Get the markup source of this infobox.
         """
 
-        txt = self.fetcher.source(self.symbol, expiry=expiry)
+        txt = self.fetcher.markup_source(self.symbol, expiry=expiry)
         return self._braces_markup(txt)
 
     def html_source(self, expiry=Expiry.DEFAULT):
@@ -156,7 +156,7 @@ class Infobox(Logging):
         """
 
         if not hasattr(self, '_html'):
-            self._html = self.fetcher.download(self.symbol, expiry=expiry)
+            self._html = self.fetcher.html_source(self.symbol, expiry=expiry)
 
         bs = fromstring(self._html)
         ret = ET.Element('div')

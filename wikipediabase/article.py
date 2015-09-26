@@ -69,14 +69,14 @@ class Article(Logging):
         Markup source of the article.
         """
 
-        return self.fetcher.source(self._title, expiry=expiry)
+        return self.fetcher.markup_source(self._title, expiry=expiry)
 
     def html_source(self, expiry=Expiry.DEFAULT):
         """
         Markup source of the article.
         """
 
-        return self.fetcher.download(self._title, expiry=expiry)
+        return self.fetcher.html_source(self._title, expiry=expiry)
 
     def paragraphs(self):
         """
