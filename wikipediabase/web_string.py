@@ -19,11 +19,17 @@ class WebString(Configurable):
         self.data = data
         self.configuration = configuration
 
-    def __str__(self):
+    def raw(self):
         return self.data
 
+    def __len__(self):
+        return len(self.raw())
+
+    def __str__(self):
+        return self.raw()
+
     def __contains__(self, item):
-        return item in str(self)
+        return item in self.data
 
 class SymbolString(WebString):
     def __init__(self, data, configuration=configuration):
@@ -57,7 +63,7 @@ class SymbolString(WebString):
         return re.sub(ur"(^the|^a|^an)\b", "", ret, flags=re.U).strip()
 
     def url_friendly(self):
-        return re.sub(r"\s+", "_", self.prefixed().lower())
+        return re.sub(r"\s+", "_", self.prefixed())
 
     def literal(self):
         return re.sub(r"(\s+|_)", " ", self.symbol)
@@ -265,8 +271,18 @@ class MarkupString(WebString):
     Some basic mediawiki parsing stuff.
     """
 
-    def __init__(self, data, configuration=configuration):
-        super(HtmlString, self).__init__(data, configuration=configuration)
+    def __init__(self, data, symbol=None, configuration=configuration):
+        super(MarkupString, self).__init__(data, configuration=configuration)
+        self.symbol = symbol and SymbolString(symbol, configuration)
+
+    def redirect_target(self):
+        """
+        A SymbolString of the redirect target or None.
+        """
+        redirect_match = re.search(r"^\s*#\s*redirect\s*\[\[(.*)\]\]\s*$",
+                                   self.raw(), re.I | re.MULTILINE)
+        if redirect_match:
+            return SymbolString(redirect_match.group(1).strip())
 
     def raw(self):
         return self.data

@@ -13,8 +13,9 @@ try:
 except ImportError:
     import unittest
 
+import re
 from wikipediabase import web_string
-from wikipediabase.config import configuration
+from common import testcfg
 from wikipediabase import settings
 
 class TestWebString(unittest.TestCase):
@@ -47,7 +48,7 @@ class TestWebString(unittest.TestCase):
         title_url = web_string.UrlString.from_url("example.com/title?title=b_title")
         edit_url = web_string.UrlString.from_url("example.com/title?title=b_title&action=edit")
         edit_notitle_url = web_string.UrlString.from_url("example.com/title?action=edit")
-        cfg = configuration.child()
+        cfg = testcfg.child()
         cfg.ref.remote.url = "example.com"
         cfg.ref.remote.base = "base/index.php"
         symbol_url = web_string.UrlString('sym', cfg)
@@ -62,15 +63,21 @@ class TestWebString(unittest.TestCase):
         sym = web_string.SymbolString('The Beatles')
         url = web_string.SymbolString('the Beatles')
         self.assertEqual(sym.reduced(), 'beatles')
-        self.assertEqual(sym.url_friendly(), 'the_beatles')
+        self.assertEqual(sym.url_friendly(), 'The_Beatles')
         self.assertEqual(sym.literal(), 'The Beatles')
         self.assertEqual(url.literal(), 'the Beatles')
 
-        cfg = configuration.child()
+        cfg = testcfg.child()
         cfg.ref.remote.url = "example.com"
         cfg.ref.remote.base = "base/index.php"
         self.assertEqual(url.url(configuration=cfg).raw(),
                          "example.com/base/index.php?title=the_beatles")
+
+    def test_markup_redirect(self):
+        markup = web_string.MarkupString('  #redirect [[redirect target]]  \n')
+        self.assertEqual(markup.redirect_target().url_friendly(), "redirect_target")
+        markup = web_string.MarkupString('#REDIRECT[[redirect target]]')
+        self.assertEqual(markup.redirect_target().url_friendly(), "redirect_target")
 
     def tearDown(self):
         pass

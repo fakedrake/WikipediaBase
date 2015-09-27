@@ -47,8 +47,9 @@ class TestInfobox(unittest.TestCase):
     def test_attributes(self):
         self.assertEqual(self.ibox.get("origin"), "London, England")
         clinton = get_infobox("Bill Clinton", configuration=testcfg)
+
         self.assertIn("death-place",
-                      [k for k, v in clinton.markup_parsed_iter()])
+                      [k for k, v in clinton.markup_parsed()])
 
     def test_types(self):
         self.assertEqual(self.ibox.types(), ['Template:Infobox musical artist'])
@@ -61,6 +62,8 @@ class TestInfobox(unittest.TestCase):
 
     def test_html_keys(self):
         bbc = get_infobox("BBC News", configuration=testcfg)
+        import pdb; pdb.set_trace()
+
         self.assertEquals("Owner(s)", bbc.rendered_keys().get("owner"))
 
     def tearDown(self):

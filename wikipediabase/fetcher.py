@@ -10,6 +10,7 @@ import re
 
 from wikipediabase.config import Configurable, configuration
 import wikipediabase.util as util
+from wikipediabase.web_string import MarkupString
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
@@ -53,12 +54,12 @@ class WikipediaSiteFetcher(BaseFetcher):
         self.url = configuration.ref.remote.url.lens(lambda x: x.strip('/'))
         self.base = configuration.ref.remote.base.lens(lambda x: x.strip('/'))
 
-    def get_wikisource(self, xml_string):
+    def get_wikisource(self, xml_string, symbol):
         """
         Get the source from an html soup of the edit page.
         """
-        return next(xml_string.xpath(".//*[@id='wpTextbox1']")).text()
-
+        for box in xml_string.xpath(".//*[@id='wpTextbox1']"):
+            return MarkupString(box.text(), symbol=symbol)
 
     def download(self, *args, **kwargs):
         return self.urlopen(*args, **kwargs).read()
@@ -107,17 +108,16 @@ class WikipediaSiteFetcher(BaseFetcher):
         xml = self.xml_string(html)
 
         try:
-            src = self.get_wikisource(xml)
+            src = self.get_wikisource(xml, str(symbol))
         except IndexError:
             raise ValueError("Got invalid source page for article '%s'." %
                              symbol)
 
-        # Handle redirecions silently
-        redirect_match = re.search(REDIRECT_REGEX, src)
 
-        if redirect and redirect_match:
-            src = self.download(symbol=redirect_match.group(1),
-                                get=get_request)
+        redirect_target = src.redirect_target()
+        if redirect and redirect_target:
+            return self.source(symbol=redirect_target, get_request=get_request,
+                              redirect=False)
 
         return src
 

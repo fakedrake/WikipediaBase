@@ -34,8 +34,12 @@ class TestFetcher(unittest.TestCase):
         self.assertIn("{{Infobox", src)
 
     def test_redirect(self):
-        redir = "http://ashmore.csail.mit.edu:8080/mediawiki/index.php?title=hansolo"
-        self.assertEqual(self.fetcher.redirect_url("hansolo"), redir)
+        redir = "index.php?title=hansolo"
+        self.assertTrue(self.fetcher.redirect_url("hansolo").endswith(redir))
+
+    def test_source_redirect(self):
+        src = self.fetcher.source("bill clinton")
+        self.assertIn("{{Infobox", src.raw())
 
     def tearDown(self):
         pass

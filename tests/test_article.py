@@ -70,7 +70,7 @@ class TestArticle(unittest.TestCase):
         # Actually redirects the source
         self.assertGreater(len(Article("Barack Hussein Obama", configuration=testcfg).
                                markup_source()),
-                         30000)
+                           30000)
 
 
     def tearDown(self):

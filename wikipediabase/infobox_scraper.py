@@ -48,8 +48,9 @@ class MetaInfobox(Infobox):
         # There will always be an example in the documentation but
         # there may be more than one.
         ibxes = get_article(self.symbol.url_friendly() + '/doc').markup_source()
+
         return [i for i \
-                in set(re.findall(r"^\s*|\s*([a-zA-Z_\-]+)\s*=", ibxes)) if i]
+                in set(re.findall(r"^\s*|\s*([a-zA-Z_\-]+)\s*=", ibxes.raw())) if i]
 
 
     def markup_source(self):

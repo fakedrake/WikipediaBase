@@ -111,7 +111,7 @@ class Infobox(Configurable):
 
         self._rendered_keys = dict()
         for infobox_type in reversed(self.types()):
-            ibx = get_meta_infobox(infobox_type)
+            ibx = get_meta_infobox(infobox_type, configuration=self.configuration)
             self._rendered_keys.update(ibx.rendered_keys())
 
         return self._rendered_keys
@@ -141,7 +141,7 @@ class Infobox(Configurable):
         Get the markup source of this infobox.
         """
 
-        txt = self.fetcher.source(self.symbol.url_friendly())
+        txt = self.fetcher.source(self.symbol.url_friendly()).raw()
         return self._braces_markup(txt)
 
     def html_source(self):

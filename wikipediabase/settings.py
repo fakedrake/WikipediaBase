@@ -17,6 +17,7 @@ def get_persistent_dict(filename):
 import wikipediabase.persistentkv as pkv
 configuration.ref.cache.sync_period = 5 # In transactions
 configuration.ref.cache.path = os.getenv('HOME') + '/.wikipediabase/'
+configuration.ref.cache.pages = VersionedItem(pkv.DbmPersistentDict, filename='pages')
 configuration.ref.cache.rendered_pages = VersionedItem(pkv.DbmPersistentDict, filename='rendered_pages')
 configuration.ref.cache.persistent_dict = VersionedItem(pkv.DbmPersistentDict, filename='pages')
 
