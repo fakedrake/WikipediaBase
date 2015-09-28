@@ -23,7 +23,7 @@ class StaticResolver(BaseResolver):
     def word_cout(self, article, attribute):
         self.log().info("Trying 'word-count' tag from static resolver.")
         self._tag = "html"
-        return len(self._words(self.fetcher.download(article)))
+        return len(self._words(self.fetcher.html_source(article)))
 
     @provide(name="gender")
     def gender(self, article, attribute):
