@@ -321,7 +321,7 @@ WIKI_EXAMPLES_RX = [
     # r'290.*km.*3'),
 
     ('(get "wikipedia-military-conflict" "American Civil War" (:code "RESULT"))',
-     re.compile(r'Union victory.*Slavery abolished.*Territorial integrity.*Lincoln assassinated.*Reconstruction', re.DOTALL)),
+     re.compile(r'Union victory.*Slavery abolished.*Territorial integrity.*Destruction and dissolution.*Reconstruction', re.DOTALL)),
     ('(get "wikipedia-weapon" "M1 Abrams" (:code "WARS"))',
      r'Gulf War',
      'Returns link text, not link target'),
