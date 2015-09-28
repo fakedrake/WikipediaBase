@@ -107,7 +107,7 @@ class TestResolvers(unittest.TestCase):
 
     def test_error_resolver(self):
         err = self.kb.get('wikipedia-president', 'Bill Clinton', 'death-date')
-        err = self.kb.get('wikipedia-person', 'Barack Obama', 'death-date')
+        err = self.kb.get('wikibase-person', 'Barack Obama', 'death-date')
         self.assertEqual(str(err),
                       '((error attribute-value-not-found :reply '
                       '"Currently alive"))')

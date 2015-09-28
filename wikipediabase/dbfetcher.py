@@ -158,7 +158,7 @@ class DBUtil(object):
             return s.split(']]', 1)[0].split('|')[0]
 
         return map(first_part, txt.split("[[Category:")[1:]) + \
-            ["wikipedia-article"]
+            ["wikibase-article"]
 
     def article_text(self, article):
         """
