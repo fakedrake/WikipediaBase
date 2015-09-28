@@ -13,17 +13,11 @@ try:
 except ImportError:
     import unittest
 
-import re
-
-import common
 from wikipediabase.knowledgebase import KnowledgeBase
-from wikipediabase.provider import Acquirer, Provider
+from wikipediabase.provider import Acquirer
 from wikipediabase.enchantments import EnchantedList
 
-CLINTON_ATTRS = (
-u'(:code "NAME"', u':code "IMAGE"', u':code "ORDER"', u':code "OFFICE"', u':code "VICEPRESIDENT"', u':code "TERM-START"', u':code "TERM-END"', u':code "PREDECESSOR"', u':code "SUCCESSOR"', u':code "ORDER1"', u':code "OFFICE1"', u':code "LIEUTENANT1"', u':code "TERM-START1"', u':code "TERM-END1"', u':code "PREDECESSOR1"', u':code "SUCCESSOR1"', u':code "LIEUTENANT2"', u':code "TERM-START2"', u':code "TERM-END2"', u':code "PREDECESSOR2"', u':code "SUCCESSOR2"', u':code "ORDER3"', u':code "OFFICE3"', u':code "GOVERNOR3"', u':code "TERM-START3"', u':code "TERM-END3"', u':code "PREDECESSOR3"', u':code "SUCCESSOR3"', u':code "BIRTH-NAME"', u':code "BIRTH-DATE"', u':code "BIRTH-PLACE"', u':code "DEATH-DATE" :rendered "Died"', u':code "DEATH-PLACE"', u':code "PARTY" :rendered "Political party"', u':code "PARENTS" :rendered "Parents"', u':code "RELATIONS" :rendered "Relations"', u':code "SPOUSE" :rendered "Spouse(s)"', u':code "CHILDREN" :rendered "Children"', u':code "ALMA-MATER"', u':code "RELIGION" :rendered "Religion"', u':code "SIGNATURE"', u':code "SIGNATURE-ALT")')
-# Ommited based on content:
-# u':code "PROFESSION" :rendered "Profession"'
+CLINTON_ATTRS = (u'(:code "NAME") (:code "IMAGE") (:code "ORDER") (:code "OFFICE") (:code "VICEPRESIDENT") (:code "TERM-START") (:code "TERM-END") (:code "PREDECESSOR") (:code "SUCCESSOR") (:code "ORDER1") (:code "OFFICE1") (:code "LIEUTENANT1") (:code "TERM-START1") (:code "TERM-END1") (:code "PREDECESSOR1") (:code "SUCCESSOR1") (:code "LIEUTENANT2") (:code "TERM-START2") (:code "TERM-END2") (:code "PREDECESSOR2") (:code "SUCCESSOR2") (:code "ORDER3") (:code "OFFICE3") (:code "GOVERNOR3") (:code "TERM-START3") (:code "TERM-END3") (:code "PREDECESSOR3") (:code "SUCCESSOR3") (:code "BIRTH-NAME" :rendered "Born") (:code "BIRTH-DATE" :rendered "Born") (:code "BIRTH-PLACE" :rendered "Born") (:code "PARTY" :rendered "Political party") (:code "PROFESSION" :rendered "Profession") (:code "PARENTS" :rendered "Parents") (:code "RELATIONS" :rendered "Relations") (:code "SPOUSE" :rendered "Spouse(s)") (:code "CHILDREN" :rendered "Children") (:code "ALMA-MATER" :rendered "Alma mater") (:code "RELIGION" :rendered "Religion") (:code "SIGNATURE") (:code "SIGNATURE-ALT")')
 
 class TestKnowledgebase(unittest.TestCase):
 

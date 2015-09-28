@@ -42,7 +42,7 @@ class ForwardRedirectInducer(BaseInducer):
 
     def title(self, symbol, fetcher=None):
         fetcher = fetcher or WIKIBASE_FETCHER
-        html = fetcher.download(symbol)
+        html = fetcher.html_source(symbol)
         match = re.search(TITLE_REGEX, html)
         if match:
             return match.group(1)

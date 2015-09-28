@@ -27,10 +27,10 @@ class BaseFetcher(Logging):
 
     priority = 0
 
-    def download(self, symbol, **kwargs):
+    def html_source(self, symbol, **kwargs):
         return symbol
 
-    def source(self, symbol, **kwargs):
+    def markup_source(self, symbol, **kwargs):
         return symbol
 
 
@@ -53,7 +53,7 @@ class Fetcher(BaseFetcher):
         assert(isinstance(page, unicode))  # TODO : remove for production
         return page
 
-    def download(self, symbol, **kwargs):
+    def html_source(self, symbol, **kwargs):
         """
         Get the rendered HTML article of the symbol.
         """
@@ -61,7 +61,7 @@ class Fetcher(BaseFetcher):
         params = {'action': 'view', 'title': symbol, 'redirect': 'yes'}
         return self.urlopen(self.url, params)
 
-    def source(self, symbol, **kwargs):
+    def markup_source(self, symbol, **kwargs):
         """
         Get the wikitext markup of the symbol.
         """
@@ -101,24 +101,25 @@ class CachingFetcher(Fetcher):
 
         return content
 
-    def source(self, symbol, expiry=Expiry.DEFAULT):
+    def html_source(self, symbol, expiry=Expiry.DEFAULT):
+        html = self._caching_fetch(symbol, 'html', 'article:',
+                                   super(CachingFetcher, self).html_source,
+                                   expiry=expiry)
+
+        assert(isinstance(html, unicode))  # TODO : remove for production
+        return html
+
+    def markup_source(self, symbol, expiry=Expiry.DEFAULT):
         source = self._caching_fetch(symbol, 'source', 'article:',
-                                     super(CachingFetcher, self).source,
+                                     super(CachingFetcher, self).markup_source,
                                      expiry=expiry)
 
         assert(isinstance(source, unicode))  # TODO : remove for production
         return source
 
-    def download(self, symbol, expiry=Expiry.DEFAULT):
-        rendered = self._caching_fetch(symbol, 'rendered', 'article:',
-                                       super(CachingFetcher, self).download,
-                                       expiry=expiry)
-
-        assert(isinstance(rendered, unicode))  # TODO : remove for production
-        return rendered
-
 
 class StaticFetcher(BaseFetcher):
+
     """
     Will just get the html and markup provided in init.
     """
@@ -127,10 +128,10 @@ class StaticFetcher(BaseFetcher):
         self.html = html
         self.markup = markup
 
-    def download(self, symbol, **kwargs):
+    def html_source(self, symbol, **kwargs):
         return self.html
 
-    def source(self, symbol, **kwargs):
+    def markup_source(self, symbol, **kwargs):
         return self.markup
 
 WIKIBASE_FETCHER = CachingFetcher()

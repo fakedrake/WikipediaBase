@@ -59,12 +59,12 @@ def ibx_type_tree(fetcher=None, form=None):
     if not fetcher:
         fetcher = WIKIBASE_FETCHER
 
-    src = fetcher.source("Wikipedia:List_of_infoboxes")
+    src = fetcher.markup_source("Wikipedia:List_of_infoboxes")
     titles = map(lambda x: x.split("}}", 1)[0],
                  src.split(u"{{Wikipedia:List of infoboxes/")[1:])
     symbols = (u"Wikipedia:List_of_infoboxes/" + i
                for i in titles)
-    tuples = chain.from_iterable((ibx_tree(fetcher.source(sym),
+    tuples = chain.from_iterable((ibx_tree(fetcher.markup_source(sym),
                                            form=form)
                                   for sym, tit in zip(symbols, titles)))
     ibx_type_tree.ret = dict(tuples)
