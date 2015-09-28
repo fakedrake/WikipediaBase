@@ -34,11 +34,13 @@ class TestInfobox(unittest.TestCase):
     def test_infobox_markup_raw(self):
         self.assertIn("| name = Led Zeppelin", self.ibox.markup_source())
         clinton = get_infobox("Bill Clinton", configuration=testcfg)
-        self.assertIn("|death_place ", clinton.markup_source())
+        self.assertNotIn("|death_place ", clinton.markup_source())
+        self.assertIn("|birth_place ", clinton.markup_source())
 
     def test_rendered_keys(self):
         clinton = get_infobox("Bill Clinton", configuration=testcfg)
-        self.assertEqual("Died", clinton.rendered_keys().get("death_place"))
+        self.assertEqual(clinton.rendered_keys().get("death_place"), None)
+        self.assertEqual(clinton.rendered_keys().get("birth_place"), "Born")
 
     def test_infobox_html_parsed(self):
         self.assertIn((u'Origin', u'London, England'),
@@ -48,7 +50,10 @@ class TestInfobox(unittest.TestCase):
         self.assertEqual(self.ibox.get("origin"), "London, England")
         clinton = get_infobox("Bill Clinton", configuration=testcfg)
 
-        self.assertIn("death-place",
+        self.assertNotIn("death-place",
+                         [k for k, v in clinton.markup_parsed()])
+
+        self.assertIn("term-start",
                       [k for k, v in clinton.markup_parsed()])
 
     def test_types(self):
@@ -62,9 +67,8 @@ class TestInfobox(unittest.TestCase):
 
     def test_html_keys(self):
         bbc = get_infobox("BBC News", configuration=testcfg)
-        import pdb; pdb.set_trace()
-
-        self.assertEquals("Owner(s)", bbc.rendered_keys().get("owner"))
+        self.assertEquals("Owner(s)", bbc.rendered_keys().get("owner"),
+                          bbc.rendered_keys().keys())
 
     def tearDown(self):
         pass

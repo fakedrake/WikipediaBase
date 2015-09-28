@@ -10,7 +10,7 @@ import re
 
 from wikipediabase.config import Configurable, configuration
 import wikipediabase.util as util
-from wikipediabase.web_string import MarkupString
+from wikipediabase.web_string import MarkupString, SymbolString
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
@@ -51,8 +51,7 @@ class WikipediaSiteFetcher(BaseFetcher):
 
     def __init__(self, configuration=configuration):
         self.xml_string = configuration.ref.strings.xml_string_class
-        self.url = configuration.ref.remote.url.lens(lambda x: x.strip('/'))
-        self.base = configuration.ref.remote.base.lens(lambda x: x.strip('/'))
+        self.configuration = configuration
 
     def get_wikisource(self, xml_string, symbol):
         """
@@ -74,17 +73,11 @@ class WikipediaSiteFetcher(BaseFetcher):
         :returns: HTML code
         """
 
-        if not get:
-            get = dict(title=symbol)
-        else:
-            get = get.copy()
-            if symbol is not None:
-                get.update(title=symbol)
+        if not isinstance(symbol, SymbolString):
+            symbol = SymbolString(symbol)
 
-        url = "%s/%s?%s" % (self.url, base or self.base,
-                            urlencode(get))
-
-        return ul.urlopen(url)
+        url = symbol.url(extra_get=get, configuration=self.configuration)
+        return ul.urlopen(url.raw())
         # try:
         #     return ul.urlopen(url)
         # except ul.HTTPError:
@@ -92,7 +85,13 @@ class WikipediaSiteFetcher(BaseFetcher):
 
 
     def redirect_url(self, symbol):
-        return self.urlopen(symbol).geturl()
+        sym = symbol
+        if not isinstance(symbol, SymbolString):
+            sym = Symbol(symbol)
+
+        redirect_sym = self.source(sym, redirect=False).redirect_target() or sym
+        return redirect_sym.url().raw()
+
 
     def source(self, symbol, get_request=None, redirect=True):
         """
@@ -107,17 +106,15 @@ class WikipediaSiteFetcher(BaseFetcher):
         html = self.download(symbol=symbol, get=get_request)
         xml = self.xml_string(html)
 
-        try:
-            src = self.get_wikisource(xml, str(symbol))
-        except IndexError:
+        src = self.get_wikisource(xml, str(symbol))
+        if src is None:
             raise ValueError("Got invalid source page for article '%s'." %
-                             symbol)
-
+                             symbol.url_friendly())
 
         redirect_target = src.redirect_target()
         if redirect and redirect_target:
             return self.source(symbol=redirect_target, get_request=get_request,
-                              redirect=False)
+                               redirect=False)
 
         return src
 
@@ -143,9 +140,13 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         super(CachingSiteFetcher, self).__init__(configuration)
 
     def redirect_url(self, symbol):
-        return self.caching_fetch("REDIRECT:" + symbol,
-                                  lambda sym: super(CachingSiteFetcher,
-                                                    self).redirect_url(symbol), symbol)
+        key = "REDIRECT:" + str(symbol)
+        if key in self.data:
+            ret = self.data[key]
+
+        ret = super(CachingSiteFetcher, self).redirect_url(symbol)
+        self.data[key] = ret
+        return ret
 
     def download(self, symbol, get=None, base=None):
         dkey = "%s;%s" % (symbol, get) if not base else \

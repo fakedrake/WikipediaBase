@@ -62,6 +62,8 @@ class TestWebString(unittest.TestCase):
     def test_symbol_string(self):
         sym = web_string.SymbolString('The Beatles')
         url = web_string.SymbolString('the Beatles')
+        pres = web_string.SymbolString('Template:Infobox president')
+        self.assertEqual(sym.synonym().raw(), 'The_Beatles')
         self.assertEqual(sym.reduced(), 'beatles')
         self.assertEqual(sym.url_friendly(), 'The_Beatles')
         self.assertEqual(sym.literal(), 'The Beatles')
@@ -71,7 +73,7 @@ class TestWebString(unittest.TestCase):
         cfg.ref.remote.url = "example.com"
         cfg.ref.remote.base = "base/index.php"
         self.assertEqual(url.url(configuration=cfg).raw(),
-                         "example.com/base/index.php?title=the_beatles")
+                         "example.com/base/index.php?title=the_Beatles")
 
     def test_markup_redirect(self):
         markup = web_string.MarkupString('  #redirect [[redirect target]]  \n')

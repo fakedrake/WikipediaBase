@@ -30,15 +30,26 @@ class MockUrlFd(Configurable):
         return json.dumps((self.url, self.post_data))
 
     def geturl(self):
-        return self.url
+        import pdb; pdb.set_trace()
+
+        return self.operation('geturl')
 
     def read(self):
-        key = self.key()
+        return self.operation('read')
+
+    def operation(self, op):
+        key = self.key() + ('' if op == 'read' else op)
         ret = self.cache.get(key)
         if ret:
             return ret
 
-        ret = real_urlopen(self.url, data=self.post_data).read()
+        try:
+            fd = real_urlopen(self.url, data=self.post_data)
+
+        except urllib.HTTPError:
+            raise LookupError("Failed opening: %s" % self.url)
+
+        ret = getattr(fd, op)()
         self.cache[key] = ret
         return ret
 
@@ -58,8 +69,8 @@ def download_all():
 # wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')
 testcfg.ref.test.offline_cache = DbmPersistentDict(data('pages.dumbdbm'))
 
-configuration.ref.remote.url = 'http://ashmore.csail.mit.edu:8080'
 configuration.ref.remote.base = 'mediawiki/index.php'
+configuration.ref.remote.url = 'http://ashmore.csail.mit.edu:8080'
 
 # configuration.ref.remote.url = 'http://wikipedia.org'
 # configuration.ref.remote.base = 'w/index.php'

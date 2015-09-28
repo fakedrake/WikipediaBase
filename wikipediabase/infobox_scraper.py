@@ -30,6 +30,7 @@ class MetaInfobox(Infobox):
         childcfg = configuration.child()
         super(MetaInfobox, self).__init__(infobox_type, configuration=childcfg)
 
+        self.symbol.prefix = self.symbol.prefix or "Template"
         # Infobox or ambox
         self.type = self.symbol.literal().split(" ")[0]
         self.renderer = configuration.ref.renderer.with_args(
@@ -47,7 +48,8 @@ class MetaInfobox(Infobox):
 
         # There will always be an example in the documentation but
         # there may be more than one.
-        ibxes = get_article(self.symbol.url_friendly() + '/doc').markup_source()
+        ibxes = get_article(self.symbol.synonym().url_friendly()
+                            + '/doc').markup_source()
 
         return [i for i \
                 in set(re.findall(r"^\s*|\s*([a-zA-Z_\-]+)\s*=", ibxes.raw())) if i]
@@ -58,11 +60,10 @@ class MetaInfobox(Infobox):
         Markup of the meta infobox. Each attribute has a value that
         contains all the equivalent attributes to itself.
         """
-
-        return '{{' + self.title().capitalize().replace("_", " ") + "\n" + \
-            '\n'.join(["| %s = !!!!!%s!!!!!" % (attr, attr) for \
-                       attr in self.attributes()]) + \
-            "\n}}\n"
+        attr_pairs = ["| %s = !!!!!%s!!!!!" % (attr, attr) for \
+                       attr in self.attributes()]
+        return '{{%s\n %s\n}}\n' % \
+            (self.symbol.url_friendly(), '\n'.join(attr_pairs))
 
     def html_source(self):
         return self.xml_string(self.renderer.render(self.markup_source()))

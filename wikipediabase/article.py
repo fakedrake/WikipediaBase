@@ -6,6 +6,7 @@ from wikipediabase.util import (markup_categories,
                                 totext,
                                 url_get_dict,
                                 get_infobox)
+from wikipediabase.web_string import SymbolString
 
 # XXX: also support images.
 class Article(Configurable):
@@ -17,9 +18,10 @@ class Article(Configurable):
     """
 
     def __init__(self, title, configuration=configuration):
-        self._title = title
+        self.symbol = SymbolString(title, configuration=configuration)
         self.config = configuration
-        self.fetcher = configuration.ref.fetcher.with_args(configuration=configuration)
+        self.fetcher = configuration.ref.fetcher.with_args(
+            configuration=configuration)
         self.xml_string = configuration.ref.strings.xml_string_class
 
         self.ibox = None
@@ -27,15 +29,7 @@ class Article(Configurable):
         self._url = None
 
     def url(self):
-        if self._url is None:
-            self._url = self.fetcher.urlopen(self._title).geturl()
-
-        return self._url
-
-    def symbol(self):
-        url = self.url()
-        return url_get_dict(url).get('title') or \
-            os.path.basename(url)
+        return self.symbol.url()
 
     def xml(self):
         if self._xml is None:
@@ -67,21 +61,21 @@ class Article(Configurable):
         if heading is not None:
             return heading.text().strip()
 
-        raise Exception("No title found for '%s'" % self.symbol())
+        raise Exception("No title found for '%s'" % self.symbol.url_friendly())
 
     def markup_source(self):
         """
         Markup source of the article.
         """
 
-        return self.fetcher.source(self._title)
+        return self.fetcher.source(self.symbol.url_friendly())
 
     def html_source(self):
         """
         Markup source of the article.
         """
 
-        return self.xml_string(self.fetcher.download(self._title))
+        return self.xml_string(self.fetcher.download(self.symbol.url_friendly()))
 
     def paragraphs(self):
         """

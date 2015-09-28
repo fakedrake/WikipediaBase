@@ -1,6 +1,11 @@
 import re
 import os
 import types
+try:
+    import urllib2 as urllib
+except:
+    import urllib
+
 from urllib import urlencode
 
 import lxml.etree as ET
@@ -35,8 +40,9 @@ class SymbolString(WebString):
     def __init__(self, data, configuration=configuration):
         super(SymbolString, self).__init__(data, configuration=configuration)
 
-
-        self.prefix =  None
+        self.fetcher = configuration.ref.fetcher.with_args(
+            configuration=configuration)
+        self.prefix = None
         self.symbol = re.sub(r"\s*:\s*", ":", self.data)
         self.symbol = re.sub(r"\s+", " ", self.symbol).strip()
 
@@ -65,22 +71,32 @@ class SymbolString(WebString):
     def url_friendly(self):
         return re.sub(r"\s+", "_", self.prefixed())
 
+    def synonym(self):
+        """
+        Get the true name of the article.
+        """
+        real_url = self.fetcher.redirect_url(self)
+        urlstr = UrlString.from_url(real_url, configuration=configuration)
+        return urlstr.symbol()
+
     def literal(self):
         return re.sub(r"(\s+|_)", " ", self.symbol)
 
-    def __str__(self):
-        return self.literal()
-
     def url(self, *args, **kw):
-        return UrlString(self.literal(), *args, **kw)
+        if 'configuration' not in kw:
+            kw['configuration'] = self.configuration
+
+        return UrlString(self, *args, **kw)
 
 class UrlString(WebString):
     """
     Construct urls to a mediawiki instance.
     """
-    def __init__(self, symbol, edit=False, configuration=configuration):
+    def __init__(self, symbol, edit=False, extra_get=None,
+                 configuration=configuration):
         super(UrlString, self).__init__(symbol, configuration=configuration)
 
+        self.extra_get = extra_get or {}
         self.configuration = configuration
         self.url = (configuration.ref.remote.url & \
                     configuration.ref.remote.base).lens(lambda a,b: a+'/'+b)
@@ -91,10 +107,15 @@ class UrlString(WebString):
         if self.edit:
             ret['action'] = 'edit'
 
+        ret.update(self.extra_get)
         return ret
 
     def raw(self):
-        return "%s?%s" % (self.url, urlencode(self.get_data()))
+        ret = "%s?%s" % (self.url, urlencode(self.get_data()))
+        return urllib.unquote(ret)
+
+    def literal(self):
+        return self.raw()
 
     @classmethod
     def from_url(cls, url, configuration=configuration):
@@ -114,6 +135,9 @@ class UrlString(WebString):
         return cls(title, edit=edit, configuration=configuration)
 
     def symbol(self, configuration=None):
+        if isinstance(self.data, SymbolString):
+            return self.data
+
         cfg = configuration or self.configuration
         return SymbolString(self.data, configuration=cfg)
 

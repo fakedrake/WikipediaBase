@@ -23,11 +23,14 @@ class TestMetaInfobox(unittest.TestCase):
         self.ibx = MetaInfobox('infobox_person')
 
     def test_newlines(self):
-        self.assertEqual(get_meta_infobox('Template:Infobox weapon').rendered_keys()['secondary_armament'], "Secondary armament")
+        weapon = get_meta_infobox('Template:Infobox weapon').rendered_keys()
+        self.assertIn('secondary_armament', weapon)
+        self.assertEqual(weapon.get('secondary_armament'), "Secondary armament")
 
     def test_musician(self):
         di = get_meta_infobox('Template:Infobox musical artist')
-        self.assertEqual(di.rendered_keys()['origin'], "Origin")
+        self.assertIn("origin", di.rendered_keys())
+        self.assertEqual(di.rendered_keys().get('origin'), "Origin")
 
     def test_regression_officeholder(self):
         mibx = get_meta_infobox('Template:Infobox officeholder')
@@ -35,23 +38,22 @@ class TestMetaInfobox(unittest.TestCase):
 
     def test_getting_by_symbol(self):
         di = get_meta_infobox('Template:Infobox musical artist')
-        self.assertEqual(di.symbol, "Template:Infobox musical artist")
-        self.assertEqual(di.title, "Infobox musical artist")
+        self.assertEqual(di.title(), "Infobox musical artist")
+        self.assertEqual(di.symbol.url_friendly(), "Template:Infobox_musical_artist")
 
     def test_getting_by_title(self):
         di = get_meta_infobox('Infobox musical artist')
-        self.assertEqual(di.symbol, "Template:Infobox musical artist")
-        self.assertEqual(di.title, "Infobox musical artist")
+        self.assertEqual(di.symbol.url_friendly(), "Template:Infobox_musical_artist")
+        self.assertEqual(di.title(), "Infobox musical artist")
 
 
     def test_attributes(self):
         self.assertIn((u'Native\xc2\xa0name', '!!!!!native_name!!!!!'),
-                      list(self.ibx.html_parsed()))
+                      [(k.text(), v.text()) for k, v in self.ibx.html_parsed()])
 
     def test_rendered_keys(self):
         self.assertEqual(self.ibx.rendered_keys().get('native_name'),
                          u'Native\xc2\xa0name', self.ibx.rendered_keys())
-
 
     def tearDown(self):
         pass

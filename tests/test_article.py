@@ -46,7 +46,7 @@ class TestArticle(unittest.TestCase):
     def test_complex(self):
         rtcl = Article("Baal", configuration=testcfg)
         self.assertEqual(rtcl.headings()[-1], "External links")
-        self.assertEqual(len(list(rtcl.headings())), 15)
+        self.assertGreaterEqual(len(list(rtcl.headings())), 15)
 
     # XXX: symbols are not used anyway but here is the test.
     # The symbols work, mocking
