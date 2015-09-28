@@ -30,10 +30,10 @@ class StaticResolver(BaseResolver):
         from wikipediabase.classifiers import PersonClassifier
         cls = PersonClassifier().classify(article)
 
-        if 'wikipedia-male' in cls:
+        if 'wikibase-male' in cls:
             return enchant(':masculine', None)
 
-        if 'wikipedia-female' in cls:
+        if 'wikibase-female' in cls:
             return enchant(':feminine', None)
 
     @staticmethod

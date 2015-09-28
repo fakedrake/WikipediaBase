@@ -24,10 +24,10 @@ class TestClassifiers(unittest.TestCase):
 
     def test_person(self):
         c = cls.PersonClassifier()
-        self.assertIn('wikipedia-person', c('Bill Clinton'))
-        self.assertIn('wikipedia-male', c('Bill Clinton'))
-        self.assertIn('wikipedia-person', c('Mary Shakespeare'))
-        self.assertIn('wikipedia-female', c('Mary Shakespeare'))
+        self.assertIn('wikibase-person', c('Bill Clinton'))
+        self.assertIn('wikibase-male', c('Bill Clinton'))
+        self.assertIn('wikibase-person', c('Mary Shakespeare'))
+        self.assertIn('wikibase-female', c('Mary Shakespeare'))
 
     def tearDown(self):
         pass

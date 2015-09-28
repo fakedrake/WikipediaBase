@@ -28,7 +28,7 @@ class BaseClassifier(Logging):
 class StaticClassifier(BaseClassifier):
 
     def classify(self, symbol, fetcher=None):
-        return ['wikipedia-term']
+        return ['wikibase-term', 'wikibase-paragraphs']
 
 
 class InfoboxClassifier(BaseClassifier):
@@ -81,12 +81,12 @@ class PersonClassifier(BaseClassifier):
 
         ret = []
         if self.is_person(symbol):
-            ret += ['wikipedia-person']
+            ret += ['wikibase-person']
 
             if self.is_male(symbol):
-                ret += ['wikipedia-male']
+                ret += ['wikibase-male']
             else:
-                ret += ['wikipedia-female']
+                ret += ['wikibase-female']
 
         return ret
 

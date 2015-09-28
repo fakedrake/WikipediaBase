@@ -98,26 +98,26 @@ WIKI_EXAMPLES = [
 DEGENERATE_EXAMPLES = [
     # DEGENERATE CASES
     # Resolved from text
-    ('(get "wikipedia-person" "Mary Shakespeare" "DEATH-DATE")',
+    ('(get "wikibase-person" "Mary Shakespeare" "DEATH-DATE")',
      '((:yyyymmdd 16080000))',
      'Person without infobox -- get death date from first paragraph'),
-    ('(get "wikipedia-person" "John Shakespeare" "DEATH-DATE")',
+    ('(get "wikibase-person" "John Shakespeare" "DEATH-DATE")',
      '((:yyyymmdd 16010907))',
      'Person without infobox -- get death date from first paragraph'),
-    ('(get "wikipedia-person" "Mary Shakespeare" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Mary Shakespeare" "BIRTH-DATE")',
      '((:yyyymmdd 15370000))',
      'Person without infobox -- get birth date from first paragraph'),
-    ('(get "wikipedia-person" "Manno Wolf-Ferrari" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Manno Wolf-Ferrari" "BIRTH-DATE")',
      '((:yyyymmdd 19110000))'),
-    ('(get "wikipedia-person" "Manno Wolf-Ferrari" "DEATH-DATE")',
+    ('(get "wikibase-person" "Manno Wolf-Ferrari" "DEATH-DATE")',
      '((:yyyymmdd 19940000))'),
-    ('(get "wikipedia-person" "Freidun Aghalyan" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Freidun Aghalyan" "BIRTH-DATE")',
      '((:yyyymmdd 18761120))'),
-    ('(get "wikipedia-person" "Freidun Aghalyan" "DEATH-DATE")',
+    ('(get "wikibase-person" "Freidun Aghalyan" "DEATH-DATE")',
      '((:yyyymmdd 19440201))'),
-    ('(get "wikipedia-person" "Edward Michael S." "BIRTH-DATE")',
+    ('(get "wikibase-person" "Edward Michael S." "BIRTH-DATE")',
      '((:yyyymmdd 19210000))'),
-    ('(get "wikipedia-person" "Edward Michael S." "DEATH-DATE")',
+    ('(get "wikibase-person" "Edward Michael S." "DEATH-DATE")',
      '((:yyyymmdd 20060000))'),
 
     # Dates can now be evaluated
@@ -130,25 +130,25 @@ DEGENERATE_EXAMPLES = [
     # tests for 'get' -- special attributes
     # =====================================
 
-    ('(get "wikipedia-term" "Bill Clinton"  "image-data")',
+    ('(get "wikibase-term" "Bill Clinton"  "image-data")',
      '((0 "44_Bill_Clinton_3x4.jpg"))'),
-    ('(get "wikipedia-term" "Bill Clinton" (:code "IMAGE-DATA"))',
+    ('(get "wikibase-term" "Bill Clinton" (:code "IMAGE-DATA"))',
      '((0 "44_Bill_Clinton_3x4.jpg"))'),
-    ('(get "wikipedia-term" "Yuri I. Manin" (:CODE "IMAGE-DATA"))',
+    ('(get "wikibase-term" "Yuri I. Manin" (:CODE "IMAGE-DATA"))',
      '((0 "Juri_Manin,_Ksenia_Semenova.jpeg" "Yuri Manin with his wife Ksenia Semenova at the ICM 2006 in Madrid"))'),
-    ('(get "wikipedia-term" "Sium sisarum" (:code "IMAGE-DATA"))',
+    ('(get "wikibase-term" "Sium sisarum" (:code "IMAGE-DATA"))',
      # '((0 "illustration_Sium_sisarum0.jpg" "<i>Sium sisarum</i>"))'
      '((0 "illustration_Sium_sisarum0.jpg"))'),
 
     # Next three tests copied from old tests that asserted that each
     # coordinate was within a small delta (.1) of the tested value, to
     # allow for minor edits to Wikipedia articles.
-    ('(get "wikipedia-term" "Black Sea" "COORDINATES")',
+    ('(get "wikibase-term" "Black Sea" "COORDINATES")',
      '((:coordinates 44 35))'),
-    ('(get "wikipedia-term" "Eiffel Tower" "COORDINATES")',
+    ('(get "wikibase-term" "Eiffel Tower" "COORDINATES")',
      # '((:coordinates 48.8583, 2.2945))'
      '((:coordinates 48.8582 2.2945))'),
-    ('(get "wikipedia-term" "Caracas" "COORDINATES")',
+    ('(get "wikibase-term" "Caracas" "COORDINATES")',
      # '((:coordinates 10.5, -66.916664))'
      '((:coordinates 10.5 -66.9167))'),
     # XXX: according to wikipedia not so
@@ -174,21 +174,21 @@ DEGENERATE_EXAMPLES = [
     ('(get "wikipedia-person" "Mary Shakespeare" (:calculated "GENDER"))',
      ':feminine'),
 
-    ('(get "wikipedia-term" "Bill Clinton" (:calculated "PROPER"))',
+    ('(get "wikibase-term" "Bill Clinton" (:calculated "PROPER"))',
      '#t'),
-    ('(get "wikipedia-term" "North American Free Trade Agreement" (:calculated "PROPER"))',
+    ('(get "wikibase-term" "North American Free Trade Agreement" (:calculated "PROPER"))',
      '#t'),
-    ('(get "wikipedia-term" "Purchasing power parity" (:calculated "PROPER"))',
+    ('(get "wikibase-term" "Purchasing power parity" (:calculated "PROPER"))',
      '#f'),
     ('(get "wikipedia-musical-artist" "Lamb of God (band)" "PROPER")',
      '#t'),
-    ('(get "wikipedia-term" "Board game" "PROPER")',
+    ('(get "wikibase-term" "Board game" "PROPER")',
      '#f'),
 
     # This means plural or singular I guess
-    ('(get "wikipedia-term" "Bill Clinton" (:calculated "NUMBER"))',
+    ('(get "wikibase-term" "Bill Clinton" (:calculated "NUMBER"))',
      '#f'),
-    ('(get "wikipedia-term" "The Beatles" (:calculated "NUMBER"))',
+    ('(get "wikibase-term" "The Beatles" (:calculated "NUMBER"))',
      '#t'),
 
     ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
@@ -203,7 +203,7 @@ WIKI_EXAMPLES_NOT = [
     # tests for 'get' -- special attributes
     # =====================================
 
-    ('(get "wikipedia-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))',
+    ('(get "wikibase-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))',
      '((:html ""))'),
 
     # ==============================================================
@@ -240,11 +240,11 @@ WIKI_EXAMPLES_RX = [
     # Would be clearer as something like:
     #   (assert-member 'wikipedia-term' '(get-classes \"Bill Clinton\")')
     ('(get-classes \"Bill Clinton\")',
-     r'wikipedia-president',
-     'All Wikipedia symbols have calculated class wikipedia-term'),
+     r'wikibase-term',
+     'All Wikipedia symbols have calculated class wikibase-term'),
     ('(get-classes \"Bill Clinton\")',
-     r'wikipedia-president',
-     'All Wikipedia symbols have calculated class wikipedia-paragraphs'),
+     r'wikibase-paragraphs',
+     'All Wikipedia symbols have calculated class wikibase-paragraphs'),
     ('(get-classes \"Bill Clinton\")',
      r'wikipedia-president'),
     ('(get-classes \"Ada (programming language)\")',
@@ -333,21 +333,24 @@ WIKI_EXAMPLES_RX = [
 
     # A bit edgy...
     ('(get-classes \"Mary Shakespeare\")',
-     r'wikipedia-person',
+     r'wikibase-person',
      'Person without infobox'),
     ('(get-classes \"Bill Clinton\")',
-     r'wikipedia-person',
-     'All people have calculated class wikipedia-person'),
+     r'wikibase-person',
+     'All people have calculated class wikibase-person'),
+    ('(get-classes \"Adam Sandler\")',
+     r'wikipedia-person.*wikibase-person',
+     'There should be no namespace conflict with infobox person'),
 
     # =====================================
     # tests for 'get' -- special attributes
     # =====================================
 
-    ('(get "wikipedia-term" "Alexander Pushkin" "SHORT-ARTICLE")',
+    ('(get "wikibase-term" "Alexander Pushkin" "SHORT-ARTICLE")',
      r'Russian literature'),
-    ('(get "wikipedia-term" "North America" "SHORT-ARTICLE")',
+    ('(get "wikibase-term" "North America" "SHORT-ARTICLE")',
      r'It is bordered to the north'),
-    ('(get "wikipedia-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))',
+    ('(get "wikibase-term" "Mother\'s Day" (:CODE "SHORT-ARTICLE"))',
      r'influence of mothers in society'),
 
 ]
@@ -376,9 +379,9 @@ WIKI_EXAMPLES_NOT_RX = [
     # tests for 'get' -- special attributes
     # =====================================
 
-    ('(get "wikipedia-term" "Alexander Pushkin" "SHORT-ARTICLE")',
+    ('(get "wikibase-term" "Alexander Pushkin" "SHORT-ARTICLE")',
      r'Watchlist'),
-    ('(get "wikipedia-term" "North America" "SHORT-ARTICLE")',
+    ('(get "wikibase-term" "North America" "SHORT-ARTICLE")',
      r'Uploads'),
 
     # ============================================
