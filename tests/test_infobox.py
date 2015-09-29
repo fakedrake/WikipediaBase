@@ -79,8 +79,9 @@ class TestInfobox(unittest.TestCase):
 
     def test_types(self):
         ibox = get_infobox("Vladimir Putin", self.fetcher)
-        types = ["officeholder", "martial artist", "person", "sportsperson",
-                 "other sportsperson"]
+        # TODO : fix case inconsistency in infobox_tree
+        types = ["officeholder", "martial artist", "Person", "Sportsperson",
+                 "Other sportsperson"]
 
         self.assertItemsEqual(ibox.types(), types)
 

@@ -65,27 +65,26 @@ class Infobox(Logging):
     def classes(self):
         return map(self._to_class, self.templates())
 
-    def types(self, extend=True):
+    def types(self):
         """
         The infobox type. Extend means search in other places except here
         (ie find equivalent ones, parent ones etc).
         """
+        if not hasattr(self, "_sc"):
+            self._sc = ibx_type_superclasses()
 
         templates = self.templates()
         types = map(self._to_type, templates)
-        if extend:
-            if not hasattr(self, "_sc"):
-                self._sc = ibx_type_superclasses()
 
-            for template in templates:
-                t = self._to_type(template)
+        for template in templates:
+            t = self._to_type(template)
 
-                title = get_article(template, self.fetcher).title()
-                if t != self._to_type(title):
-                    types.append(self._to_type(title))
+            title = get_article(template, self.fetcher).title()
+            if t != self._to_type(title):
+                types.append(self._to_type(title))
 
-                if t in self._sc:
-                    types.extend(self._sc[t])
+            if t in self._sc:
+                types.extend(self._sc[t])
 
         return types
 
