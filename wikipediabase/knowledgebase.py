@@ -15,7 +15,7 @@ class KnowledgeBase(Provider):
 
     def __init__(self, *args, **kw):
         """
-        Accepted parapameters are:
+        Accepted parameters are:
 
         - frontend (default: None)
         - fetcher (default: WIKIBASE_FETCHER)
@@ -59,21 +59,26 @@ class KnowledgeBase(Provider):
 
     @provide(name="get-classes")
     def get_classes(self, symbol):
-        """
-        Get a symbol classes.
-        """
-
         it = chain.from_iterable((c.classify(symbol)
                                   for c in self.classifiers))
-
         return enchant(None, list(it))
+
+    @provide(name="get-types")
+    def get_types(self, symbol):
+        types = get_article(symbol).types()
+        return enchant(None, types)
+
+    @provide(name="get-categories")
+    def get_categories(self, symbol):
+        categories = get_article(symbol).categories()
+        return enchant(None, categories)
 
     @provide(name="get-attributes")
     def get_attributes(self, wb_class, symbol=None):
         if symbol is not None:
             return self._get_attrs(symbol)
 
-        # We dont really need wb_class, symbol is eough so it might
+        # We don't really need wb_class, symbol is enough so it might
         # not be provided
         return self._get_attrs(wb_class)
 
@@ -87,7 +92,7 @@ class KnowledgeBase(Provider):
 
     def _get_attrs(self, symbol):
         """
-        Get all attributes of a symbol you cna find.
+        Get all attributes of a symbol you can find.
         """
 
         ibox = get_infobox(symbol, self.fetcher)
