@@ -41,10 +41,29 @@ class Infobox(Logging):
         return bool(self.fetcher.html_source(self.symbol))
 
     @staticmethod
-    def __tt(tmpl):
+    def _to_class(template):
         return "wikipedia-" + \
-            tmpl.lower().replace(
+            template.lower().replace(
                 " ", "-").replace("_", "-").replace("template:infobox-", "")
+
+    @staticmethod
+    def _to_type(template):
+        return template.replace("_", " ")[len("template:infobox "):]
+
+    def templates(self):
+        templates = []
+        ibox_source = self.markup_source()
+        if ibox_source:
+            # XXX: includ taxoboes
+            for m in re.finditer(r'{{\s*(?P<infobox>%s\s+[\w ]*)' % self.box_rx,
+                                 ibox_source):
+                # The direct ibox
+                template = "Template:" + m.group('infobox')
+                templates.append(template)
+        return templates
+
+    def classes(self):
+        return map(self._to_class, self.templates())
 
     def types(self, extend=True):
         """
@@ -52,40 +71,23 @@ class Infobox(Logging):
         (ie find equivalent ones, parent ones etc).
         """
 
-        types = []
-        ibox_source = self.markup_source()
-        if ibox_source:
-            # XXX: includ taxoboes
-            for m in re.finditer(r'{{\s*(?P<type>%s\s+[\w ]*)' % self.box_rx,
-                                 ibox_source):
-                # The direct ibox
-                dominant = "Template:" + m.group('type')
-                types.append(dominant)
+        templates = self.templates()
+        types = map(self._to_type, templates)
+        if extend:
+            if not hasattr(self, "_sc"):
+                self._sc = ibx_type_superclasses()
 
-                if extend:
-                    title = get_article(dominant,
-                                        self.fetcher).title()
+            for template in templates:
+                t = self._to_type(template)
 
-                    if self.__tt(dominant) != self.__tt(title):
-                        types.append(title)
+                title = get_article(template, self.fetcher).title()
+                if t != self._to_type(title):
+                    types.append(self._to_type(title))
+
+                if t in self._sc:
+                    types.extend(self._sc[t])
 
         return types
-
-    def start_types(self):
-        types = self.types(extend=True)
-        ret = types[:]
-
-        if not hasattr(self, "_sc"):
-            self._sc = ibx_type_superclasses()
-
-        for t in types:
-            try:
-                # In case of redirections this may fail
-                ret.extend(self._sc[t.replace("Template:Infobox ", "")])
-            except KeyError:
-                pass
-
-        return map(self.__tt, ret)
 
     def get(self, attr, source=None):
         """
@@ -115,8 +117,8 @@ class Infobox(Logging):
             return self._rendered_attributes
 
         self._rendered_attributes = dict()
-        for infobox_type in reversed(self.types()):
-            ibx = get_meta_infobox(infobox_type)
+        for template in reversed(self.templates()):
+            ibx = get_meta_infobox(template)
             self._rendered_attributes.update(ibx.rendered_attributes())
 
         return self._rendered_attributes

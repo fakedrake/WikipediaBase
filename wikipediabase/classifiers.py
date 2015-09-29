@@ -1,7 +1,10 @@
 """
-Symbol annotation. Subclass BaseClassifier provideing the classify
-method and return an iterable of strings that are the classes that
-your classifier provides.
+Subclass BaseClassifier and implement the classify()
+method to return an iterable of strings.
+
+Classes can be one of two kinds:
+ * infobox templates, prefixed by "wikipedia-"
+ * calculated classes, prefixed by "wikibase-"
 """
 
 import re
@@ -35,16 +38,9 @@ class InfoboxClassifier(BaseClassifier):
 
     def classify(self, symbol, fetcher=None):
         ibox = get_infobox(symbol, fetcher)
-        types = ibox.start_types()
+        classes = ibox.classes()
 
-        return types
-
-
-class _CategoryClassifier(BaseClassifier):
-
-    def classify(self, symbol, fetcher=None):
-        article = get_article(symbol, fetcher)
-        return article.categories()
+        return classes
 
 
 class PersonClassifier(BaseClassifier):
