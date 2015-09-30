@@ -87,7 +87,7 @@ class WikipediaSiteFetcher(BaseFetcher):
     def redirect_url(self, symbol):
         sym = symbol
         if not isinstance(symbol, SymbolString):
-            sym = Symbol(symbol)
+            sym = SymbolString(symbol)
 
         redirect_sym = self.source(sym, redirect=False).redirect_target() or sym
         return redirect_sym.url().raw()
