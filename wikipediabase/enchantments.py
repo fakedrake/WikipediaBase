@@ -1,44 +1,28 @@
 """
-Enchantments are an abstraction to representation of data within
-and outside of wikipediabase, ie wikipedia free text, python types and
-START s-expressions.
+Enchantments convert Python objects into Lisp-like encoded strings that are
+readable by START.
 
-To use the enchantment infrastructure use the 'enchant' function. To
-create a new way of interpreting data subclass the Enchanted
-class. Prefix your class with an underscore (_) if it is an
-intermediate generation between Enchanted and the classes that
-actually parse so that the enchant method will ignore it.
+To use the enchantment infrastructure use the 'enchant' function.
+To create a new way of interpreting data subclass the Enchanted class.
+
+Prefix your class with an underscore (_) if it is an intermediate generation
+between Enchanted and the classes that actually parse so that the enchant 
+method will ignore it.
 """
 
 import re
 from numbers import Number
 import warnings
-
 import overlay_parse
 
 from wikipediabase.log import Logging
 from wikipediabase.util import subclasses, output
 
 
-# For fully deterministic enchantments use this prioroty.
+# For fully deterministic enchantments use this priority.
 MIN_PRIORITY = 0
 MAX_PRIORITY = 15
 
-def kv_pair(k, v):
-    if isinstance(k, basestring):
-        kv = u":%s %s" % (k, v)
-        return output(kv)
-
-    kv = u"%s %s" % (k, v)
-    return output(kv)
-
-
-def erepr(v):
-    if isinstance(v, basestring):
-        e = u'"%s"' % v
-        return output(e)
-
-    return repr(v)
 
 def mid_priority():
     """
@@ -54,18 +38,18 @@ def mid_priority():
 
 MID_PRIORITY = mid_priority()
 
+
 class Enchanted(Logging):
 
     """
     An enchanted object's string representation is something that
-    START understands. Also its `val` attribute is something that
-    makes sense to python.
+    START understands. Its `val` attribute is a Python object.
 
     Note that not only answers but also questions are enchanted.
 
     To use this subclass it and provide any of the following:
 
-    - _str: string representation
+    - __str__: string representation
     - should_parse
     - parse_val
     """
@@ -73,12 +57,12 @@ class Enchanted(Logging):
     priority = 0
     literal = False
 
-    def __init__(self, tag, val, question=None, **kw):
+    def __init__(self, val, typecode, question=None, **kw):
         """
         Enchant a piece of data. Throws EnchantError on failure.
         """
 
-        self.tag = tag
+        self.typecode = typecode
         self.question = question
         self.val = val
         self.valid = False
@@ -91,7 +75,7 @@ class Enchanted(Logging):
 
     def should_parse(self):
         """
-        If this returns false echantment is invalid whatever the value.
+        If this returns false enchantment is invalid whatever the value.
         """
 
         return True
@@ -103,33 +87,37 @@ class Enchanted(Logging):
 
         return val
 
+    def typed_value(self):
+        if self.typecode is None:
+            return u"%s" % self.val_str()
+        else:
+            return u"(:%s %s)" % (self.typecode_str(), self.val_str())
+
     def __repr__(self):
-        r = u"<%s object (%s)>" % (
-            self.__class__.__name__, kv_pair(self.tag_str(), self.val_str()))
+        r = u"<%s object %s>" % (self.__class__.__name__,
+                                 self.__str__())
         return output(r)
 
     def __str__(self):
-        if self.literal:
-            return self._str()
-
-        s = u"(%s)" % self._str().replace("\n", "")
-        return output(s)
-
-    def _str(self):
-        if self:
-            s = u"(%s)" % kv_pair(self.tag_str(), self.val_str())
-            return output(s)
-
-        return ''
+        return output(self.typed_value())
 
     def val_str(self):
-        return output(unicode(self.val))
+        return unicode(self.val)
 
-    def tag_str(self):
-        return self.tag or "html"
+    def typecode_str(self):
+        return self.typecode
 
     def __nonzero__(self):
         return self.valid
+
+    def __eq__(self, other):
+        # compare Enchanted objects based on their string representation
+        if isinstance(other, self.__class__) or isinstance(other, basestring):
+            return self.__str__() == other.__str__()
+        return False
+
+    def __hash__(self):
+        return hash(self.__str__())
 
 
 class EnchantedString(Enchanted):
@@ -138,17 +126,12 @@ class EnchantedString(Enchanted):
     def should_parse(self):
         return isinstance(self.val, basestring)
 
-    def tag_str(self):
-        if self.tag == "code" or self.tag is None:
-            return "html"
-
-        return self.tag
-
     def val_str(self):
-        v = re.sub(r"\[\d*\]", "", self.val) # remove references, e.g. [1]
-        v = re.sub(r"[[\]]", "", v) # remove wikimarkup links, e.g. [[Ruby]]
-        v = u"\"%s\"" % v
-        return output(v)
+        v = re.sub(r"\[\d*\]", "", self.val)  # remove references, e.g. [1]
+        v = re.sub(r"[[\]]", "", v)  # remove wikimarkup links, e.g. [[Ruby]]
+        v = v.replace('"', '\\"')  # escape double quotes
+        v = u'"{0}"'.format(v)
+        return v
 
 
 class EnchantedList(Enchanted):
@@ -158,18 +141,35 @@ class EnchantedList(Enchanted):
     """
 
     priority = next(MID_PRIORITY)
+    literal = True
 
     def should_parse(self):
         return hasattr(self.val, '__iter__')
 
-    def _str(self):
-        if self.tag is None:
-            return '(%s)' % self.val_str()
+    def __str__(self):
+        if self.typecode is None:
+            return '(%s)' % super(EnchantedList, self).__str__()
         else:
-            return '(:%s %s)' % (self.tag_str(), self.val_str())
+            return '(:%s %s)' % (self.typecode_str(),
+                                 super(EnchantedList, self).__str__())
+
+    def erepr(self, v):
+        if isinstance(v, Enchanted):
+            return str(v)
+
+        if isinstance(v, basestring):
+            return str(EnchantedString(v, None))
+
+        if hasattr(v, '__iter__'):
+            return str(EnchantedList(v, None))
+
+        return repr(v)
+
+    def typecode_str(self):
+        return None  # ignore typecodes
 
     def val_str(self):
-        return " ".join([erepr(v) for v in self.val])
+        return " ".join([self.erepr(v) for v in self.val])
 
     def __contains__(self, val):
         return val in self.val
@@ -178,7 +178,7 @@ class EnchantedList(Enchanted):
 class EnchantedDate(Enchanted):
 
     """
-    Date enchantment but using the overlay framework.
+    Date enchantment using the overlay framework.
     """
 
     priority = next(MID_PRIORITY)
@@ -187,17 +187,17 @@ class EnchantedDate(Enchanted):
         d, m, y = self.val
         return "%s%04d%02d%02d" % ("-" if y < 0 else "", abs(y), m, d)
 
-    def tag_str(self):
+    def typecode_str(self):
         return "yyyymmdd"
 
     def should_parse(self):
         if self.question and self.question.lower().endswith("date"):
             return True
 
-        return self.tag == "yyyymmdd"
+        return self.typecode == "yyyymmdd"
 
     def _range_middle(self, date):
-        # Very impercise
+        # Very imprecise
 
         (d1, d2) = date
         return tuple(int((i + j) / 2) for i, j in zip(d1, d2))
@@ -221,12 +221,12 @@ class _EnchantedDateVoting(EnchantedDate):
 
     def parse_val(self, txt):
         """
-        Return of the extracted date the one appearing most often. Count
+        Return of the extracted dates the one appearing most often. Count
         the ones that are in ranges etc.
 
         Note that while this works it is not used. See results for the
         jesus date of birth. The correct way would be to have a
-        sepcial enchantment that may be a date or a date range.
+        special enchantment that may be a date or a date range.
         """
 
         # Do not parse separately, it's expensive and you will get
@@ -266,6 +266,7 @@ class _EnchantedDateVoting(EnchantedDate):
 
 EnchantedDateVoting = _EnchantedDateVoting
 
+
 class EnchantedStringDict(Enchanted):
 
     """
@@ -279,11 +280,12 @@ class EnchantedStringDict(Enchanted):
     def should_parse(self):
         return isinstance(self.val, dict)
 
-    def _str(self):
+    def __str__(self):
+        pairs = self.val.items()
         if self.reverse:
-            pairs = reversed(self.val.items())
+            pairs = reversed(pairs)
 
-        return '(%s)' % self._plist(pairs)
+        return output(u'(%s)' % self._plist(pairs))
 
     def _plist(self, pairs):
         """
@@ -292,20 +294,26 @@ class EnchantedStringDict(Enchanted):
 
         return " ".join(list(self._paren_content_iter(pairs)))
 
+    def _kv_pair(self, k, v):
+        if k is None:
+            return output(u"%s" % v)
 
-    @staticmethod
-    def _paren_content_iter(pairs):
+        if isinstance(k, basestring):
+            return output(u":%s %s" % (k, v))
+
+    def _paren_content_iter(self, pairs):
         for k, v in pairs:
             if v is not None:
                 # XXX: NastyHack(TM). Replace the nonbreaking space
                 # with a space.
-                yield kv_pair(k, u'"%s"' % v)
+                yield self._kv_pair(k, EnchantedString(u'%s' % v, None))
 
 
 class EnchantedError(EnchantedStringDict):
+
     """
     An error with a reply and a symbol. The expected value should be a
-    dict-like object with the keys 'kw' and 'symbol' and the the tag
+    dict-like object with the keys 'kw' and 'symbol' and the the typecode
     should be 'error'. Alternatively you can pass as value an
     exception and I will try to deal with it.
     """
@@ -316,20 +324,19 @@ class EnchantedError(EnchantedStringDict):
     lookup = dict()
 
     def should_parse(self):
-        return self.tag == 'error' or \
-            isinstance(self.val, BaseException)
+        return self.typecode == 'error' or isinstance(self.val, BaseException)
 
-    def _str(self):
+    def __str__(self):
         if isinstance(self.val, BaseException):
             self.val = dict(
-                symbol=self.lookup.get(type(self.val).__name__) or \
+                symbol=self.lookup.get(type(self.val).__name__) or
                 type(self.val).__name__,
                 kw={'reply': self.val.message}
             )
 
-        return "(error {symbol} {keys})".format(
+        return output(u"(error {symbol} {keys})".format(
             symbol=self.val['symbol'],
-            keys=self._plist(self.val['kw'].iteritems()))
+            keys=self._plist(self.val['kw'].iteritems())))
 
     def __nonzero__(self):
         """
@@ -351,21 +358,21 @@ class _EnchantedLiteral(Enchanted):
     literal = True
 
 
-class EnchantKeyword(_EnchantedLiteral):
+class EnchantedKeyword(_EnchantedLiteral):
 
     """
     Just a keyword. No content.
     """
 
     def should_parse(self):
-        return isinstance(self.tag, basestring) and \
-            self.val is None
+        return isinstance(self.val, basestring) and self.val.startswith(':') \
+            and ' ' not in self.val
 
-    def _str(self):
-        return self.tag
+    def val_str(self):
+        return self.val
 
 
-class EnchantBool(_EnchantedLiteral):
+class EnchantedBool(_EnchantedLiteral):
 
     """
     Enchant a boolean value
@@ -374,57 +381,58 @@ class EnchantBool(_EnchantedLiteral):
     def should_parse(self):
         return isinstance(self.val, bool)
 
-    def _str(self):
+    def val_str(self):
         return "#t" if self.val else "#f"
 
 
-class EnchantNone(_EnchantedLiteral):
+class EnchantedNone(_EnchantedLiteral):
 
     """
     Enchanted none object
     """
 
     def should_parse(self):
-        return self.val is None and \
-            self.tag is None
+        return self.val is None
 
-    def _str(self):
+    def val_str(self):
         return 'nil'
 
 
-class EnchantNumber(_EnchantedLiteral):
+class EnchantedNumber(_EnchantedLiteral):
 
     def should_parse(self):
-        return isinstance(self.val, Number) and \
-            self.tag is None
+        return isinstance(self.val, Number)
 
-    def _str(self):
+    def val_str(self):
         return str(self.val)
 
 
 WIKIBASE_ENCHANTMENTS = subclasses(Enchanted, instantiate=False)
 
 
-def enchant(tag, obj, result_from=None, fallback=None, **kw):
+def enchant(obj, typecode=None, result_from=None, fallback=None, in_list=False, **kw):
     """
-    Return an appropriate enchanted object. reslut is true when we are
-    enchanting a result. Sometimes tags mean different thigs in
-    results. Also for now you always want to be enchanting.
+    Return an enchanted object.
+
+    result_from is true when we are enchanting a result. Sometimes typecodes 
+    mean different things in results.
     """
 
     if isinstance(obj, Enchanted):
         return obj
 
     for E in WIKIBASE_ENCHANTMENTS:
-        ret = E(tag, obj, question=result_from, **kw)
+        ret = E(obj, typecode, question=result_from, **kw)
         if ret.valid:
+            if in_list:
+                ret = enchant(None, [ret])
             return ret
 
     if fallback:
         return EnchantedError('error', fallback)
 
     raise NotImplementedError(
-        "Implement enchatment tag: %s, val: %s or"
-        "provide fallback error." % (tag, obj))
+        "Implement enchantment for typecode: %s, val: %s or"
+        "provide fallback error." % (typecode, obj))
 
 __all__ = ['enchant']
