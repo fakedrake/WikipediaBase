@@ -26,6 +26,8 @@ def ibx_tree(src, prefix=None, form=None):
     You also have the chance to change the form of the category
     """
 
+    # TODO : case is inconsistent, e.g. "Person" instead of "person"
+
     stack = (prefix or []) + ([None] * len(MW_HEADING_RX))
     queue = []
     offset = len(prefix or [])

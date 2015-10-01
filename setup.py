@@ -15,8 +15,6 @@ setup(
     packages=[
         'wikipediabase',
         'wikipediabase.resolvers',
-        'wikipediabase.adhoc',
-        'tests'
     ],
     include_package_data=True,
     install_requires=[

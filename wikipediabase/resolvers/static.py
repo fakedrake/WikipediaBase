@@ -31,10 +31,10 @@ class StaticResolver(BaseResolver):
         cls = PersonClassifier().classify(article)
 
         if 'wikibase-male' in cls:
-            return enchant(':masculine', None)
+            return enchant(':masculine', typecode='calculated')
 
         if 'wikibase-female' in cls:
-            return enchant(':feminine', None)
+            return enchant(':feminine', typecode='calculated')
 
     @staticmethod
     def _dton(s):
@@ -70,7 +70,7 @@ class StaticResolver(BaseResolver):
         nlat = self._dton(totext(lat))
         nlon = self._dton(totext(lon))
 
-        return enchant("coordinates", [nlat, nlon])
+        return enchant([nlat, nlon], typecode='coordinates')
 
     @provide(name="image-data")
     def image(self, article, attribute):
@@ -91,7 +91,7 @@ class StaticResolver(BaseResolver):
             fnam = fnam.split("{{!}}border")[0]
 
         cap = ibx.get('caption')
-        return enchant(None, [0, fnam] + ([markup_unlink(cap)] if cap else []))
+        return enchant([0, fnam] + ([markup_unlink(cap)] if cap else []))
 
     @provide(name='url')
     def url(self, article, _):
@@ -102,7 +102,7 @@ class StaticResolver(BaseResolver):
         # Will also teake care of redirections.
         article = get_article(article)
         url = article.url()
-        return enchant("url", url)
+        return enchant(url, typecode='url')
 
     @provide(name='number')
     def number(self, article, _):
@@ -117,7 +117,7 @@ class StaticResolver(BaseResolver):
         yay = sum(map(txt.count, [' are ', ' were ', ' have ']))
 
         # inequality because there are many more nays
-        return enchant(None, yay > nay)
+        return enchant(yay > nay, typecode='calculated')
 
     @provide(name='proper')
     def proper(self, article, _):
@@ -132,4 +132,4 @@ class StaticResolver(BaseResolver):
         ret = (txt.count(a.lower()) - txt.count(". " + a.lower()) <
                txt.count(a))
 
-        return enchant(None, ret)
+        return enchant(ret, typecode='calculated')

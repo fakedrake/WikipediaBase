@@ -71,12 +71,12 @@ class LifespanParagraphResolver(BaseResolver):
 
             for ovl in overlay_parse.dates.just_ranges(paren):
                 if attr == 'birth-date':
-                    return enchant('yyyymmdd', ovl[0])
+                    return enchant(ovl[0], typecode='yyyymmdd')
                 elif attr == 'death-date':
-                    return enchant('yyyymmdd', ovl[1])
+                    return enchant(ovl[1], typecode='yyyymmdd')
 
             # If there is just one date and we need a birth date, get
             # that.
             if attr == 'birth-date':
                 for ovl in overlay_parse.dates.just_dates(paren):
-                    return enchant('yyyymmdd', ovl)
+                    return enchant(ovl, typecode='yyyymmdd')

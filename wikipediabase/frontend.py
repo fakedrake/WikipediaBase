@@ -26,7 +26,7 @@ class Frontend(Acquirer):
 
     @provide(name='commands')
     def commands(self):
-        return enchant(None, [i for i,_ in self.resources().iteritems()])
+        return enchant([i for i, _ in self.resources().iteritems()])
 
     def get_callable(self, symbol):
         """
@@ -38,7 +38,7 @@ class Frontend(Acquirer):
             return self.resources()[symbol._name]
 
         if isinstance(symbol, Keyword):
-            return lambda *args: enchant(symbol._name, *args)
+            return lambda *args: enchant(*args, typecode=symbol._name)
 
         raise TypeError("Could not resolve function %s (type %s)."
                         % (symbol, str(type(symbol))))
@@ -70,7 +70,7 @@ class TelnetFrontend(Frontend):
             if isinstance(e, SystemExit):
                 raise e
 
-            return unicode(enchant('error', e)) + u'\n'
+            return unicode(enchant(e, typecode='error')) + u'\n'
 
     def __init__(self, *args, **kwargs):
         super(TelnetFrontend, self).__init__(*args, **kwargs)

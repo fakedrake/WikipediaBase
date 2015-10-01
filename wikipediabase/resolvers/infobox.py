@@ -20,7 +20,7 @@ class InfoboxResolver(BaseResolver):
 
         super(InfoboxResolver, self).__init__(*args, **kwargs)
         self.fetcher = kwargs.get('fetcher', WIKIBASE_FETCHER)
-        self._tag = "html"
+        self._typecode = "html"
 
     def resolve(self, symbol, attr, cls=None):
         """
@@ -32,18 +32,19 @@ class InfoboxResolver(BaseResolver):
             return None
 
         if isinstance(attr, Enchanted):
-            key, attr = attr.tag, attr.val
+            typecode, attr = attr.typecode, attr.val
         else:
-            key, attr = None, attr
+            typecode, attr = self._typecode, attr
 
         ibox = get_infobox(symbol, self.fetcher)
 
         if ibox:
-            ret = ibox.get(attr)
-            if ret:
+            result = ibox.get(attr)
+            if result:
                 self.log().info("Found infobox attribute '%s'" % attr)
-                assert(isinstance(ret, unicode))  # TODO: remove for production
-                return enchant(key, ret, result_from=attr, log=self.log())
+                assert(isinstance(result, unicode)) # TODO: remove for production
+
+                return enchant(result, typecode=typecode, infobox_attr=attr)
 
             self.log().warning("Could not find infobox attribute '%s'" % attr)
         else:

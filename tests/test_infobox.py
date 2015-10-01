@@ -15,12 +15,21 @@ except ImportError:
 
 from wikipediabase.util import get_infobox
 from wikipediabase import fetcher
+from wikipediabase.infobox import Infobox
 
 
 class TestInfobox(unittest.TestCase):
 
     def setUp(self):
         self.fetcher = fetcher.WIKIBASE_FETCHER
+
+    def test_class(self):
+        self.assertEqual(Infobox._to_class("Template:Infobox martial artist"),
+                         "wikipedia-martial-artist")
+
+    def test_type(self):
+        self.assertEqual(Infobox._to_type("Template:Infobox martial artist"),
+                         "martial artist")
 
     def test_markup(self):
         ibox = get_infobox("Led Zeppelin", self.fetcher)
@@ -41,10 +50,12 @@ class TestInfobox(unittest.TestCase):
 
     def test_rendered_attributes(self):
         clinton = get_infobox("Winston Churchill", self.fetcher)
-        self.assertEqual("Died", clinton.rendered_attributes().get("death_place"))
+        self.assertEqual("Died",
+                         clinton.rendered_attributes().get("death_place"))
 
         bridge = get_infobox("Brooklyn Bridge", self.fetcher)
-        self.assertEqual("Maintained by", bridge.rendered_attributes().get("maint"))
+        self.assertEqual("Maintained by",
+                         bridge.rendered_attributes().get("maint"))
 
     def test_get(self):
         ibox = get_infobox("The Rolling Stones", self.fetcher)
@@ -55,31 +66,32 @@ class TestInfobox(unittest.TestCase):
         self.assertIn("death-place",
                       [k for k, v in ibox.markup_parsed_iter()])
 
+    def test_templates(self):
+        ibox = get_infobox("Vladimir Putin", self.fetcher)
+        templates = ["Template:Infobox officeholder",
+                     "Template:Infobox martial artist"]
+        self.assertItemsEqual(ibox.templates(), templates)
+
+    def test_classes(self):
+        ibox = get_infobox("Vladimir Putin", self.fetcher)
+        classes = ["wikipedia-officeholder", "wikipedia-martial-artist"]
+        self.assertItemsEqual(ibox.classes(), classes)
+
     def test_types(self):
         ibox = get_infobox("Vladimir Putin", self.fetcher)
-        expected = ["Template:Infobox officeholder",
-                    "Template:Infobox martial artist"]
+        # TODO : fix case inconsistency in infobox_tree
+        types = ["officeholder", "martial artist", "Person", "Sportsperson",
+                 "Other sportsperson"]
 
-        expected_extended = ["Template:Infobox officeholder",
-                             "Template:Infobox martial artist"]
-
-        expected_start = ["wikipedia-officeholder",
-                          "wikipedia-martial-artist",
-                          "wikipedia-person",
-                          "wikipedia-sportsperson",
-                          "wikipedia-other-sportsperson"]
-
-        self.assertItemsEqual(ibox.types(), expected)
-        self.assertItemsEqual(ibox.types(extend=True), expected_extended)
-        self.assertEqual(ibox.start_types(), expected_start)
+        self.assertItemsEqual(ibox.types(), types)
 
     def test_types_redirect(self):
         ibox = get_infobox("Bill Clinton", self.fetcher)
-        self.assertIn("wikipedia-president", ibox.start_types())
+        self.assertIn("president", ibox.types())
 
     def test_html_attributes(self):
         ibox = get_infobox("BBC News", self.fetcher)
-        self.assertEquals("Owners", ibox.rendered_attributes().get("owners"))
+        self.assertEqual("Owners", ibox.rendered_attributes().get("owners"))
 
 if __name__ == '__main__':
     unittest.main()
