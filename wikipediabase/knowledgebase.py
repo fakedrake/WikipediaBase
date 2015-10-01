@@ -37,7 +37,7 @@ class KnowledgeBase(Provider):
     @provide(name='sort-symbols')
     def sort_symbols(self, *args):
         key = lambda a: len(' '.join(get_article(a).paragraphs()))
-        return enchant(None, sorted(args, reverse=True, key=key))
+        return enchant(sorted(args, reverse=True, key=key))
 
     @provide(name='get')
     def get(self, cls, symbol, attr):
@@ -54,33 +54,32 @@ class KnowledgeBase(Provider):
             if res is not None:
                 break
 
-        # probably already enchanted, but try anyway
-        return enchant(None, res)
+        return enchant([res])
 
     @provide(name="get-classes")
     def get_classes(self, symbol):
         it = chain.from_iterable((c.classify(symbol)
                                   for c in self.classifiers))
-        return enchant(None, list(it))
+        return enchant(list(it))
 
     @provide(name="get-types")
     def get_types(self, symbol):
         types = get_article(symbol).types()
-        return enchant(None, types)
+        return enchant(types)
 
     @provide(name="get-categories")
     def get_categories(self, symbol):
         categories = get_article(symbol).categories()
-        return enchant(None, categories)
+        return enchant(categories)
 
     @provide(name="get-attributes")
     def get_attributes(self, wb_class, symbol=None):
         if symbol is not None:
-            return self._get_attrs(symbol)
+            return enchant(self._get_attrs(symbol))
 
         # We don't really need wb_class, symbol is enough so it might
         # not be provided
-        return self._get_attrs(wb_class)
+        return enchant(self._get_attrs(wb_class))
 
     def synonyms(self, symbol):
         synonyms = set()
@@ -88,7 +87,7 @@ class KnowledgeBase(Provider):
         for si in self.synonym_inducers:
             synonyms.update(si.induce(symbol))
 
-        return enchant(None, synonyms)
+        return enchant(synonyms)
 
     def _get_attrs(self, symbol):
         """
@@ -100,12 +99,12 @@ class KnowledgeBase(Provider):
         ret = []
         for k, v in ibox.markup_parsed_iter():
             rendered = ibox.rendered_attributes().get(k.replace('-', '_'))
-            tmp = enchant(None, dict(code=k.upper(),
-                                     rendered=rendered))
+            tmp = enchant(dict(code=k.upper(),
+                               rendered=rendered))
 
-            ret.append(tmp._str())
+            ret.append(tmp)
 
-        return " ".join(ret)
+        return ret
 
     def attribute_wrap(self, val, **keys):
         """

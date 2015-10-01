@@ -34,6 +34,11 @@ class TestEnchantments(unittest.TestCase):
         l = ['wikipedia-class1', 'wikipedia-class2']
         self.assertEqual(enchant(l), '("wikipedia-class1" "wikipedia-class2")')
 
+    def test_list_with_typecode(self):
+        l = [44, 35]
+        self.assertEqual(enchant(l, typecode='coordinates'),
+                         '(:coordinates 44 35)')
+
     def test_nested_list(self):
         l = [[0, 'foo'], [1, '"bar"']]
         self.assertEqual(enchant(l), '((0 "foo") (1 "\\"bar\\""))')

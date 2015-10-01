@@ -57,13 +57,13 @@ class Enchanted(Logging):
     priority = 0
     literal = False
 
-    def __init__(self, val, typecode, question=None, **kw):
+    def __init__(self, val, typecode, infobox_attr=None):
         """
         Enchant a piece of data. Throws EnchantError on failure.
         """
 
         self.typecode = typecode
-        self.question = question
+        self.infobox_attr = infobox_attr
         self.val = val
         self.valid = False
 
@@ -126,6 +126,12 @@ class EnchantedString(Enchanted):
     def should_parse(self):
         return isinstance(self.val, basestring)
 
+    def typecode_str(self):
+        if self.infobox_attr is not None and \
+                self.typecode.lower() in ('code', 'rendered'):
+            return 'html'
+        return super(EnchantedString, self).typecode_str()
+
     def val_str(self):
         v = re.sub(r"\[\d*\]", "", self.val)  # remove references, e.g. [1]
         v = re.sub(r"[[\]]", "", v)  # remove wikimarkup links, e.g. [[Ruby]]
@@ -147,11 +153,10 @@ class EnchantedList(Enchanted):
         return hasattr(self.val, '__iter__')
 
     def __str__(self):
-        if self.typecode is None:
-            return '(%s)' % super(EnchantedList, self).__str__()
+        if self.typecode:
+            return '%s' % (super(EnchantedList, self).__str__())
         else:
-            return '(:%s %s)' % (self.typecode_str(),
-                                 super(EnchantedList, self).__str__())
+            return '(%s)' % super(EnchantedList, self).__str__()
 
     def erepr(self, v):
         if isinstance(v, Enchanted):
@@ -165,14 +170,11 @@ class EnchantedList(Enchanted):
 
         return repr(v)
 
-    def typecode_str(self):
-        return None  # ignore typecodes
-
     def val_str(self):
         return " ".join([self.erepr(v) for v in self.val])
 
     def __contains__(self, val):
-        return val in self.val
+        return val in self.val_str()
 
 
 class EnchantedDate(Enchanted):
@@ -191,10 +193,13 @@ class EnchantedDate(Enchanted):
         return "yyyymmdd"
 
     def should_parse(self):
-        if self.question and self.question.lower().endswith("date"):
+        if self.infobox_attr and (self.infobox_attr.lower() == 'date' or
+                                  self.infobox_attr.lower().endswith("-date")):
+            self.typecode = "yyyymmdd"
             return True
 
-        return self.typecode == "yyyymmdd"
+        if self.typecode == "yyyymmdd":
+            return True
 
     def _range_middle(self, date):
         # Very imprecise
@@ -410,26 +415,20 @@ class EnchantedNumber(_EnchantedLiteral):
 WIKIBASE_ENCHANTMENTS = subclasses(Enchanted, instantiate=False)
 
 
-def enchant(obj, typecode=None, result_from=None, fallback=None, in_list=False, **kw):
+def enchant(obj, typecode=None, infobox_attr=None):
     """
     Return an enchanted object.
 
-    result_from is true when we are enchanting a result. Sometimes typecodes 
-    mean different things in results.
+    infobox_attr is the name of the infobox attribute where obj came from
     """
 
     if isinstance(obj, Enchanted):
         return obj
 
     for E in WIKIBASE_ENCHANTMENTS:
-        ret = E(obj, typecode, question=result_from, **kw)
-        if ret.valid:
-            if in_list:
-                ret = enchant(None, [ret])
-            return ret
-
-    if fallback:
-        return EnchantedError('error', fallback)
+        e = E(obj, typecode, infobox_attr=infobox_attr)
+        if e.valid:
+            return e
 
     raise NotImplementedError(
         "Implement enchantment for typecode: %s, val: %s or"

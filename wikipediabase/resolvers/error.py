@@ -2,7 +2,9 @@ from wikipediabase.resolvers.base import MIN_PRIORITY, BaseResolver
 from wikipediabase.util import get_knowledgebase
 from wikipediabase.enchantments import enchant
 
+
 class ErrorResolver(BaseResolver):
+
     """
     Yield an error message given that all else failed
     """
@@ -11,8 +13,9 @@ class ErrorResolver(BaseResolver):
 
     @staticmethod
     def _err(repl=None, sym=None):
-        return enchant('error', {'symbol': sym or 'attribute-value-not-found',
-                                 'kw': {'reply': repl or 'No such attribute'}})
+        return enchant({'symbol': sym or 'attribute-value-not-found',
+                        'kw': {'reply': repl or 'No such attribute'}},
+                       typecode='error')
 
     def resolve(self, symbol, attr, cls=None):
         kb = get_knowledgebase()
