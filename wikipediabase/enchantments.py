@@ -135,6 +135,7 @@ class EnchantedString(Enchanted):
     def val_str(self):
         v = re.sub(r"\[\d*\]", "", self.val)  # remove references, e.g. [1]
         v = re.sub(r"[[\]]", "", v)  # remove wikimarkup links, e.g. [[Ruby]]
+        v = output(unicode(v)) # unidecode
         v = v.replace('"', '\\"')  # escape double quotes
         v = u'"{0}"'.format(v)
         return v
@@ -272,24 +273,19 @@ class _EnchantedDateVoting(EnchantedDate):
 EnchantedDateVoting = _EnchantedDateVoting
 
 
-class EnchantedStringDict(Enchanted):
+class EnchantedDict(Enchanted):
 
     """
     Get a lispy dictionary of non-None items.
     """
 
-    # Just so the test regexes match.
-    reverse = True
     priority = next(MID_PRIORITY)
 
     def should_parse(self):
         return isinstance(self.val, dict)
 
     def __str__(self):
-        pairs = self.val.items()
-        if self.reverse:
-            pairs = reversed(pairs)
-
+        pairs = sorted(self.val.items())
         return output(u'(%s)' % self._plist(pairs))
 
     def _plist(self, pairs):
@@ -311,10 +307,10 @@ class EnchantedStringDict(Enchanted):
             if v is not None:
                 # XXX: NastyHack(TM). Replace the nonbreaking space
                 # with a space.
-                yield self._kv_pair(k, EnchantedString(u'%s' % v, None))
+                yield self._kv_pair(k, enchant(v))
 
 
-class EnchantedError(EnchantedStringDict):
+class EnchantedError(EnchantedDict):
 
     """
     An error with a reply and a symbol. The expected value should be a
@@ -336,12 +332,15 @@ class EnchantedError(EnchantedStringDict):
             self.val = dict(
                 symbol=self.lookup.get(type(self.val).__name__) or
                 type(self.val).__name__,
-                kw={'reply': self.val.message}
+                # :reply should only be used for error messages that can be
+                # displayed to START users
+                # use :message for Python exceptions
+                kw={'message': self.val.message}
             )
 
-        return output(u"(error {symbol} {keys})".format(
+        return output(u"(:error {symbol} {keys})".format(
             symbol=self.val['symbol'],
-            keys=self._plist(self.val['kw'].iteritems())))
+            keys=self._plist(sorted(self.val['kw'].items()))))
 
     def __nonzero__(self):
         """
@@ -387,7 +386,7 @@ class EnchantedBool(_EnchantedLiteral):
         return isinstance(self.val, bool)
 
     def val_str(self):
-        return "#t" if self.val else "#f"
+        return 't' if self.val else 'nil'
 
 
 class EnchantedNone(_EnchantedLiteral):
