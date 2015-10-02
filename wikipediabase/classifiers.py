@@ -7,12 +7,12 @@ Classes can be one of two kinds:
  * calculated classes, prefixed by "wikibase-"
 """
 
-import re
-
-from wikipediabase.util import get_infobox, get_article, subclasses
+from wikipediabase.util import get_infobox, subclasses
 from wikipediabase.log import Logging
 
 # Return a LIST of classes
+
+
 class BaseClassifier(Logging):
 
     """
@@ -45,11 +45,14 @@ class InfoboxClassifier(BaseClassifier):
 
 class PersonClassifier(BaseClassifier):
 
-    male_prep = ["he", "him", "his"]
-    female_prep = ["she", "her"]
-
     def is_person(self, symbol):
+        # TODO : test the precision of this method of determining is_person
         ibx = get_infobox(symbol, fetcher=self.fetcher)
+
+        if 'wikipedia-person' in ibx.classes():
+            # TODO : check for children of the infobox class
+            return True
+
         if ibx.get('birth-date'):
             return True
 
@@ -59,32 +62,14 @@ class PersonClassifier(BaseClassifier):
 
         return False
 
-    def is_male(self, symbol):
-        art = get_article(symbol, fetcher=self.fetcher)
-        full_text = "\n\n".join(art.paragraphs())
-
-        def word_search(w):
-            return len(re.findall(r"\b%s\b" % w, full_text, re.I))
-
-        male_words = sum(map(word_search, self.male_prep))
-        female_words = sum(map(word_search, self.female_prep))
-
-        return male_words > female_words
-
     def classify(self, symbol, fetcher=None):
         if fetcher:
             self.fetcher = fetcher
 
-        ret = []
+        classes = []
         if self.is_person(symbol):
-            ret += ['wikibase-person']
-
-            if self.is_male(symbol):
-                ret += ['wikibase-male']
-            else:
-                ret += ['wikibase-female']
-
-        return ret
+            classes += ['wikibase-person']
+        return classes
 
 
 WIKIBASE_CLASSIFIERS = subclasses(BaseClassifier)

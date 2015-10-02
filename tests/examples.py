@@ -165,6 +165,12 @@ DEGENERATE_EXAMPLES = [
     ('(get "wikipedia-person" "Mary Shakespeare" (:calculated "GENDER"))',
      '((:calculated :feminine))'),
 
+    # TODO : find an example of a person who uses gender-neutral pronouns
+
+    # we incorrectly report :neuter for male Siamese twins
+    ('(get "wikipedia-person" "Chang and Eng Bunker" (:calculated "GENDER"))',
+     '((:calculated :neuter))'),
+
     ('(get "wikibase-term" "Bill Clinton" (:calculated "PROPER"))',
      '((:calculated #t))'),
     ('(get "wikibase-term" "North American Free Trade Agreement" (:calculated "PROPER"))',

@@ -35,10 +35,11 @@ class TestKnowledgebase(unittest.TestCase):
                                                             "Bill Clinton"))
 
     def test_attributes_format(self):
-        result_attrs = self.fe.resources()['get-attributes']("Bill Clinton")
+        attrs = self.fe.resources()['get-attributes']("wikipedia-president",
+                                                      "Bill Clinton")
 
         for a in CLINTON_ATTRS:
-            self.assertIn(a, result_attrs)
+            self.assertIn(a, attrs)
 
     def test_classes(self):
         self.assertIn("wikipedia-president",

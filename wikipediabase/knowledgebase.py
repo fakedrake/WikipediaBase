@@ -73,13 +73,13 @@ class KnowledgeBase(Provider):
         return enchant(categories)
 
     @provide(name="get-attributes")
-    def get_attributes(self, wb_class, symbol=None):
+    def get_attributes(self, cls, symbol):
         if symbol is not None:
             return enchant(self._get_attrs(symbol))
 
         # We don't really need wb_class, symbol is enough so it might
         # not be provided
-        return enchant(self._get_attrs(wb_class))
+        return enchant(self._get_attrs(cls))
 
     def synonyms(self, symbol):
         synonyms = set()

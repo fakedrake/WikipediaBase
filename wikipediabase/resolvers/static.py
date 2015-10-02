@@ -20,21 +20,37 @@ class StaticResolver(BaseResolver):
         return re.findall('\w+', article.lower())
 
     @provide(name="word-count")
-    def word_cout(self, article, attribute):
+    def word_count(self, article, attribute):
         self.log().info("Trying 'word-count' tag from static resolver.")
         self._tag = "html"
         return len(self._words(self.fetcher.html_source(article)))
 
+    def guess_gender(self, symbol):
+        male_prep = ["he", "him", "his"]
+        female_prep = ["she", "her", "hers"]
+        neuter_prep = ["it", "its", "they", "their", "theirs"]
+
+        article = get_article(symbol, fetcher=self.fetcher)
+        full_text = "\n\n".join(article.paragraphs()).lower()
+
+        def word_search(w):
+            return len(re.findall(r"\b%s\b" % w, full_text, re.I))
+
+        male_words = sum(map(word_search, male_prep))
+        female_words = sum(map(word_search, female_prep))
+        neuter_words = sum(map(word_search, neuter_prep))
+
+        if neuter_words > male_words and neuter_words > female_words:
+            return 'neuter'
+        elif male_words >= female_words:
+            return 'masculine'
+        else:
+            return 'feminine'
+
     @provide(name="gender")
-    def gender(self, article, attribute):
-        from wikipediabase.classifiers import PersonClassifier
-        cls = PersonClassifier().classify(article)
-
-        if 'wikibase-male' in cls:
-            return enchant(':masculine', typecode='calculated')
-
-        if 'wikibase-female' in cls:
-            return enchant(':feminine', typecode='calculated')
+    def gender(self, symbol, attribute):
+        gender = ":" + self.guess_gender(symbol)
+        return enchant(gender, typecode='calculated')
 
     @staticmethod
     def _dton(s):

@@ -13,24 +13,23 @@ try:
 except ImportError:
     import unittest
 
-import common
 from wikipediabase import classifiers as cls
 
 
 class TestClassifiers(unittest.TestCase):
 
-    def setUp(self):
-        pass
-
     def test_person(self):
         c = cls.PersonClassifier()
         self.assertIn('wikibase-person', c('Bill Clinton'))
-        self.assertIn('wikibase-male', c('Bill Clinton'))
         self.assertIn('wikibase-person', c('Mary Shakespeare'))
-        self.assertIn('wikibase-female', c('Mary Shakespeare'))
+        self.assertNotIn('wikibase-person', c('Harvard University'))
 
-    def tearDown(self):
-        pass
+    def test_static(self):
+        c = cls.StaticClassifier()
+        self.assertItemsEqual(c('Bill Clinton'),
+                              ['wikibase-term', 'wikibase-paragraphs'])
+        self.assertItemsEqual(c('Massachusetts Institute of Technology'),
+                              ['wikibase-term', 'wikibase-paragraphs'])
 
 if __name__ == '__main__':
     unittest.main()
