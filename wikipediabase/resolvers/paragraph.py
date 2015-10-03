@@ -2,7 +2,7 @@ import overlay_parse
 
 from wikipediabase.resolvers.base import BaseResolver
 from wikipediabase.util import get_article
-from wikipediabase.enchantments import enchant, Enchanted
+from wikipediabase.lispify import lispify, LispType
 
 
 def iter_paren(text, delim=None):
@@ -51,7 +51,7 @@ class LifespanParagraphResolver(BaseResolver):
         Resolve birth and death dates based on the first paragraph.
         """
 
-        if isinstance(attr, Enchanted):
+        if isinstance(attr, LispType):
             attr = attr.val.lower()
         else:
             attr = attr.lower()
@@ -71,12 +71,12 @@ class LifespanParagraphResolver(BaseResolver):
 
             for ovl in overlay_parse.dates.just_ranges(paren):
                 if attr == 'birth-date':
-                    return enchant(ovl[0], typecode='yyyymmdd')
+                    return lispify(ovl[0], typecode='yyyymmdd')
                 elif attr == 'death-date':
-                    return enchant(ovl[1], typecode='yyyymmdd')
+                    return lispify(ovl[1], typecode='yyyymmdd')
 
             # If there is just one date and we need a birth date, get
             # that.
             if attr == 'birth-date':
                 for ovl in overlay_parse.dates.just_dates(paren):
-                    return enchant(ovl, typecode='yyyymmdd')
+                    return lispify(ovl, typecode='yyyymmdd')

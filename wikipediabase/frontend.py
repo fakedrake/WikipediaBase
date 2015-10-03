@@ -4,7 +4,7 @@
 from edn_format import loads, Keyword, Symbol
 
 from wikipediabase.telnet import TelnetServer
-from wikipediabase.enchantments import enchant
+from wikipediabase.lispify import lispify
 from wikipediabase.provider import Acquirer, provide
 from wikipediabase.util import get_knowledgebase
 
@@ -26,11 +26,11 @@ class Frontend(Acquirer):
 
     @provide(name='commands')
     def commands(self):
-        return enchant([i for i, _ in self.resources().iteritems()])
+        return lispify([i for i, _ in self.resources().iteritems()])
 
     def get_callable(self, symbol):
         """
-        Given a function name return the callable. Keywods should enchant
+        Given a function name return the callable. Keywords should lispify
         the arguments.
         """
 
@@ -38,7 +38,7 @@ class Frontend(Acquirer):
             return self.resources()[symbol._name]
 
         if isinstance(symbol, Keyword):
-            return lambda *args: enchant(*args, typecode=symbol._name)
+            return lambda *args: lispify(*args, typecode=symbol._name)
 
         raise TypeError("Could not resolve function %s (type %s)."
                         % (symbol, str(type(symbol))))
@@ -70,7 +70,7 @@ class TelnetFrontend(Frontend):
             if isinstance(e, SystemExit):
                 raise e
 
-            return unicode(enchant(e, typecode='error')) + u'\n'
+            return unicode(lispify(e, typecode='error')) + u'\n'
 
     def __init__(self, *args, **kwargs):
         super(TelnetFrontend, self).__init__(*args, **kwargs)

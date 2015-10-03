@@ -4,7 +4,7 @@ import re
 
 from wikipediabase.provider import provide
 from wikipediabase.resolvers.base import BaseResolver
-from wikipediabase.enchantments import enchant
+from wikipediabase.lispify import lispify
 from wikipediabase.util import get_infobox, get_article, totext, markup_unlink
 
 
@@ -50,7 +50,7 @@ class StaticResolver(BaseResolver):
     @provide(name="gender")
     def gender(self, symbol, attribute):
         gender = ":" + self.guess_gender(symbol)
-        return enchant(gender, typecode='calculated')
+        return lispify(gender, typecode='calculated')
 
     @staticmethod
     def _dton(s):
@@ -86,11 +86,11 @@ class StaticResolver(BaseResolver):
         nlat = self._dton(totext(lat))
         nlon = self._dton(totext(lon))
 
-        return enchant([nlat, nlon], typecode='coordinates')
+        return lispify([nlat, nlon], typecode='coordinates')
 
     @provide(name="image-data")
     def image(self, article, attribute):
-        # Make sure we are not getting back the enchanted.
+        # Make sure we are not getting back a LispType.
 
         ibx = get_infobox(article)
         img = ibx.get('image')
@@ -107,7 +107,7 @@ class StaticResolver(BaseResolver):
             fnam = fnam.split("{{!}}border")[0]
 
         cap = ibx.get('caption')
-        return enchant([0, fnam] + ([markup_unlink(cap)] if cap else []))
+        return lispify([0, fnam] + ([markup_unlink(cap)] if cap else []))
 
     @provide(name='url')
     def url(self, article, _):
@@ -118,7 +118,7 @@ class StaticResolver(BaseResolver):
         # Will also teake care of redirections.
         article = get_article(article)
         url = article.url()
-        return enchant(url, typecode='url')
+        return lispify(url, typecode='url')
 
     @provide(name='number')
     def number(self, article, _):
@@ -133,7 +133,7 @@ class StaticResolver(BaseResolver):
         yay = sum(map(txt.count, [' are ', ' were ', ' have ']))
 
         # inequality because there are many more nays
-        return enchant(yay > nay, typecode='calculated')
+        return lispify(yay > nay, typecode='calculated')
 
     @provide(name='proper')
     def proper(self, article, _):
@@ -148,4 +148,4 @@ class StaticResolver(BaseResolver):
         ret = (txt.count(a.lower()) - txt.count(". " + a.lower()) <
                txt.count(a))
 
-        return enchant(ret, typecode='calculated')
+        return lispify(ret, typecode='calculated')
