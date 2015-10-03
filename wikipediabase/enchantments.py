@@ -135,7 +135,7 @@ class EnchantedString(Enchanted):
     def val_str(self):
         v = re.sub(r"\[\d*\]", "", self.val)  # remove references, e.g. [1]
         v = re.sub(r"[[\]]", "", v)  # remove wikimarkup links, e.g. [[Ruby]]
-        v = output(unicode(v)) # unidecode
+        v = output(unicode(v)) # remove unicode characters
         v = v.replace('"', '\\"')  # escape double quotes
         v = u'"{0}"'.format(v)
         return v
