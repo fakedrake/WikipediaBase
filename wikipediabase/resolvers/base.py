@@ -1,8 +1,9 @@
-from wikipediabase.enchantments import Enchanted
+from wikipediabase.lispify import LispType
 from wikipediabase.fetcher import Fetcher
 from wikipediabase.provider import Provider
 
 MIN_PRIORITY = 0
+
 
 class BaseResolver(Provider):
 
@@ -25,7 +26,7 @@ class BaseResolver(Provider):
         Use your resources to resolve. Use provided methods if available
         or return None.
         """
-        if isinstance(attr, Enchanted):
+        if isinstance(attr, LispType):
             attr = attr.val
         else:
             attr = attr

@@ -1,13 +1,12 @@
 """
-Enchantments convert Python objects into Lisp-like encoded strings that are
+Lispify converts Python objects into Lisp-like encoded strings that are
 readable by START.
 
-To use the enchantment infrastructure use the 'enchant' function.
-To create a new way of interpreting data subclass the Enchanted class.
+Use the 'lispify' function to encode a Python object.
+To create a new way of interpreting data subclass the LispType class.
 
-Prefix your class with an underscore (_) if it is an intermediate generation
-between Enchanted and the classes that actually parse so that the enchant 
-method will ignore it.
+Prefix your class with an underscore (_) if it is an intermediate representation
+so that the lispify method ignores it.
 """
 
 import re
@@ -19,7 +18,7 @@ from wikipediabase.log import Logging
 from wikipediabase.util import subclasses, output
 
 
-# For fully deterministic enchantments use this priority.
+# For fully deterministic lisp types use this priority.
 MIN_PRIORITY = 0
 MAX_PRIORITY = 15
 
@@ -39,13 +38,13 @@ def mid_priority():
 MID_PRIORITY = mid_priority()
 
 
-class Enchanted(Logging):
+class LispType(Logging):
 
     """
-    An enchanted object's string representation is something that
-    START understands. Its `val` attribute is a Python object.
+    A LispType is a Lisp-like encoded string that is readable by START.
+    Its `val` attribute is a Python object.
 
-    Note that not only answers but also questions are enchanted.
+    Note that not only answers but also questions are lispified.
 
     To use this subclass it and provide any of the following:
 
@@ -59,7 +58,7 @@ class Enchanted(Logging):
 
     def __init__(self, val, typecode, infobox_attr=None):
         """
-        Enchant a piece of data. Throws EnchantError on failure.
+        Lispify a piece of data. Throws LispError on failure.
         """
 
         self.typecode = typecode
@@ -75,7 +74,7 @@ class Enchanted(Logging):
 
     def should_parse(self):
         """
-        If this returns false enchantment is invalid whatever the value.
+        If this returns False, LispType is invalid whatever the value.
         """
 
         return True
@@ -111,7 +110,7 @@ class Enchanted(Logging):
         return self.valid
 
     def __eq__(self, other):
-        # compare Enchanted objects based on their string representation
+        # compare LispType objects based on their string representation
         if isinstance(other, self.__class__) or isinstance(other, basestring):
             return self.__str__() == other.__str__()
         return False
@@ -120,7 +119,7 @@ class Enchanted(Logging):
         return hash(self.__str__())
 
 
-class EnchantedString(Enchanted):
+class LispString(LispType):
     priority = next(MID_PRIORITY)
 
     def should_parse(self):
@@ -130,18 +129,18 @@ class EnchantedString(Enchanted):
         if self.infobox_attr is not None and \
                 self.typecode.lower() in ('code', 'rendered'):
             return 'html'
-        return super(EnchantedString, self).typecode_str()
+        return super(LispString, self).typecode_str()
 
     def val_str(self):
         v = re.sub(r"\[\d*\]", "", self.val)  # remove references, e.g. [1]
         v = re.sub(r"[[\]]", "", v)  # remove wikimarkup links, e.g. [[Ruby]]
-        v = output(unicode(v)) # remove unicode characters
+        v = output(unicode(v))  # remove unicode characters
         v = v.replace('"', '\\"')  # escape double quotes
         v = u'"{0}"'.format(v)
         return v
 
 
-class EnchantedList(Enchanted):
+class LispList(LispType):
 
     """
     This is coordinates and other things like that
@@ -155,19 +154,19 @@ class EnchantedList(Enchanted):
 
     def __str__(self):
         if self.typecode:
-            return '%s' % (super(EnchantedList, self).__str__())
+            return '%s' % (super(LispList, self).__str__())
         else:
-            return '(%s)' % super(EnchantedList, self).__str__()
+            return '(%s)' % super(LispList, self).__str__()
 
     def erepr(self, v):
-        if isinstance(v, Enchanted):
+        if isinstance(v, LispType):
             return str(v)
 
         if isinstance(v, basestring):
-            return str(EnchantedString(v, None))
+            return str(LispString(v, None))
 
         if hasattr(v, '__iter__'):
-            return str(EnchantedList(v, None))
+            return str(LispList(v, None))
 
         return repr(v)
 
@@ -178,10 +177,10 @@ class EnchantedList(Enchanted):
         return val in self.val_str()
 
 
-class EnchantedDate(Enchanted):
+class LispDate(LispType):
 
     """
-    Date enchantment using the overlay framework.
+    Date LispType using the overlay framework.
     """
 
     priority = next(MID_PRIORITY)
@@ -222,7 +221,7 @@ class EnchantedDate(Enchanted):
             return dor[0]
 
 
-class _EnchantedDateVoting(EnchantedDate):
+class _LispDateVoting(LispDate):
     priority = next(MID_PRIORITY)
 
     def parse_val(self, txt):
@@ -232,7 +231,7 @@ class _EnchantedDateVoting(EnchantedDate):
 
         Note that while this works it is not used. See results for the
         jesus date of birth. The correct way would be to have a
-        special enchantment that may be a date or a date range.
+        special lisp type that may be a date or a date range.
         """
 
         # Do not parse separately, it's expensive and you will get
@@ -270,10 +269,10 @@ class _EnchantedDateVoting(EnchantedDate):
 
         return False
 
-EnchantedDateVoting = _EnchantedDateVoting
+LispDateVoting = _LispDateVoting
 
 
-class EnchantedDict(Enchanted):
+class LispDict(LispType):
 
     """
     Get a lispy dictionary of non-None items.
@@ -307,10 +306,10 @@ class EnchantedDict(Enchanted):
             if v is not None:
                 # XXX: NastyHack(TM). Replace the nonbreaking space
                 # with a space.
-                yield self._kv_pair(k, enchant(v))
+                yield self._kv_pair(k, lispify(v))
 
 
-class EnchantedError(EnchantedDict):
+class LispError(LispDict):
 
     """
     An error with a reply and a symbol. The expected value should be a
@@ -353,16 +352,16 @@ class EnchantedError(EnchantedDict):
         return False
 
 
-class _EnchantedLiteral(Enchanted):
+class _LispLiteral(LispType):
 
     """
-    Enchanted literals. These are not.
+    Lisp literals. These are not.
     """
     priority = MAX_PRIORITY
     literal = True
 
 
-class EnchantedKeyword(_EnchantedLiteral):
+class LispKeyword(_LispLiteral):
 
     """
     Just a keyword. No content.
@@ -376,10 +375,10 @@ class EnchantedKeyword(_EnchantedLiteral):
         return self.val
 
 
-class EnchantedBool(_EnchantedLiteral):
+class LispBool(_LispLiteral):
 
     """
-    Enchant a boolean value
+    Lispify a boolean value
     """
 
     def should_parse(self):
@@ -389,10 +388,10 @@ class EnchantedBool(_EnchantedLiteral):
         return 't' if self.val else 'nil'
 
 
-class EnchantedNone(_EnchantedLiteral):
+class LispNone(_LispLiteral):
 
     """
-    Enchanted none object
+    Lispified none object
     """
 
     def should_parse(self):
@@ -402,7 +401,7 @@ class EnchantedNone(_EnchantedLiteral):
         return 'nil'
 
 
-class EnchantedNumber(_EnchantedLiteral):
+class LispNumber(_LispLiteral):
 
     def should_parse(self):
         return isinstance(self.val, Number)
@@ -411,26 +410,26 @@ class EnchantedNumber(_EnchantedLiteral):
         return str(self.val)
 
 
-WIKIBASE_ENCHANTMENTS = subclasses(Enchanted, instantiate=False)
+WIKIBASE_LISP_TYPES = subclasses(LispType, instantiate=False)
 
 
-def enchant(obj, typecode=None, infobox_attr=None):
+def lispify(obj, typecode=None, infobox_attr=None):
     """
-    Return an enchanted object.
+    Return a Lisp-like encoded string.
 
     infobox_attr is the name of the infobox attribute where obj came from
     """
 
-    if isinstance(obj, Enchanted):
+    if isinstance(obj, LispType):
         return obj
 
-    for E in WIKIBASE_ENCHANTMENTS:
-        e = E(obj, typecode, infobox_attr=infobox_attr)
-        if e.valid:
-            return e
+    for T in WIKIBASE_LISP_TYPES:
+        t = T(obj, typecode, infobox_attr=infobox_attr)
+        if t.valid:
+            return t
 
     raise NotImplementedError(
-        "Implement enchantment for typecode: %s, val: %s or"
+        "Implement LispType for typecode: %s, val: %s or"
         "provide fallback error." % (typecode, obj))
 
-__all__ = ['enchant']
+__all__ = ['lispify']
