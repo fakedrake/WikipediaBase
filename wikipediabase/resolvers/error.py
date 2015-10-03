@@ -1,6 +1,6 @@
 from wikipediabase.resolvers.base import MIN_PRIORITY, BaseResolver
 from wikipediabase.util import get_knowledgebase
-from wikipediabase.enchantments import enchant
+from wikipediabase.lispify import lispify
 
 
 class ErrorResolver(BaseResolver):
@@ -13,7 +13,7 @@ class ErrorResolver(BaseResolver):
 
     @staticmethod
     def _err(repl=None, sym=None):
-        return enchant({'symbol': sym or 'attribute-value-not-found',
+        return lispify({'symbol': sym or 'attribute-value-not-found',
                         'kw': {'reply': repl or 'No such attribute'}},
                        typecode='error')
 

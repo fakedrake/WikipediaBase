@@ -1,6 +1,6 @@
 from wikipediabase.resolvers.base import BaseResolver
 from wikipediabase.util import get_infobox
-from wikipediabase.enchantments import enchant, Enchanted
+from wikipediabase.lispify import lispify, LispType
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 
 
@@ -31,7 +31,7 @@ class InfoboxResolver(BaseResolver):
             # There are no newlines in article titles
             return None
 
-        if isinstance(attr, Enchanted):
+        if isinstance(attr, LispType):
             typecode, attr = attr.typecode, attr.val
         else:
             typecode, attr = self._typecode, attr
@@ -44,7 +44,7 @@ class InfoboxResolver(BaseResolver):
                 self.log().info("Found infobox attribute '%s'" % attr)
                 assert(isinstance(result, unicode)) # TODO: remove for production
 
-                return enchant(result, typecode=typecode, infobox_attr=attr)
+                return lispify(result, typecode=typecode, infobox_attr=attr)
 
             self.log().warning("Could not find infobox attribute '%s'" % attr)
         else:
