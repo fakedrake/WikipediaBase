@@ -21,11 +21,11 @@ class TestEnchantments(unittest.TestCase):
     def test_string(self):
         self.assertEqual(enchant("foo"), '"foo"')
 
-    def test_unicode_string(self):
-        self.assertEqual(enchant(u"föø"), '"foo"')
-
     def test_string_escaped(self):
-        self.assertEqual(enchant('foo "bar"'), '"foo \\"bar\\""')
+        self.assertEqual(enchant('foo \\ "bar"'), '"foo \\ \\"bar\\""')
+
+    def test_unicode_string(self):
+        self.assertEqual(enchant(u"föø ” "), '"foo \\" "')
 
     def test_string_with_typecode(self):
         self.assertEqual(enchant("bar", typecode="html"), '(:html "bar")')
@@ -57,18 +57,18 @@ class TestEnchantments(unittest.TestCase):
         self.assertEqual(ed, '(:yyyymmdd 20100000)')
 
     def test_date_with_range(self):
-        # 2010 is in the given range, thus it wil precede 8,8,1991
+        # 2010 is in the given range, thus it will precede 8,8,1991
         ed = enchant("2010 8.9.1991 - 2012 on August the 8th 1991",
                      typecode="yyyymmdd")
         self.assertEqual(ed, '(:yyyymmdd 20100000)')
 
     def test_bool(self):
-        self.assertEqual(enchant(True), '#t')
-        self.assertEqual(enchant(False), '#f')
+        self.assertEqual(enchant(True), 't')
+        self.assertEqual(enchant(False), 'nil')
 
     def test_bool_with_typecode(self):
         self.assertEqual(enchant(False, typecode='calculated'),
-                         '(:calculated #f)')
+                         '(:calculated nil)')
 
     def test_keyword(self):
         self.assertEqual(enchant(':feminine'), ":feminine")
@@ -82,20 +82,24 @@ class TestEnchantments(unittest.TestCase):
 
     def test_dict(self):
         self.assertEqual(enchant({'a': 1, 'b': "foo"}),
-                         '(:b "foo" :a "1")')
+                         '(:a 1 :b "foo")')
 
     def test_dict_with_escaped_string(self):
         self.assertEqual(enchant({'a': 1, 'b': '"foo"'}),
-                         '(:b "\\"foo\\"" :a "1")')
+                         '(:a 1 :b "\\"foo\\"")')
+
+    def test_dict_with_list(self):
+        self.assertEqual(enchant({'a': 1, 'b': ['foo', 'bar']}),
+                         '(:a 1 :b ("foo" "bar"))')
 
     def test_error(self):
         err = enchant({'symbol': 'sym', 'kw': dict(a=1, b=2, c='ha')},
                       typecode='error')
-        self.assertEqual(err, '(error sym :a "1" :c "ha" :b "2")')
+        self.assertEqual(err, '(:error sym :a 1 :b 2 :c "ha")')
 
     def test_error_from_exception(self):
         err = enchant(ValueError('Wrong thing'))
-        self.assertEqual(err, '(error ValueError :reply "Wrong thing")')
+        self.assertEqual(err, '(:error ValueError :message "Wrong thing")')
 
     def test_none(self):
         self.assertEqual(enchant(None), 'nil')

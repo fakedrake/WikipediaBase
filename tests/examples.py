@@ -53,12 +53,12 @@ WIKI_EXAMPLES = [
      '((:yyyymmdd 19610804))'),
     ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
      # 'nil'),
-     '((error attribute-value-not-found :reply "Currently alive"))'),
+     '((:error attribute-value-not-found :reply "Currently alive"))'),
     ('(get "wikipedia-person" "Jamie Glover" "BIRTH-DATE")',
      '((:yyyymmdd 19690710))'),
     ('(get "wikipedia-person" "Jamie Glover" "DEATH-DATE")',
      #  'nil'),
-     '((error attribute-value-not-found :reply "Currently alive"))'),
+     '((:error attribute-value-not-found :reply "Currently alive"))'),
     ('(get "wikipedia-person" "John Lennon" "BIRTH-DATE")',
      '((:yyyymmdd 19401009))'),
     ('(get "wikipedia-person" "John Lennon" "DEATH-DATE")',
@@ -84,7 +84,7 @@ WIKI_EXAMPLES = [
     # is not correct either but it is the
     # only date provided
     # ('(get "wikipedia-person" "William Shakesppeare" "BIRTH-DATE")',
-    # '#f'), XXX: you cant get both right...
+    # 'nil'), XXX: you cant get both right...
     ('(get "wikipedia-person" "Violet Markham" "BIRTH-DATE")',
      '((:yyyymmdd 18720000))'),
     ('(get "wikipedia-person" "Violet Markham" "DEATH-DATE")',
@@ -166,26 +166,26 @@ DEGENERATE_EXAMPLES = [
      '((:calculated :feminine))'),
 
     ('(get "wikibase-term" "Bill Clinton" (:calculated "PROPER"))',
-     '((:calculated #t))'),
+     '((:calculated t))'),
     ('(get "wikibase-term" "North American Free Trade Agreement" (:calculated "PROPER"))',
-     '((:calculated #t))'),
+     '((:calculated t))'),
     ('(get "wikibase-term" "Purchasing power parity" (:calculated "PROPER"))',
-     '((:calculated #f))'),
+     '((:calculated nil))'),
     ('(get "wikipedia-musical-artist" "Lamb of God (band)" "PROPER")',
-     '((:calculated #t))'),
+     '((:calculated t))'),
     ('(get "wikibase-term" "Board game" "PROPER")',
-     '((:calculated #f))'),
+     '((:calculated nil))'),
 
     # This means plural or singular I guess
     ('(get "wikibase-term" "Bill Clinton" (:calculated "NUMBER"))',
-     '((:calculated #f))'),
+     '((:calculated nil))'),
     ('(get "wikibase-term" "The Beatles" (:calculated "NUMBER"))',
-     '((:calculated #t))'),
+     '((:calculated t))'),
 
     ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
-     '((error attribute-value-not-found :reply "Currently alive"))'),
+     '((:error attribute-value-not-found :reply "Currently alive"))'),
     ('(get "wikipedia-person" "Barack Obama" "DEATH-PLACE")',
-     '((error attribute-value-not-found :reply "Currently alive"))'),
+     '((:error attribute-value-not-found :reply "Currently alive"))'),
 ]
 
 WIKI_EXAMPLES_NOT = [
