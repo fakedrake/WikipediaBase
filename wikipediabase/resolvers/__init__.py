@@ -1,17 +1,19 @@
-from wikipediabase.util import subclasses
 from wikipediabase.resolvers.base import BaseResolver
-from wikipediabase.resolvers.paragraph import LifespanParagraphResolver
-from wikipediabase.resolvers.infobox import InfoboxResolver
-from wikipediabase.resolvers.static import StaticResolver
 from wikipediabase.resolvers.error import ErrorResolver
+from wikipediabase.resolvers.infobox import InfoboxResolver
+from wikipediabase.resolvers.person import PersonResolver
+from wikipediabase.resolvers.sections import SectionsResolver
+from wikipediabase.resolvers.term import TermResolver
+from wikipediabase.util import subclasses
 
 WIKIBASE_RESOLVERS = subclasses(BaseResolver)
 
 __all__ = [
-    "WIKIBASE_RESOLVERS",
     "BaseResolver",
-    "LifespanParagraphResolver",
-    "InfoboxResolver",
-    "StaticResolver",
     "ErrorResolver",
+    "InfoboxResolver",
+    "PersonResolver",
+    "SectionsResolver",
+    "TermResolver",
+    "WIKIBASE_RESOLVERS",
 ]
