@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from itertools import chain
-
-from wikipediabase.provider import Provider, provide
+from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.lispify import lispify
+from wikipediabase.provider import Provider, provide
 from wikipediabase.resolvers import WIKIBASE_RESOLVERS
-from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
 from wikipediabase.synonym_inducers import WIKIBASE_INDUCERS
-from wikipediabase.util import get_article, get_infobox
+from wikipediabase.util import get_article, get_infoboxes
 
 
 class KnowledgeBase(Provider):
@@ -58,9 +56,7 @@ class KnowledgeBase(Provider):
 
     @provide(name="get-classes")
     def get_classes(self, symbol):
-        it = chain.from_iterable((c.classify(symbol)
-                                  for c in self.classifiers))
-        return lispify(list(it))
+        return get_article(symbol).classes()
 
     @provide(name="get-types")
     def get_types(self, symbol):
@@ -74,10 +70,7 @@ class KnowledgeBase(Provider):
 
     @provide(name="get-attributes")
     def get_attributes(self, cls, symbol):
-        if symbol is not None:
-            return lispify(self._get_attrs(symbol))
-
-        return lispify(self._get_attrs(cls))
+        return lispify(self._get_attrs(cls, symbol))
 
     def synonyms(self, symbol):
         synonyms = set()
@@ -87,22 +80,21 @@ class KnowledgeBase(Provider):
 
         return lispify(synonyms)
 
-    def _get_attrs(self, symbol):
+    def _get_attrs(self, cls, symbol):
         """
         Get all attributes of a symbol you can find.
         """
 
-        ibox = get_infobox(symbol, self.fetcher)
+        attributes = []
+        infoboxes = get_infoboxes(symbol, cls=cls, fetcher=self.fetcher)
 
-        ret = []
-        for k, v in ibox.markup_parsed_iter():
-            rendered = ibox.rendered_attributes().get(k.replace('-', '_'))
-            tmp = lispify(dict(code=k.upper(),
-                               rendered=rendered))
+        for ibox in infoboxes:
+            for k, v in ibox.markup_parsed_iter():
+                rendered = ibox.rendered_attributes().get(k.replace('-', '_'))
+                tmp = lispify(dict(code=k.upper(), rendered=rendered))
+                attributes.append(tmp)
 
-            ret.append(tmp)
-
-        return ret
+        return attributes
 
     def attribute_wrap(self, val, **keys):
         """
