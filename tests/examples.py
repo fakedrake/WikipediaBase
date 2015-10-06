@@ -13,84 +13,95 @@ WIKI_EXAMPLES = [
 
     ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
      '((:html "8848"))'),
-    ('(get "wikipedia-officeholder" "Bill Clinton" (:code "SUCCESSOR"))',
+    ('(get "wikipedia-president" "Bill Clinton" (:code "SUCCESSOR"))',
      '((:html "George W. Bush"))'),
 
     # ==============================================================
     # tests for 'get' -- attributes from infoboxes -or- article text
     # ==============================================================
 
-    ('(get "wikipedia-person" "Barack Obama" (:ID "BIRTH-DATE"))',
+    # for articles with infoboxes, wikibase-person and wikipedia-class should
+    # return the same dates
+    ('(get "wikipedia-officeholder" "Barack Obama" (:ID "BIRTH-DATE"))',
      '((:yyyymmdd 19610804))'),
-    ('(get "wikipedia-person" "Bill Clinton" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Barack Obama" (:ID "BIRTH-DATE"))',
+     '((:yyyymmdd 19610804))'),
+    ('(get "wikipedia-president" "Bill Clinton" "BIRTH-DATE")',
      '((:yyyymmdd 19460819))'),
-    ('(get "wikipedia-person" "Klaus Barbie" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Bill Clinton" "BIRTH-DATE")',
+     '((:yyyymmdd 19460819))'),
+
+    ('(get "wikipedia-president" "Bill Clinton" "BIRTH-DATE")',
+     '((:yyyymmdd 19460819))'),
+    ('(get "wikibase-person" "Klaus Barbie" "BIRTH-DATE")',
      '((:yyyymmdd 19131025))'),
-    ('(get "wikipedia-person" "Klaus Barbie" "DEATH-DATE")',
+    ('(get "wikibase-person" "Klaus Barbie" "DEATH-DATE")',
      '((:yyyymmdd 19910923))'),
-    ('(get "wikipedia-person" "Paul Shardlow" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Paul Shardlow" "BIRTH-DATE")',
      '((:yyyymmdd 19430429))'),
-    ('(get "wikipedia-person" "Paul Shardlow" "DEATH-DATE")',
+    ('(get "wikibase-person" "Paul Shardlow" "DEATH-DATE")',
      '((:yyyymmdd 19681014))'),
-    ('(get "wikipedia-person" "Napoleon" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Napoleon" "BIRTH-DATE")',
      '((:yyyymmdd 17690815))'),
-    ('(get "wikipedia-person" "Napoleon" "DEATH-DATE")',
+    ('(get "wikibase-person" "Napoleon" "DEATH-DATE")',
      '((:yyyymmdd 18210505))'),
-    ('(get "wikipedia-person" "Stephen Gray (scientist)" "DEATH-DATE")',
+    ('(get "wikibase-person" "Stephen Gray (scientist)" "DEATH-DATE")',
      '((:yyyymmdd 17360207))'),
-    ('(get "wikipedia-person" "Jesus" "BIRTH-DATE")',
+
+    ('(get "wikibase-person" "Jesus" "BIRTH-DATE")',
      '((:yyyymmdd -00050000))'),  # Used to be 4BC but the correct
     # answer would be a range 7-2BC amyway
-    ('(get "wikipedia-person" "Jesus" "DEATH-DATE")',
+    ('(get "wikibase-person" "Jesus" "DEATH-DATE")',
      '((:yyyymmdd 00310000))'),  # Used to be '((:yyyymmdd
     # 00300000))'), But both are equally correct i think. For the same
     # reasons: range I choose 31 instead of 33
-    ('(get "wikipedia-person" "Albert Einstein" "BIRTH-DATE")',
+
+    ('(get "wikibase-person" "Albert Einstein" "BIRTH-DATE")',
      '((:yyyymmdd 18790314))'),
-    ('(get "wikipedia-person" "Albert Einstein" "DEATH-DATE")',
+    ('(get "wikibase-person" "Albert Einstein" "DEATH-DATE")',
      '((:yyyymmdd 19550418))'),
-    ('(get "wikipedia-person" "Barack Obama" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Barack Obama" "BIRTH-DATE")',
      '((:yyyymmdd 19610804))'),
-    ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
+    ('(get "wikibase-person" "Barack Obama" "DEATH-DATE")',
      # 'nil'),
      '((:error attribute-value-not-found :reply "Currently alive"))'),
-    ('(get "wikipedia-person" "Jamie Glover" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Jamie Glover" "BIRTH-DATE")',
      '((:yyyymmdd 19690710))'),
-    ('(get "wikipedia-person" "Jamie Glover" "DEATH-DATE")',
+    ('(get "wikibase-person" "Jamie Glover" "DEATH-DATE")',
      #  'nil'),
      '((:error attribute-value-not-found :reply "Currently alive"))'),
-    ('(get "wikipedia-person" "John Lennon" "BIRTH-DATE")',
+    ('(get "wikibase-person" "John Lennon" "BIRTH-DATE")',
      '((:yyyymmdd 19401009))'),
-    ('(get "wikipedia-person" "John Lennon" "DEATH-DATE")',
+    ('(get "wikibase-person" "John Lennon" "DEATH-DATE")',
      '((:yyyymmdd 19801208))'),
-    ('(get "wikipedia-person" "Jean Ferrat" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Jean Ferrat" "BIRTH-DATE")',
      '((:yyyymmdd 19301226))'),
-    ('(get "wikipedia-person" "Jean Ferrat" "DEATH-DATE")',
+    ('(get "wikibase-person" "Jean Ferrat" "DEATH-DATE")',
      '((:yyyymmdd 20100313))'),
-    ('(get "wikipedia-person" "Al Babartsky" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Al Babartsky" "BIRTH-DATE")',
      '((:yyyymmdd 19150419))'),
-    ('(get "wikipedia-person" "Al Babartsky" "DEATH-DATE")',
+    ('(get "wikibase-person" "Al Babartsky" "DEATH-DATE")',
      '((:yyyymmdd 20021229))'),
-    ('(get "wikipedia-person" "Martin Iti" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Martin Iti" "BIRTH-DATE")',
      '((:yyyymmdd 19830228))'),
-    ('(get "wikipedia-person" "Herbert Allan Fogel" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Herbert Allan Fogel" "BIRTH-DATE")',
      '((:yyyymmdd 19290000))'),
-    ('(get "wikipedia-person" "Marcos Angeleri" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Marcos Angeleri" "BIRTH-DATE")',
      '((:yyyymmdd 19830407))'),
-    ('(get "wikipedia-person" "Samantha Cristoforetti" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Samantha Cristoforetti" "BIRTH-DATE")',
      '((:yyyymmdd 19770426))'),
-    ('(get "wikipedia-person" "William Shakespeare" "BIRTH-DATE")',
+    ('(get "wikibase-person" "William Shakespeare" "BIRTH-DATE")',
      '((:yyyymmdd 15640426))'),  # '((:yyyymmdd 15640400))'), XXX this
     # is not correct either but it is the
     # only date provided
     # ('(get "wikipedia-person" "William Shakesppeare" "BIRTH-DATE")',
     # 'nil'), XXX: you cant get both right...
-    ('(get "wikipedia-person" "Violet Markham" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Violet Markham" "BIRTH-DATE")',
      '((:yyyymmdd 18720000))'),
-    ('(get "wikipedia-person" "Violet Markham" "DEATH-DATE")',
+    ('(get "wikibase-person" "Violet Markham" "DEATH-DATE")',
      '((:yyyymmdd 19590000))'),  # Infobox prescedes.
     # Text sais ((:yyyymmdd 19590202))
-    ('(get "wikipedia-person" "Stephen Gray (scientist)" "BIRTH-DATE")',
+    ('(get "wikibase-person" "Stephen Gray (scientist)" "BIRTH-DATE")',
      '((:yyyymmdd 16661200))'),  # '((:yyyymmdd 16660000))'), xxx it
     # actually sais december of 1666
 ]
@@ -121,7 +132,7 @@ DEGENERATE_EXAMPLES = [
      '((:yyyymmdd 20060000))'),
 
     # Dates can now be evaluated
-    ('(get "wikipedia-person" "Plato" "BIRTH-DATE")',
+    ('(get "wikipedia-philosopher" "Plato" "BIRTH-DATE")',
      # '((:html "ca. 428 BC/427 BC"))'  XXX: Wikipedia was updated it seems
      # '((:html "428/427 or 424/423 BC"))'
      '((:yyyymmdd -04260000))'),
@@ -153,22 +164,22 @@ DEGENERATE_EXAMPLES = [
      '((:coordinates 10.5 -66.9167))'),
     # XXX: according to wikipedia not so
 
-    ('(get "wikipedia-person" "Bill Clinton" (:code "URL"))',
+    ('(get "wikibase-term" "Bill Clinton" (:code "URL"))',
      '((:url "https://en.wikipedia.org/wiki/Bill_Clinton"))'),
 
-    ('(get "wikipedia-person" "Bill Clinton" (:code "GENDER"))',
+    ('(get "wikibase-person" "Bill Clinton" (:code "GENDER"))',
      '((:calculated :masculine))'),
-    ('(get "wikipedia-person" "William Shakespeare" "GENDER")',
+    ('(get "wikibase-person" "William Shakespeare" "GENDER")',
      '((:calculated :masculine))'),
-    ('(get "wikipedia-person" "Sacagawea" "GENDER")',
+    ('(get "wikibase-person" "Sacagawea" "GENDER")',
      '((:calculated :feminine))'),
-    ('(get "wikipedia-person" "Mary Shakespeare" (:calculated "GENDER"))',
+    ('(get "wikibase-person" "Mary Shakespeare" (:calculated "GENDER"))',
      '((:calculated :feminine))'),
 
     # TODO : find an example of a person who uses gender-neutral pronouns
 
     # we incorrectly report :neuter for male Siamese twins
-    ('(get "wikipedia-person" "Chang and Eng Bunker" (:calculated "GENDER"))',
+    ('(get "wikibase-person" "Chang and Eng Bunker" (:calculated "GENDER"))',
      '((:calculated :neuter))'),
 
     ('(get "wikibase-term" "Bill Clinton" (:calculated "PROPER"))',
@@ -177,7 +188,7 @@ DEGENERATE_EXAMPLES = [
      '((:calculated t))'),
     ('(get "wikibase-term" "Purchasing power parity" (:calculated "PROPER"))',
      '((:calculated nil))'),
-    ('(get "wikipedia-musical-artist" "Lamb of God (band)" "PROPER")',
+    ('(get "wikibase-term" "Lamb of God (band)" "PROPER")',
      '((:calculated t))'),
     ('(get "wikibase-term" "Board game" "PROPER")',
      '((:calculated nil))'),
@@ -240,8 +251,8 @@ WIKI_EXAMPLES_RX = [
      r'wikibase-term',
      'All Wikipedia symbols have calculated class wikibase-term'),
     ('(get-classes \"Bill Clinton\")',
-     r'wikibase-paragraphs',
-     'All Wikipedia symbols have calculated class wikibase-paragraphs'),
+     r'wikibase-sections',
+     'All Wikipedia symbols have calculated class wikibase-sections'),
     ('(get-classes \"Bill Clinton\")',
      r'wikipedia-president'),
     ('(get-classes \"Ada (programming language)\")',
@@ -301,18 +312,18 @@ WIKI_EXAMPLES_RX = [
 
     # Next few test the retrieval of infobox attributes that contain the
     # {{convert|..}} template
-    ('(get "wikipedia-ocean" "Sea of Azov" (:CODE "LENGTH"))',
+    ('(get "wikipedia-sea" "Sea of Azov" (:CODE "LENGTH"))',
      r'360.*km.*220.*mi'),
     # TODO : debug why the examples below fail spuriously and uncomment them
     # the tests occasionally fail due to a suspected race condition with lxml
     # See issue #35 for more context
-    # ('(get "wikipedia-ocean" "Sea of Azov" (:CODE "WIDTH"))',
+    # ('(get "wikipedia-sea" "Sea of Azov" (:CODE "WIDTH"))',
     #  r'180.*km.*110.*mi'),
-    # ('(get "wikipedia-ocean" "Sea of Azov" (:CODE "AREA"))',
+    # ('(get "wikipedia-sea" "Sea of Azov" (:CODE "AREA"))',
     #  r'39.?000.*km.*2.*15.?000.*sq.*mi'),
-    # ('(get "wikipedia-ocean" "Sea of Azov" (:CODE "DEPTH"))',
+    # ('(get "wikipedia-sea" "Sea of Azov" (:CODE "DEPTH"))',
     #  r'7.*met.*23.*ft'),
-    # ('(get "wikipedia-ocean" "Sea of Azov" (:CODE "MAX-DEPTH"))',
+    # ('(get "wikipedia-sea" "Sea of Azov" (:CODE "MAX-DEPTH"))',
     #  r'14.*m.*46.*ft'),
     #('(get "wikipedia-sea" "Sea of Azov" (:CODE "VOLUME"))',
     # r'290.*km.*3'),

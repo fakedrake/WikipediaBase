@@ -30,9 +30,8 @@ class TestKnowledgebase(unittest.TestCase):
         self.assertEquals(self.fe.resources()['get'], self.kb.get)
 
     def test_get_attributes(self):
-        self.assertIn("BIRTH-DATE",
-                      self.fe.resources()['get-attributes']("wikipedia-person",
-                                                            "Bill Clinton"))
+        f = self.fe.resources()['get-attributes']
+        self.assertIn("BIRTH-DATE", f("wikipedia-president", "Bill Clinton"))
 
     def test_attributes_format(self):
         attrs = self.fe.resources()['get-attributes']("wikipedia-president",

@@ -24,12 +24,15 @@ class TestClassifiers(unittest.TestCase):
         self.assertIn('wikibase-person', c('Mary Shakespeare'))
         self.assertNotIn('wikibase-person', c('Harvard University'))
 
-    def test_static(self):
-        c = cls.StaticClassifier()
-        self.assertItemsEqual(c('Bill Clinton'),
-                              ['wikibase-term', 'wikibase-paragraphs'])
-        self.assertItemsEqual(c('Massachusetts Institute of Technology'),
-                              ['wikibase-term', 'wikibase-paragraphs'])
+    def test_term(self):
+        c = cls.TermClassifier()
+        self.assertEquals(c('Bill Clinton'), ['wikibase-term'])
+        self.assertEquals(c('Harvard University'), ['wikibase-term'])
+
+    def test_sections(self):
+        c = cls.SectionsClassifier()
+        self.assertEquals(c('Bill Clinton'), ['wikibase-sections'])
+        self.assertEquals(c('Harvard University'), ['wikibase-sections'])
 
 if __name__ == '__main__':
     unittest.main()

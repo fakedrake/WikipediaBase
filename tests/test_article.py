@@ -38,7 +38,7 @@ class TestArticle(unittest.TestCase):
                       self.article.headings())
 
     def test_infobox(self):
-        self.assertEqual(self.article.infobox().types(), [])
+        self.assertEqual(self.article.types(), [])
 
     def test_complex(self):
         article = Article("Baal", self.fetcher)
