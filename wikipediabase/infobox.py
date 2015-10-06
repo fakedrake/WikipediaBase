@@ -1,18 +1,23 @@
 import re
-import lxml.etree as ET
+
+from fuzzywuzzy import fuzz, process
 
 from wikipediabase.util import (Expiry,
-                                totext,
-                                tostring,
                                 fromstring,
                                 get_meta_infobox,
-                                get_article)
+                                get_article,
+                                totext,
+                                tostring)
 from wikipediabase.log import Logging
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.infobox_tree import ibx_type_superclasses
 
-INFOBOX_ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_0-9]+)\s*=" \
-                          "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
+ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_0-9]+)\s*=" \
+    "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
+
+# Various names under which you may find an infobox
+# TODO: include geobox
+BOX_REGEX = ur"\b(infobox|Infobox|taxobox|Taxobox)\b"
 
 
 class Infobox(Logging):
@@ -22,48 +27,29 @@ class Infobox(Logging):
     - instead of _.
     """
 
-    # Various names under which you may find an infobox
-    box_rx = ur"\b(infobox|Infobox|taxobox|Taxobox)\b"
-
-    def __init__(self, symbol, title=None, fetcher=None):
-        """
-        It is a good idea to provide a fetcher as caching will be done
-        much better.
-        """
-
+    def __init__(self, symbol, markup_source, html_source, fetcher=None,
+                 title=None):
         self.symbol = self.title = symbol
         if title is not None:
             self.title = title
-
+        self._markup = markup_source
+        self._html = html_source
         self.fetcher = fetcher or WIKIBASE_FETCHER
 
     def __nonzero__(self):
-        return bool(self.fetcher.html_source(self.symbol))
+        return bool(self._html)
 
-    @staticmethod
-    def _to_class(template):
-        return "wikipedia-" + \
-            template.lower().replace(
-                " ", "-").replace("_", "-").replace("template:infobox-", "")
-
-    @staticmethod
-    def _to_type(template):
-        return template.replace("_", " ")[len("template:infobox "):]
-
-    def templates(self):
-        templates = []
+    def template(self):
         ibox_source = self.markup_source()
         if ibox_source:
-            # XXX: includ taxoboes
-            for m in re.finditer(r'{{\s*(?P<infobox>%s\s+[\w ]*)' % self.box_rx,
-                                 ibox_source):
-                # The direct ibox
-                template = "Template:" + m.group('infobox')
-                templates.append(template)
-        return templates
+            template_regex = r'{{\s*(?P<infobox>%s\s+[\w ]*)' % BOX_REGEX
+            for m in re.finditer(template_regex, ibox_source):
+                template = "Template:" + m.group('infobox').strip()
+                return template
+        return None
 
-    def classes(self):
-        return map(self._to_class, self.templates())
+    def wikipedia_class(self):
+        return self._to_class(self.template())
 
     def types(self):
         """
@@ -73,18 +59,16 @@ class Infobox(Logging):
         if not hasattr(self, "_sc"):
             self._sc = ibx_type_superclasses()
 
-        templates = self.templates()
-        types = map(self._to_type, templates)
+        template = self.template()
+        types = filter(lambda t: t is not None, [self._to_type(template)])
 
-        for template in templates:
-            t = self._to_type(template)
+        t = self._to_type(template)
+        title = get_article(template, self.fetcher).title()
+        if t != self._to_type(title):
+            types.append(self._to_type(title))
 
-            title = get_article(template, self.fetcher).title()
-            if t != self._to_type(title):
-                types.append(self._to_type(title))
-
-            if t in self._sc:
-                types.extend(self._sc[t])
+        if t in self._sc:
+            types.extend(self._sc[t])
 
         return types
 
@@ -116,11 +100,27 @@ class Infobox(Logging):
             return self._rendered_attributes
 
         self._rendered_attributes = dict()
-        for template in reversed(self.templates()):
-            ibx = get_meta_infobox(template)
-            self._rendered_attributes.update(ibx.rendered_attributes())
+        ibx = get_meta_infobox(self.template())
+        self._rendered_attributes.update(ibx.rendered_attributes())
 
         return self._rendered_attributes
+
+    @staticmethod
+    def _to_class(template):
+        # TODO: add more boxes
+
+        if "infobox" in template.lower():
+            return "wikipedia-" + \
+                template.strip().lower().replace(
+                    " ", "-").replace("_", "-").replace("template:infobox-", "")
+
+        elif "taxobox" in template.lower():
+            return "wikipedia-taxobox"
+
+    @staticmethod
+    def _to_type(template):
+        if "infobox" in template.lower():
+            return template.replace("_", " ")[len("template:infobox "):]
 
     def markup_parsed_iter(self):
         """
@@ -128,7 +128,7 @@ class Infobox(Logging):
         """
 
         mu = self.markup_source()
-        for m in re.finditer(INFOBOX_ATTRIBUTE_REGEX, mu,
+        for m in re.finditer(ATTRIBUTE_REGEX, mu,
                              flags=re.IGNORECASE | re.DOTALL):
             key = m.group("key").replace("_", "-").lower()
             val = m.group("val")
@@ -142,28 +142,18 @@ class Infobox(Logging):
 
         return list(self.markup_parsed_iter())
 
-    def markup_source(self, expiry=Expiry.DEFAULT):
+    def markup_source(self):
         """
         Get the markup source of this infobox.
         """
 
-        txt = self.fetcher.markup_source(self.symbol, expiry=expiry)
-        return self._braces_markup(txt)
+        return self._markup
 
     def html_source(self, expiry=Expiry.DEFAULT):
         """
-        A div with all the infoboxes in it.
+        A rendered infobox as a <table>
         """
-
-        if not hasattr(self, '_html'):
-            self._html = self.fetcher.html_source(self.symbol, expiry=expiry)
-
-        bs = fromstring(self._html)
-        ret = ET.Element('div')
-        ret.extend([t for t in bs.findall(".//table")
-                    if 'infobox' in t.get('class', '')])
-
-        return ret
+        return self._html
 
     def rendered(self):
         return totext(self.html_source())
@@ -215,18 +205,59 @@ class Infobox(Logging):
 
         return tpairs
 
-    def _braces_markup(self, txt):
+
+class InfoboxScraper(Logging):
+
+    """
+    InfoboxScraper scrapes markup and HTML of an article to produce a list
+    of infoboxes
+    """
+
+    def __init__(self, symbol, title=None, fetcher=None):
+        self.symbol = self.title = symbol
+        if title is not None:
+            self.title = title
+
+        self.fetcher = fetcher or WIKIBASE_FETCHER
+
+    def infoboxes(self):
         """
-        Using the braces make a concatenation of all infoboxes.
+        Returns a list of Infobox objects constructed from the article
         """
 
-        ret = ""
+        markup = self._markup_infoboxes()
+        html = self._html_infoboxes()
+
+        assert(len(markup) <= len(html))  # TODO: remove for production
+
+        if len(markup) != len(html):
+            # hack/optimization: remove sidebar table about article series
+            # for an example, see Barack Obama or JFK's article
+            series_txt = 'This article is part of a series about'
+            html = filter(lambda t: series_txt not in totext(t), html)
+
+        if len(markup) != len(html):
+            # filter out infobox-like tables that don't match the infobox markup
+            # this operation is expensive. Try to find optimizations like above
+            html = self._best_html_infoboxes(markup, html)
+
+        infoboxes = []
+        for i, source in enumerate(markup):
+            ibox = Infobox(self.symbol, source, html[i], title=self.title)
+            infoboxes.append(ibox)
+
+        return infoboxes
+
+    def _markup_infoboxes(self, expiry=Expiry.DEFAULT):
+        txt = self.fetcher.markup_source(self.symbol, expiry=expiry)
+
+        infoboxes = []
         ibs = -1
         braces = 0
         rngs = []
 
         for m in re.finditer(
-                "((?P<open>{{)\s*(?P<ibox>%s)?|(?P<close>}}))" % self.box_rx,
+                "((?P<open>{{)\s*(?P<ibox>%s)?|(?P<close>}}))" % BOX_REGEX,
                 txt):
 
             if m.group('open'):
@@ -241,7 +272,6 @@ class Infobox(Logging):
                 if m.group('ibox') and braces == 0:
                     braces = 1
                     ibs = m.start('open')
-                    self.type = m.group('ibox')
 
             elif m.group('close') and braces > 0:
                 braces -= 1
@@ -250,8 +280,47 @@ class Infobox(Logging):
                     ibe = m.end('close')
                     rngs.append((ibs, ibe))
 
-        # There may be more than one infoboxes, concaenate them.
+        # There may be more than one infobox
         for s, e in rngs:
-            ret += txt[s:e]
+            infoboxes.append(txt[s:e])
 
-        return ret
+        return infoboxes
+
+    def _html_infoboxes(self, expiry=Expiry.DEFAULT):
+        """
+        A list of rendered infobox-like tables.
+
+        We find rendered infoboxes by looking for a <table> element with
+        class "infobox"
+
+        Unfortunately, non-infobox tables such as sidebars might also match this
+        criteria. Until Wikipedia uses a CSS class specifically for infoboxes
+        we don't have a better way of selecting them.
+        """
+
+        html = self.fetcher.html_source(self.symbol, expiry=expiry)
+        bs = fromstring(html)
+        return [t for t in bs.findall(".//table")
+                if 'infobox' in t.get('class', '')]
+
+    def _best_html_infoboxes(self, markup, html):
+        """
+        Given n markup infoboxes and n+m infobox-like html tables
+        returns a list of n best candidates for html infoboxes
+        """
+        n = len(markup)
+        m = len(html) - n
+        pos = 0
+        infoboxes = []
+
+        for ibox in markup:
+            choices = html[pos:pos + m]
+            best_match, score = process.extractOne(totext(ibox),
+                                                   choices,
+                                                   processor=totext,
+                                                   scorer=fuzz.token_set_ratio)
+
+            infoboxes.append(best_match)
+            pos = html.index(best_match) + 1
+
+        return infoboxes
