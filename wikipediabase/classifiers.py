@@ -7,10 +7,16 @@ Classes can be one of two kinds:
  * calculated classes, prefixed by "wikibase-"
 """
 
-from wikipediabase.util import get_infobox, subclasses
 from wikipediabase.log import Logging
+from wikipediabase.util import get_infoboxes, subclasses
 
-# Return a LIST of classes
+
+def is_wikipedia_class(cls):
+    return cls.startswith('wikipedia-')
+
+
+def is_wikibase_class(cls):
+    return cls.startswith('wikibase-')
 
 
 class BaseClassifier(Logging):
@@ -28,18 +34,24 @@ class BaseClassifier(Logging):
         return self.classify(symbol, *av, **kw)
 
 
-class StaticClassifier(BaseClassifier):
+class TermClassifier(BaseClassifier):
 
     def classify(self, symbol, fetcher=None):
-        return ['wikibase-term', 'wikibase-paragraphs']
+        return ['wikibase-term']
+
+
+class SectionsClassifier(BaseClassifier):
+
+    def classify(self, symbol, fetcher=None):
+        return ['wikibase-sections']
 
 
 class InfoboxClassifier(BaseClassifier):
 
     def classify(self, symbol, fetcher=None):
-        ibox = get_infobox(symbol, fetcher)
-        classes = ibox.classes()
-
+        classes = []
+        for ibox in get_infoboxes(symbol, fetcher=fetcher):
+            classes.append(ibox.wikipedia_class())
         return classes
 
 
@@ -47,17 +59,14 @@ class PersonClassifier(BaseClassifier):
 
     def is_person(self, symbol):
         # TODO : test the precision of this method of determining is_person
-        ibx = get_infobox(symbol, fetcher=self.fetcher)
+        infoboxes = get_infoboxes(symbol)
+        for ibx in infoboxes:
+            if ibx.wikipedia_class() == 'wikipedia-person' or \
+                    ibx.get('birth-date'):
+                return True
 
-        if 'wikipedia-person' in ibx.classes():
-            # TODO : check for children of the infobox class
-            return True
-
-        if ibx.get('birth-date'):
-            return True
-
-        from wikipediabase.resolvers import LifespanParagraphResolver as LPR
-        if LPR().resolve(symbol, 'birth-date'):
+        from wikipediabase.resolvers import PersonResolver
+        if PersonResolver().birth_date(symbol, 'birth-date'):
             return True
 
         return False
