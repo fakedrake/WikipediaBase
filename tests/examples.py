@@ -203,6 +203,10 @@ DEGENERATE_EXAMPLES = [
      '((:error attribute-value-not-found :reply "Currently alive"))'),
     ('(get "wikipedia-person" "Barack Obama" "DEATH-PLACE")',
      '((:error attribute-value-not-found :reply "Currently alive"))'),
+
+    # infobox defined outside the article, in its own template
+    ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
+     ('((:yyyymmdd 19140728))')),
 ]
 
 WIKI_EXAMPLES_NOT = [
@@ -257,6 +261,10 @@ WIKI_EXAMPLES_RX = [
      r'wikipedia-president'),
     ('(get-classes \"Ada (programming language)\")',
      r'wikipedia-programming-language'),
+
+    # infobox defined outside the article, in its own template
+    ('(get-classes \"World War I\")',
+     r'wikipedia-military-conflict'),
 
     # ========================
     # tests for get-attributes
@@ -333,6 +341,10 @@ WIKI_EXAMPLES_RX = [
     ('(get "wikipedia-weapon" "M1 Abrams" (:code "WARS"))',
      r'Gulf War',
      'Returns link text, not link target'),
+
+    # infobox defined outside the article, in its own template
+    ('(get "wikipedia-military-conflict" "World War I" (:code "CASUALTIES1"))',
+     (r'Military dead.*5,525,000.*Military wounded.*12,831,500')),
 
     # ===============================================================
     # Tests that infobox attributes that aren't dates but may contain

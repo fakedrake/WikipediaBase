@@ -17,7 +17,12 @@ ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_0-9]+)\s*=" \
 
 # Various names under which you may find an infobox
 # TODO: include geobox
-BOX_REGEX = ur"\b(infobox|Infobox|taxobox|Taxobox)\b"
+BOX_REGEX = r"\b(infobox|Infobox|taxobox|Taxobox)\b"
+
+# Infoboxes may be defined in a separate article and included
+# using a special template
+# for an example, see WWI's "{{World War I infobox}}"
+SPECIAL_INFOBOX_REGEX = r"{{\s*(?P<template>([\w ]+)[Ii]nfobox)}}"
 
 
 class Infobox(Logging):
@@ -220,37 +225,61 @@ class InfoboxScraper(Logging):
 
         self.fetcher = fetcher or WIKIBASE_FETCHER
 
-    def infoboxes(self):
+    def infoboxes(self, expiry=Expiry.DEFAULT):
         """
         Returns a list of Infobox objects constructed from the article
         """
 
-        markup = self._markup_infoboxes()
-        html = self._html_infoboxes()
+        markup_source = self.fetcher.markup_source(self.symbol, expiry=expiry)
+        html_source = self.fetcher.html_source(self.symbol, expiry=expiry)
 
-        assert(len(markup) <= len(html))  # TODO: remove for production
+        infoboxes, external_templates = self._infoboxes_from_article(markup_source, html_source)
+        for t in external_templates:
+            title = 'Template:%s' % t.strip()
+            try:
+                m = self.fetcher.markup_source(title, expiry=expiry)
+                h = self.fetcher.html_source(title, expiry=expiry)
 
-        if len(markup) != len(html):
-            # hack/optimization: remove sidebar table about article series
-            # for an example, see Barack Obama or JFK's article
-            series_txt = 'This article is part of a series about'
-            html = filter(lambda t: series_txt not in totext(t), html)
-
-        if len(markup) != len(html):
-            # filter out infobox-like tables that don't match the infobox markup
-            # this operation is expensive. Try to find optimizations like above
-            html = self._best_html_infoboxes(markup, html)
-
-        infoboxes = []
-        for i, source in enumerate(markup):
-            ibox = Infobox(self.symbol, source, html[i], title=self.title)
-            infoboxes.append(ibox)
+                # we only follow external infobox templates once, instead of
+                # looping until we can't find additional external templates.
+                # it seems dangerous to keep following template links. It's
+                # possible to get stuck in a long redirect loop
+                external_infoboxes, _ = self._infoboxes_from_article(m, h)
+                infoboxes.extend(external_infoboxes)
+            except LookupError:
+                self.log().warn("Could not find external infobox template '%s'",
+                                title)
 
         return infoboxes
 
-    def _markup_infoboxes(self, expiry=Expiry.DEFAULT):
-        txt = self.fetcher.markup_source(self.symbol, expiry=expiry)
+    def _infoboxes_from_article(self, markup_source, html_source):
+        markup_infoboxes, external_templates = self._markup_infoboxes(markup_source)
+        html_infoboxes = self._html_infoboxes(html_source)
 
+        assert(len(markup_infoboxes) <= len(html_infoboxes))  # TODO: remove for production
+
+        if len(markup_infoboxes) != len(html_infoboxes):
+            # hack/optimization: remove sidebar table about article series
+            # for an example, see Barack Obama or JFK's article
+            series_txt = 'This article is part of a series about'
+            html_infoboxes = filter(lambda t: series_txt not in totext(t),
+                                    html_infoboxes)
+
+        if len(markup_infoboxes) != len(html_infoboxes):
+            # filter out infobox-like tables that don't match the infobox markup
+            # this operation is expensive. Try to find optimizations like above
+            html_infoboxes = self._best_html_infoboxes(markup_infoboxes,
+                                                       html_infoboxes)
+
+        infoboxes = []
+        for i, source in enumerate(markup_infoboxes):
+            ibox = Infobox(self.symbol, source, html_infoboxes[i],
+                           title=self.title)
+            infoboxes.append(ibox)
+
+        return infoboxes, external_templates
+
+    def _markup_infoboxes(self, source):
         infoboxes = []
         ibs = -1
         braces = 0
@@ -258,7 +287,7 @@ class InfoboxScraper(Logging):
 
         for m in re.finditer(
                 "((?P<open>{{)\s*(?P<ibox>%s)?|(?P<close>}}))" % BOX_REGEX,
-                txt):
+                source):
 
             if m.group('open'):
                 # If we are counting just continue, dont count outside
@@ -282,11 +311,17 @@ class InfoboxScraper(Logging):
 
         # There may be more than one infobox
         for s, e in rngs:
-            infoboxes.append(txt[s:e])
+            infoboxes.append(source[s:e])
 
-        return infoboxes
+        external_templates = []
+        for m in re.finditer(SPECIAL_INFOBOX_REGEX, source):
+            template = m.group('template')
+            if template:
+                external_templates.append(template)
 
-    def _html_infoboxes(self, expiry=Expiry.DEFAULT):
+        return infoboxes, external_templates
+
+    def _html_infoboxes(self, html):
         """
         A list of rendered infobox-like tables.
 
@@ -298,7 +333,6 @@ class InfoboxScraper(Logging):
         we don't have a better way of selecting them.
         """
 
-        html = self.fetcher.html_source(self.symbol, expiry=expiry)
         bs = fromstring(html)
         return [t for t in bs.findall(".//table")
                 if 'infobox' in t.get('class', '')]
