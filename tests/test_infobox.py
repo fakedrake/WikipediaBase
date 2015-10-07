@@ -106,5 +106,16 @@ class TestInfobox(unittest.TestCase):
         ibox = get_infoboxes("BBC News", fetcher=self.fetcher)[0]
         self.assertEqual("Owners", ibox.rendered_attributes().get("owners"))
 
+    def test_no_clashes_with_multiple_infoboxes(self):
+        officeholder_ibox, martial_artist_ibox = get_infoboxes('Vladimir Putin')
+        self.assertEqual(officeholder_ibox.wikipedia_class(),
+                         'wikipedia-officeholder')
+        self.assertEqual(martial_artist_ibox.wikipedia_class(),
+                         'wikipedia-martial-artist')
+        self.assertEqual(officeholder_ibox.get('image'),
+                         'Vladimir Putin 12023 (cropped).jpg')
+        self.assertEqual(martial_artist_ibox.get('image'),
+                         'Vladimir Putin in Japan 3-5 September 2000-22.jpg')
+
 if __name__ == '__main__':
     unittest.main()
