@@ -1,14 +1,14 @@
-from wikipediabase.lispify import LispType
 from wikipediabase.fetcher import Fetcher
+from wikipediabase.lispify import lispify, LispType
 from wikipediabase.provider import Provider
 
 MIN_PRIORITY = 0
 
 
 def check_resolver(fn):
-    def decorator(self, *args, **kwargs):
-        if self._should_resolve(*args, **kwargs):
-            return fn(self, *args, **kwargs)
+    def decorator(self, cls, *args, **kwargs):
+        if self._should_resolve(cls):
+            return fn(self, cls, *args, **kwargs)
         else:
             return None
 
@@ -41,16 +41,16 @@ class BaseResolver(Provider):
                                 resolve_fns[-1].__name__)
             return resolve_fns[-1]
 
-    def _should_resolve(self, symbol, attr, **kw):
+    def _should_resolve(self, cls):
         """
-        Checks if this resolver applies to (symbol, attr)
+        Checks if this resolver applies to cls
 
         BaseResolver should always return True
         """
         return True
 
     @check_resolver
-    def resolve(self, symbol, attr, **kwargs):
+    def resolve(self, cls, symbol, attr):
         """
         Resolve attr using a custom resolve function or provided methods
 
@@ -62,7 +62,7 @@ class BaseResolver(Provider):
         """
         custom_resolve = self._custom_resolve_fn()
         if custom_resolve:
-            return custom_resolve(symbol, attr, **kwargs)
+            return custom_resolve(cls, symbol, attr)
 
         if isinstance(attr, LispType):
             attr = attr.val
@@ -72,3 +72,10 @@ class BaseResolver(Provider):
         attr = attr.lower()
         if attr in self._resources:
             return self._resources[attr](symbol, attr)
+
+    @check_resolver
+    def attributes(self, cls, symbol):
+        """
+        Get a list of lispified attributes that the resolver provides
+        """
+        return lispify([dict(code=a.upper()) for a in self._resources.keys()])

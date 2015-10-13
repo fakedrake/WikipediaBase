@@ -56,8 +56,7 @@ class TestResolvers(unittest.TestCase):
         self.assertEqual(len(self.term_resolver._words(ARTICLE_BODY)), 100)
 
     def test_url(self):
-        url = self.term_resolver.resolve('Barack obama', 'url',
-                                         cls='wikibase-term')
+        url = self.term_resolver.resolve('wikibase-term', 'Barack obama', 'url')
         self.assertEquals('https://en.wikipedia.org/wiki/Barack_Obama', url.val)
 
     def test_infobox(self):

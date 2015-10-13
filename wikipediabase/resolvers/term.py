@@ -19,7 +19,7 @@ class TermResolver(BaseResolver):
     # TODO: add provided methods for SHORT-ARTICLE
     # as described in the WikipediaBase InfoLab wiki page
 
-    def _should_resolve(self, symbol, attr, cls=None, **kwargs):
+    def _should_resolve(self, cls):
         return cls == 'wikibase-term'
 
     @provide(name="coordinates")

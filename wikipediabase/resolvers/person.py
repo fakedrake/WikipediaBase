@@ -4,6 +4,7 @@ import re
 
 import overlay_parse
 
+from wikipediabase.classifiers import InfoboxClassifier
 from wikipediabase.lispify import lispify
 from wikipediabase.provider import provide
 from wikipediabase.resolvers import InfoboxResolver
@@ -42,12 +43,13 @@ def first_paren(text):
 
 def find_date(symbol, date_type):
     """
-    Resolve birth and death dates from the infobox, or, if it is not found,
+    Resolve birth and death dates from infoboxes, or, if it is not found,
     from the first paragraph
     """
-    ibox_date = InfoboxResolver().resolve_infobox(symbol, date_type)
-    if ibox_date is not None:
-        return ibox_date
+    for cls in InfoboxClassifier().classify(symbol):
+        ibox_date = InfoboxResolver().resolve_infobox(cls, symbol, date_type)
+        if ibox_date is not None:
+            return ibox_date
 
     # TODO: look at categories for dates
 
@@ -76,7 +78,7 @@ class PersonResolver(BaseResolver):
 
     priority = 9
 
-    def _should_resolve(self, symbol, attr, cls=None, **kwargs):
+    def _should_resolve(self, cls):
         return cls == 'wikibase-person'
 
     @provide(name='birth-date')

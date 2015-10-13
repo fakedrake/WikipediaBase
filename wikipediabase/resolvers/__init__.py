@@ -2,7 +2,7 @@ from wikipediabase.resolvers.base import BaseResolver
 from wikipediabase.resolvers.error import ErrorResolver
 from wikipediabase.resolvers.infobox import InfoboxResolver
 from wikipediabase.resolvers.person import PersonResolver
-from wikipediabase.resolvers.sections import SectionsResolver
+from wikipediabase.resolvers.section import SectionResolver
 from wikipediabase.resolvers.term import TermResolver
 from wikipediabase.util import subclasses
 
@@ -13,7 +13,7 @@ __all__ = [
     "ErrorResolver",
     "InfoboxResolver",
     "PersonResolver",
-    "SectionsResolver",
+    "SectionResolver",
     "TermResolver",
     "WIKIBASE_RESOLVERS",
 ]

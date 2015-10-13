@@ -6,7 +6,7 @@ from wikipediabase.lispify import lispify
 from wikipediabase.provider import Provider, provide
 from wikipediabase.resolvers import WIKIBASE_RESOLVERS
 from wikipediabase.synonym_inducers import WIKIBASE_INDUCERS
-from wikipediabase.util import get_article, get_infoboxes
+from wikipediabase.util import get_article
 
 
 class KnowledgeBase(Provider):
@@ -48,11 +48,24 @@ class KnowledgeBase(Provider):
         :returns: the attribute's value or an error, lispified
         """
         for ar in self.resolvers:
-            res = ar.resolve(symbol, attr, cls=cls)
+            res = ar.resolve(cls, symbol, attr)
             if res is not None:
                 break
 
         return lispify([res])
+
+    @provide(name="get-attributes")
+    def get_attributes(self, cls, symbol):
+        for r in self.resolvers:
+            attributes = r.attributes(cls, symbol)
+            if attributes is not None:
+                return attributes
+        return lispify([])
+
+    @provide(name="get-categories")
+    def get_categories(self, symbol):
+        categories = get_article(symbol).categories()
+        return lispify(categories)
 
     @provide(name="get-classes")
     def get_classes(self, symbol):
@@ -63,15 +76,6 @@ class KnowledgeBase(Provider):
         types = get_article(symbol).types()
         return lispify(types)
 
-    @provide(name="get-categories")
-    def get_categories(self, symbol):
-        categories = get_article(symbol).categories()
-        return lispify(categories)
-
-    @provide(name="get-attributes")
-    def get_attributes(self, cls, symbol):
-        return lispify(self._get_attrs(cls, symbol))
-
     def synonyms(self, symbol):
         synonyms = set()
 
@@ -79,31 +83,3 @@ class KnowledgeBase(Provider):
             synonyms.update(si.induce(symbol))
 
         return lispify(synonyms)
-
-    def _get_attrs(self, cls, symbol):
-        """
-        Get all attributes of a symbol you can find.
-        """
-
-        attributes = []
-        infoboxes = get_infoboxes(symbol, cls=cls, fetcher=self.fetcher)
-
-        for ibox in infoboxes:
-            for k, v in ibox.markup_parsed_iter():
-                rendered = ibox.rendered_attributes().get(k.replace('-', '_'))
-                tmp = lispify(dict(code=k.upper(), rendered=rendered))
-                attributes.append(tmp)
-
-        return attributes
-
-    def attribute_wrap(self, val, **keys):
-        """
-        Make a dict with val and keys. This wraps attributes which are
-        strings only for internal use in knowledgebase.
-        """
-
-        try:
-            val["keys"].update(keys)
-            return val
-        except (KeyError, TypeError):
-            return dict(val=val, keys=keys)

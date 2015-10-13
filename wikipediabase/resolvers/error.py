@@ -17,7 +17,7 @@ class ErrorResolver(BaseResolver):
                         'kw': {'reply': repl or 'No such attribute'}},
                        typecode='error')
 
-    def resolve_error(self, symbol, attr, cls=None):
+    def resolve_error(self, cls, symbol, attr):
         kb = get_knowledgebase()
 
         if isinstance(attr, LispType):
