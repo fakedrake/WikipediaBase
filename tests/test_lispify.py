@@ -47,6 +47,15 @@ class TestLispify(unittest.TestCase):
         l = [[0, ['v0', 'foo']], [1, ['v1', 'bar']]]
         self.assertEqual(lispify(l), '((0 ("v0" "foo")) (1 ("v1" "bar")))')
 
+    def test_list_of_dict(self):
+        l = [{'foo': 'bar'}, {'foo': 'baz'}]
+        self.assertEqual(lispify(l), '((:foo "bar") (:foo "baz"))')
+
+    def test_list_of_dict_with_typecode(self):
+        l = [{'foo': 'bar'}, {'foo': 'baz'}]
+        self.assertEqual(lispify(l, typecode='html'),
+                         '(:html (:foo "bar") (:foo "baz"))')
+
     def test_date_simple(self):
         ed = lispify("coming on August the 8th", typecode="yyyymmdd")
         self.assertEqual(ed, '(:yyyymmdd 00000808)')
