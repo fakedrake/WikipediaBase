@@ -33,7 +33,6 @@ class TestFrontend(unittest.TestCase):
                          str("Symbol(words) of 'article'"))
 
     def test_unicode(self):
-        # TODO: fix, we can't fetch the WWI infobox
         date = self.fe.eval(
             '(get "wikipedia-military-conflict" "World War I" (:code "DATE"))')
         self.assertEqual(date, '((:yyyymmdd 19140728))')
