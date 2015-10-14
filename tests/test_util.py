@@ -15,9 +15,8 @@ except ImportError:
 
 import datetime
 
-import common
 from wikipediabase import util
-from wikipediabase.infobox import Infobox
+from wikipediabase.infobox import Infobox, InfoboxScraper
 from wikipediabase.article import Article
 
 
@@ -30,10 +29,11 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(util.totext(util.fromstring("hello<br/>")), "hello")
         self.assertEqual(util.totext(util.fromstring("<br/>", True)), "\n")
 
-    def test_infobox(self):
-        ibx = Infobox(self.symbol)
-        self.assertIs(Infobox, type(util.get_infobox(self.symbol)))
-        self.assertIs(Infobox, type(util.get_infobox(ibx)))
+    def test_infoboxes(self):
+        c = InfoboxScraper(self.symbol)
+        self.assertIs(list, type(util.get_infoboxes(self.symbol)))
+        self.assertIs(Infobox, type(util.get_infoboxes(self.symbol)[0]))
+        self.assertIs(list, type(util.get_infoboxes(c)))
 
     def test_article(self):
         art = Article(self.symbol)

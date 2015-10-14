@@ -1,3 +1,6 @@
+from itertools import chain
+
+from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.log import Logging
 from wikipediabase.synonym_inducers import ForwardRedirectInducer
@@ -6,9 +9,11 @@ from wikipediabase.util import (Expiry,
                                 fromstring,
                                 totext,
                                 memoized,
-                                get_infobox)
+                                get_infoboxes)
 
 # XXX: also support images.
+
+
 class Article(Logging):
 
     """
@@ -20,7 +25,7 @@ class Article(Logging):
     def __init__(self, title, fetcher=WIKIBASE_FETCHER):
         self._title = title
         self.fetcher = fetcher
-        self.ibox = None
+        self._infoboxes = []
         self.title_inducer = ForwardRedirectInducer()
 
     @memoized
@@ -41,14 +46,21 @@ class Article(Logging):
     def categories(self):
         return markup_categories(self.markup_source())
 
-    def infobox(self):
-        if not self.ibox:
-            self.ibox = get_infobox(self.title(), fetcher=self.fetcher)
+    def classes(self):
+        it = chain.from_iterable((c.classify(self.symbol())
+                                  for c in WIKIBASE_CLASSIFIERS))
+        return list(it)
 
-        return self.ibox
+    def infoboxes(self):
+        if not self._infoboxes:
+            self._infoboxes = get_infoboxes(self.title(), fetcher=self.fetcher)
+
+        return self._infoboxes
 
     def types(self):
-        return self.infobox().types()
+        types = [ibox.types() for ibox in self.infoboxes()]
+        types = list(chain.from_iterable(types))  # flatten list
+        return types
 
     def title(self):
         """

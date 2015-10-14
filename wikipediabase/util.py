@@ -33,6 +33,8 @@ class StringException(Exception):
 # XXX: I deepcopy objects. If you disable that be very
 # careful. However use this only on out facing functions.
 DEEPCOPY = True
+
+
 def memoized(fn):
     @functools.wraps(fn)
     def wrap(*args, **kw):
@@ -42,7 +44,6 @@ def memoized(fn):
             key = hash((kwkey, argkey))
         except TypeError:
             return wrap(*args, **kw)
-
 
         if key in wrap.memoized:
             if DEEPCOPY:
@@ -62,6 +63,7 @@ def memoized(fn):
         wrap._provided = fn._provided
 
     return wrap
+
 
 def iwindow(seq, n):
     """
@@ -86,13 +88,19 @@ def get_meta_infobox(symbol, fetcher=None):
     """
     from wikipediabase.metainfobox import MetaInfobox
 
-    return _context_get(symbol, "rendered_infobox", MetaInfobox, fetcher)
+    return _context_get(symbol, "meta_infobox", MetaInfobox, fetcher)
 
 
-def get_infobox(symbol, fetcher=None):
-    from wikipediabase.infobox import Infobox
+def get_infoboxes(symbol, cls=None, fetcher=None):
+    from wikipediabase.infobox import InfoboxScraper
 
-    return _context_get(symbol, "infobox", Infobox, fetcher)
+    scraper = _context_get(symbol, "infoboxes", InfoboxScraper, fetcher)
+    infoboxes = scraper.infoboxes()
+
+    if cls:
+        return filter(lambda i: i.wikipedia_class() == cls.lower(), infoboxes)
+
+    return infoboxes
 
 
 def get_article(symbol, fetcher=None):
@@ -123,6 +131,7 @@ def _get_persistent_dict(filename=DBM_FILE):
 
     return _context_get(filename, 'peristent_store', PersistentDict)
 
+
 def markup_categories(wiki_markup):
     """
     return the names of the categories.
@@ -134,6 +143,7 @@ def markup_categories(wiki_markup):
         return s.split(']]', 1)[0]
 
     return map(first_part, wiki_markup.split("[[Category:")[1:])
+
 
 def _context_get(symbol, domain, cls, new=False, **kwargs):
     """
@@ -237,6 +247,8 @@ def tostring(et):
     return s
 
 # A memoization
+
+
 def fromstring(txt, literal_newlines=False):
     if isinstance(txt, lxml.etree._Element):
         return txt
@@ -261,8 +273,10 @@ def fromstring(txt, literal_newlines=False):
 
     return ret
 
+
 def expand(fn, ite):
     return reduce(lambda a, b: a + b, [fn(i) for i in ite])
+
 
 def concat(*args):
 
@@ -296,8 +310,10 @@ def encode(txt):
     # return txt.decode('utf-8')
     return unicode(txt.decode("utf-8", errors='ignore'))
 
+
 def markup_unlink(markup):
     return re.sub(r"\[+(.*\||)(?P<content>.*?)\]+", r'\g<content>', markup)
+
 
 def output(s):
     if not isinstance(s, unicode):

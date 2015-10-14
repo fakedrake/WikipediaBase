@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from itertools import chain
-
-from wikipediabase.provider import Provider, provide
+from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
 from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.lispify import lispify
+from wikipediabase.provider import Provider, provide
 from wikipediabase.resolvers import WIKIBASE_RESOLVERS
-from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
 from wikipediabase.synonym_inducers import WIKIBASE_INDUCERS
-from wikipediabase.util import get_article, get_infobox
+from wikipediabase.util import get_article
 
 
 class KnowledgeBase(Provider):
@@ -50,36 +48,33 @@ class KnowledgeBase(Provider):
         :returns: the attribute's value or an error, lispified
         """
         for ar in self.resolvers:
-            res = ar.resolve(symbol, attr, cls=cls)
+            res = ar.resolve(cls, symbol, attr)
             if res is not None:
                 break
 
         return lispify([res])
 
-    @provide(name="get-classes")
-    def get_classes(self, symbol):
-        it = chain.from_iterable((c.classify(symbol)
-                                  for c in self.classifiers))
-        return lispify(list(it))
-
-    @provide(name="get-types")
-    def get_types(self, symbol):
-        types = get_article(symbol).types()
-        return lispify(types)
+    @provide(name="get-attributes")
+    def get_attributes(self, cls, symbol):
+        for r in self.resolvers:
+            attributes = r.attributes(cls, symbol)
+            if attributes is not None:
+                return attributes
+        return lispify([])
 
     @provide(name="get-categories")
     def get_categories(self, symbol):
         categories = get_article(symbol).categories()
         return lispify(categories)
 
-    @provide(name="get-attributes")
-    def get_attributes(self, wb_class, symbol=None):
-        if symbol is not None:
-            return lispify(self._get_attrs(symbol))
+    @provide(name="get-classes")
+    def get_classes(self, symbol):
+        return get_article(symbol).classes()
 
-        # We don't really need wb_class, symbol is enough so it might
-        # not be provided
-        return lispify(self._get_attrs(wb_class))
+    @provide(name="get-types")
+    def get_types(self, symbol):
+        types = get_article(symbol).types()
+        return lispify(types)
 
     def synonyms(self, symbol):
         synonyms = set()
@@ -88,32 +83,3 @@ class KnowledgeBase(Provider):
             synonyms.update(si.induce(symbol))
 
         return lispify(synonyms)
-
-    def _get_attrs(self, symbol):
-        """
-        Get all attributes of a symbol you can find.
-        """
-
-        ibox = get_infobox(symbol, self.fetcher)
-
-        ret = []
-        for k, v in ibox.markup_parsed_iter():
-            rendered = ibox.rendered_attributes().get(k.replace('-', '_'))
-            tmp = lispify(dict(code=k.upper(),
-                               rendered=rendered))
-
-            ret.append(tmp)
-
-        return ret
-
-    def attribute_wrap(self, val, **keys):
-        """
-        Make a dict with val and keys. This wraps attributes which are
-        strings only for internal use in knowledgebase.
-        """
-
-        try:
-            val["keys"].update(keys)
-            return val
-        except (KeyError, TypeError):
-            return dict(val=val, keys=keys)

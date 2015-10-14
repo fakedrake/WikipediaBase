@@ -16,12 +16,11 @@ except ImportError:
 import logging
 
 from wikipediabase import resolvers
-from wikipediabase import fetcher
 from wikipediabase.frontend import Frontend
 
 from wikipediabase.util import get_knowledgebase
 
-from wikipediabase.resolvers.paragraph import first_paren
+from wikipediabase.resolvers.person import first_paren
 
 from tests.examples import *
 
@@ -49,25 +48,16 @@ class TestResolvers(unittest.TestCase):
 
     def setUp(self):
         self.log = logging.getLogger("resolver-testing")
-        self.simple_resolver = resolvers.StaticResolver(
-            fetcher=fetcher.BaseFetcher())
-        self.ibresolver = resolvers.InfoboxResolver(
-            fetcher=fetcher.WIKIBASE_FETCHER)
-
         self.fe = Frontend()
         self.kb = get_knowledgebase()
+        self.term_resolver = resolvers.TermResolver()
 
-    def test_resolver(self):
-        self.assertEqual(self.simple_resolver.resolve(ARTICLE_BODY, "word-count"),
-                         100)
+    def test_word_count(self):
+        self.assertEqual(len(self.term_resolver._words(ARTICLE_BODY)), 100)
 
     def test_url(self):
-        """
-        The url we provide should be to wikipedia.org for the user's
-        benefit.
-        """
-        self.assertIn('en.wikipedia.org/wiki',
-                      str(self.simple_resolver.resolve("Barack obama", "url")))
+        url = self.term_resolver.resolve('wikibase-term', 'Barack obama', 'url')
+        self.assertEquals('https://en.wikipedia.org/wiki/Barack_Obama', url.val)
 
     def test_infobox(self):
         band_name = self.fe.eval('(get "wikipedia-album" "%s" "Name")' %
@@ -106,11 +96,12 @@ class TestResolvers(unittest.TestCase):
         self.assertIs(first_paren(txt_none), None)
 
     def test_error_resolver(self):
+        alive_err = '((:error attribute-value-not-found :reply '\
+            '"Currently alive"))'
         err = self.kb.get('wikipedia-president', 'Bill Clinton', 'death-date')
+        self.assertEqual(str(err), alive_err)
         err = self.kb.get('wikibase-person', 'Barack Obama', 'death-date')
-        self.assertEqual(str(err),
-                         '((:error attribute-value-not-found :reply '
-                         '"Currently alive"))')
+        self.assertEqual(str(err), alive_err)
 
     def _ans_match(self, lst, just=None):
         """

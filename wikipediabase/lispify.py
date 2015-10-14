@@ -165,6 +165,9 @@ class LispList(LispType):
         if isinstance(v, basestring):
             return str(LispString(v, None))
 
+        if isinstance(v, dict):
+            return str(LispDict(v, None))
+
         if hasattr(v, '__iter__'):
             return str(LispList(v, None))
 
