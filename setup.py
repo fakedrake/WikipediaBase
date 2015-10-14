@@ -27,7 +27,6 @@ setup(
         'lxml',
         'overlay-parse',
         'redis',
-        'redis',
         'requests',
         'sqlitedict',
         'unidecode',
