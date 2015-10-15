@@ -69,7 +69,7 @@ class KnowledgeBase(Provider):
 
     @provide(name="get-classes")
     def get_classes(self, symbol):
-        return get_article(symbol).classes()
+        return lispify(get_article(symbol).classes())
 
     @provide(name="get-types")
     def get_types(self, symbol):
