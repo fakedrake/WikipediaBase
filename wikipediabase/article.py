@@ -5,11 +5,12 @@ from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.log import Logging
 from wikipediabase.synonym_inducers import ForwardRedirectInducer
 from wikipediabase.util import (Expiry,
-                                markup_categories,
                                 fromstring,
-                                totext,
+                                get_infoboxes,
+                                markup_categories,
                                 memoized,
-                                get_infoboxes)
+                                tostring,
+                                totext)
 
 # XXX: also support images.
 
@@ -90,14 +91,18 @@ class Article(Logging):
 
         return self.fetcher.html_source(self._title, expiry=expiry)
 
-    def paragraphs(self):
+    def paragraphs(self, keep_html=False):
         """
         Generate paragraphs.
         """
 
-        return ["".join(p.itertext()) for p in
-                self._soup().findall(".//*[@id='mw-content-text']/p")
-                if "".join(p.itertext())]
+        xpath = ".//*[@id='mw-content-text']/p"
+        if keep_html:
+            return ["".join(tostring(p)) for p in self._soup().findall(xpath)
+                    if "".join(p.itertext())]
+        else:
+            return ["".join(p.itertext()) for p in self._soup().findall(xpath)
+                    if "".join(p.itertext())]
 
     def headings(self):
         """
@@ -111,8 +116,8 @@ class Article(Logging):
                 for h in s.findall(xpath)
                 if "".join(h.itertext())]
 
-    def first_paragraph(self):
-        for p in self.paragraphs():
+    def first_paragraph(self, keep_html=False):
+        for p in self.paragraphs(keep_html=keep_html):
             if p.strip():
                 return p
 
