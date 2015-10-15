@@ -11,7 +11,6 @@ import lxml.etree as ET
 import copy
 import lxml
 from lxml import html
-from unidecode import unidecode
 
 _CONTEXT = dict()
 DBM_FILE = "/tmp/wikipediabase.mdb"
@@ -316,7 +315,7 @@ def markup_unlink(markup):
 
 
 def output(s):
+    # TODO : remove this function for production
     if not isinstance(s, unicode):
         raise StringException("Not a unicode string: %s" % s)
-
-    return unidecode(s)
+    return s
