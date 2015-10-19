@@ -13,6 +13,7 @@ class TelnetHandler(SocketServer.StreamRequestHandler, Logging):
 
     def handle(self):
         msg = self.rfile.readline().strip()
+        self.log().info('Received request: %s', msg)
         answer = self.server.eval(msg)
         assert(isinstance(answer, unicode))  # TODO : remove for production
         self.wfile.write(answer.encode('utf-8'))
