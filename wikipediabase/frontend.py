@@ -67,7 +67,8 @@ class TelnetFrontend(Frontend):
         try:
             return super(TelnetFrontend, self).eval(*args, **kw) + u'\n'
         except Exception as e:
-            return unicode(lispify(e, typecode='error')) + u'\n'
+            error = lispify(e, typecode='error')
+            return unicode(lispify([error])) + u'\n'
 
     def __init__(self, *args, **kwargs):
         super(TelnetFrontend, self).__init__(*args, **kwargs)
