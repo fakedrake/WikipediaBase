@@ -339,7 +339,7 @@ class LispError(LispDict):
                 # :reply should only be used for error messages that can be
                 # displayed to START users
                 # use :message for Python exceptions
-                kw={'message': self.val.message}
+                kw={'message': str(self.val.message)}
             )
 
         return output(u"(:error {symbol} {keys})".format(
