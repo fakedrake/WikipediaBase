@@ -5,6 +5,7 @@ from wikipediabase.fetcher import WIKIBASE_FETCHER
 from wikipediabase.lispify import lispify
 from wikipediabase.provider import Provider, provide
 from wikipediabase.resolvers import WIKIBASE_RESOLVERS
+from wikipediabase.sort_symbols import sort_by_length, sort_named
 from wikipediabase.synonym_inducers import WIKIBASE_INDUCERS
 from wikipediabase.util import get_article
 
@@ -31,11 +32,6 @@ class KnowledgeBase(Provider):
         self.resolvers = kw.get('resolvers', WIKIBASE_RESOLVERS)
         self.classifiers = kw.get('classifiers', WIKIBASE_CLASSIFIERS)
         self.synonym_inducers = kw.get('synonym_inducers', WIKIBASE_INDUCERS)
-
-    @provide(name='sort-symbols')
-    def sort_symbols(self, *args):
-        key = lambda a: len(' '.join(get_article(a).paragraphs()))
-        return lispify(sorted(args, reverse=True, key=key))
 
     @provide(name='get')
     def get(self, cls, symbol, attr):
@@ -69,12 +65,20 @@ class KnowledgeBase(Provider):
 
     @provide(name="get-classes")
     def get_classes(self, symbol):
-        return get_article(symbol).classes()
+        return lispify(get_article(symbol).classes())
 
     @provide(name="get-types")
     def get_types(self, symbol):
         types = get_article(symbol).types()
         return lispify(types)
+
+    @provide(name='sort-symbols')
+    def sort_symbols(self, *args):
+        return lispify(sort_by_length(*args))
+
+    @provide(name='sort-symbols-named')
+    def sort_symbols_named(self, synonym, *args):
+        return lispify(sort_named(synonym, *args))
 
     def synonyms(self, symbol):
         synonyms = set()

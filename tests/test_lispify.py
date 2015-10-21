@@ -25,7 +25,7 @@ class TestLispify(unittest.TestCase):
         self.assertEqual(lispify('foo \\ "bar"'), '"foo \\ \\"bar\\""')
 
     def test_unicode_string(self):
-        self.assertEqual(lispify(u"föø ” "), '"foo \\" "')
+        self.assertEqual(lispify(u"föø ” "), u'"föø ” "')
 
     def test_string_with_typecode(self):
         self.assertEqual(lispify("bar", typecode="html"), '(:html "bar")')

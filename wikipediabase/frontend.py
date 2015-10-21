@@ -65,21 +65,18 @@ class TelnetFrontend(Frontend):
 
     def eval(self, *args, **kw):
         try:
-            return super(TelnetFrontend, self).eval(*args, **kw) + "\n"
-        except BaseException, e:
-            if isinstance(e, SystemExit):
-                raise e
-
-            return unicode(lispify(e, typecode='error')) + u'\n'
+            return super(TelnetFrontend, self).eval(*args, **kw) + u'\n'
+        except Exception as e:
+            error = lispify(e, typecode='error')
+            return unicode(lispify([error])) + u'\n'
 
     def __init__(self, *args, **kwargs):
         super(TelnetFrontend, self).__init__(*args, **kwargs)
-        self.srv = TelnetServer(answer=self.eval,
-                                safeword="quit")
+        self.srv = TelnetServer(('0.0.0.0', 8023), self.eval)
 
     def run(self):
         self.log().info("Running telnet server...")
-        self.srv.start(thread=False)
+        self.srv.serve_forever()
 
     @provide()
     def quit(self, status=0):

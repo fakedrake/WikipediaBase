@@ -103,7 +103,7 @@ class TermResolver(BaseResolver):
         """
 
         # TODO: check if the first paragraph is shorter than 350 characters
-        first_paragraph = get_article(symbol).first_paragraph()
+        first_paragraph = get_article(symbol).first_paragraph(keep_html=True)
         return lispify(first_paragraph, typecode='html')
 
     @provide(name='url')

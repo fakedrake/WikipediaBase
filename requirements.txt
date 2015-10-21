@@ -1,5 +1,4 @@
 -e git://github.com/fakedrake/overlay_parse#egg=overlay-parse
-Unidecode==0.4.18
 beautifulsoup4==4.4.1
 coverage==4.0.1
 coveralls==1.0

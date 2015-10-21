@@ -29,7 +29,6 @@ setup(
         'redis',
         'requests',
         'sqlitedict',
-        'unidecode',
         'unittest2 < 1.0.0',
     ],
     dependency_links=[

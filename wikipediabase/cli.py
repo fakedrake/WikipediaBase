@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 def main():
     arguments = docopt(__doc__, version=wikipediabase.__version__)
-    debug = arguments['--debug']
+    debug = arguments['--debug'] if '--debug' in arguments else None
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     log.debug('arguments: %s', arguments)
 

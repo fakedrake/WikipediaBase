@@ -111,8 +111,11 @@ class LispType(Logging):
 
     def __eq__(self, other):
         # compare LispType objects based on their string representation
-        if isinstance(other, self.__class__) or isinstance(other, basestring):
+        if isinstance(other, self.__class__):
             return self.__str__() == other.__str__()
+        elif isinstance(other, basestring):
+            return self.__str__() == other
+
         return False
 
     def __hash__(self):
@@ -134,7 +137,6 @@ class LispString(LispType):
     def val_str(self):
         v = re.sub(r"\[\d*\]", "", self.val)  # remove references, e.g. [1]
         v = re.sub(r"[[\]]", "", v)  # remove wikimarkup links, e.g. [[Ruby]]
-        v = output(unicode(v))  # remove unicode characters
         v = v.replace('"', '\\"')  # escape double quotes
         v = u'"{0}"'.format(v)
         return v
@@ -154,22 +156,22 @@ class LispList(LispType):
 
     def __str__(self):
         if self.typecode:
-            return '%s' % (super(LispList, self).__str__())
+            return u'%s' % (super(LispList, self).__str__())
         else:
-            return '(%s)' % super(LispList, self).__str__()
+            return u'(%s)' % super(LispList, self).__str__()
 
     def erepr(self, v):
         if isinstance(v, LispType):
-            return str(v)
+            return unicode(v)
 
         if isinstance(v, basestring):
-            return str(LispString(v, None))
+            return unicode(LispString(v, None))
 
         if isinstance(v, dict):
-            return str(LispDict(v, None))
+            return unicode(LispDict(v, None))
 
         if hasattr(v, '__iter__'):
-            return str(LispList(v, None))
+            return unicode(LispList(v, None))
 
         return repr(v)
 
@@ -337,7 +339,7 @@ class LispError(LispDict):
                 # :reply should only be used for error messages that can be
                 # displayed to START users
                 # use :message for Python exceptions
-                kw={'message': self.val.message}
+                kw={'message': str(self.val.message)}
             )
 
         return output(u"(:error {symbol} {keys})".format(
@@ -388,7 +390,7 @@ class LispBool(_LispLiteral):
         return isinstance(self.val, bool)
 
     def val_str(self):
-        return 't' if self.val else 'nil'
+        return u't' if self.val else u'nil'
 
 
 class LispNone(_LispLiteral):
@@ -401,7 +403,7 @@ class LispNone(_LispLiteral):
         return self.val is None
 
     def val_str(self):
-        return 'nil'
+        return u'nil'
 
 
 class LispNumber(_LispLiteral):
