@@ -25,6 +25,7 @@ setup(
         'fuzzywuzzy',
         'hiredis',
         'lxml',
+        'namedentities',
         'overlay-parse',
         'redis',
         'requests',
