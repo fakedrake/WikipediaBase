@@ -1,7 +1,7 @@
 import re
 from itertools import chain
 
-from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.fetcher import get_fetcher
 
 MW_HEADING_RX = map(re.compile, [
     ur"\s*==([\w\s]+)==",
@@ -54,21 +54,19 @@ def ibx_tree(src, prefix=None, form=None):
     return queue
 
 
-def ibx_type_tree(fetcher=None, form=None):
+def ibx_type_tree(form=None):
     if hasattr(ibx_type_tree, "ret"):
         return ibx_type_tree.ret
 
-    if not fetcher:
-        fetcher = WIKIBASE_FETCHER
-
-    src = fetcher.markup_source("Wikipedia:List_of_infoboxes")
+    fetcher = get_fetcher()
+    src = fetcher.markup_source("Wikipedia:List_of_infoboxes", force_live=True)
     titles = map(lambda x: x.split("}}", 1)[0],
                  src.split(u"{{Wikipedia:List of infoboxes/")[1:])
     symbols = (u"Wikipedia:List_of_infoboxes/" + i
                for i in titles)
-    tuples = chain.from_iterable((ibx_tree(fetcher.markup_source(sym),
-                                           form=form)
-                                  for sym, tit in zip(symbols, titles)))
+    tuples = chain.from_iterable(
+        (ibx_tree(fetcher.markup_source(sym, force_live=True), form=form)
+         for sym, tit in zip(symbols, titles)))
     ibx_type_tree.ret = dict(tuples)
     return ibx_type_tree.ret
 

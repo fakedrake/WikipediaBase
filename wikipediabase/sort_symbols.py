@@ -1,4 +1,4 @@
-from wikipediabase.util import get_article
+from wikipediabase.article import get_article
 
 
 def sort_by_length(*args):
@@ -14,7 +14,7 @@ def sort_named(named, *args):
             article_lengths[a] = len(' '.join(get_article(a).paragraphs()))
         except LookupError:
             pass
-    
+
     def compare(a, b):
         named_eq = lambda x: x == named
         named_ieq = lambda x: x.lower() == named.lower()
@@ -26,8 +26,11 @@ def sort_named(named, *args):
         else:
             len_a = article_lengths[a]
             len_b = article_lengths[b]
-            if len_a < len_b: return -1
-            elif len_a == len_b: return 0
-            elif len_a > len_b: return 1
+            if len_a < len_b:
+                return -1
+            elif len_a == len_b:
+                return 0
+            elif len_a > len_b:
+                return 1
 
     return sorted(article_lengths.keys(), cmp=compare)

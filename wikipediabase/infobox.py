@@ -3,14 +3,13 @@ import re
 from fuzzywuzzy import fuzz, process
 
 from wikipediabase.util import (Expiry,
+                                LRUCache,
                                 fromstring,
-                                get_meta_infobox,
-                                get_article,
-                                totext,
-                                tostring)
+                                tostring,
+                                totext,)
 from wikipediabase.log import Logging
-from wikipediabase.fetcher import WIKIBASE_FETCHER
-from wikipediabase.infobox_tree import ibx_type_superclasses
+from wikipediabase.fetcher import get_fetcher
+from wikipediabase.meta_infobox import get_meta_infobox
 
 ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_0-9]+)\s*=" \
     "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
@@ -24,6 +23,11 @@ BOX_REGEX = r"\b(infobox|Infobox|taxobox|Taxobox)\b"
 # for an example, see WWI's "{{World War I infobox}}"
 SPECIAL_INFOBOX_REGEX = r"{{\s*(?P<template>([\w ]+)[Ii]nfobox)}}"
 
+# Infobox objects are cached in memory
+# The cache size was determined from a typical WikipediaBase workload where
+# START calls get-classes and get-attributes for many symbols, and get for a few
+_INFOBOX_CACHE = LRUCache(100)
+
 
 class Infobox(Logging):
 
@@ -32,14 +36,12 @@ class Infobox(Logging):
     - instead of _.
     """
 
-    def __init__(self, symbol, markup_source, html_source, fetcher=None,
-                 title=None):
+    def __init__(self, symbol, markup_source, html_source, title=None):
         self.symbol = self.title = symbol
         if title is not None:
             self.title = title
         self._markup = markup_source
         self._html = html_source
-        self.fetcher = fetcher or WIKIBASE_FETCHER
 
     def __nonzero__(self):
         return bool(self._html)
@@ -55,27 +57,6 @@ class Infobox(Logging):
 
     def wikipedia_class(self):
         return self._to_class(self.template())
-
-    def types(self):
-        """
-        The infobox type. Extend means search in other places except here
-        (ie find equivalent ones, parent ones etc).
-        """
-        if not hasattr(self, "_sc"):
-            self._sc = ibx_type_superclasses()
-
-        template = self.template()
-        types = filter(lambda t: t is not None, [self._to_type(template)])
-
-        t = self._to_type(template)
-        title = get_article(template, self.fetcher).title()
-        if t != self._to_type(title):
-            types.append(self._to_type(title))
-
-        if t in self._sc:
-            types.extend(self._sc[t])
-
-        return types
 
     def get(self, attr, source=None):
         """
@@ -211,21 +192,20 @@ class Infobox(Logging):
         return tpairs
 
 
-class InfoboxScraper(Logging):
+class InfoboxBuilder(Logging):
 
     """
-    InfoboxScraper scrapes markup and HTML of an article to produce a list
+    InfoboxBuilder scrapes markup and HTML of an article to build a list
     of infoboxes
     """
 
-    def __init__(self, symbol, title=None, fetcher=None):
+    def __init__(self, symbol, title=None):
         self.symbol = self.title = symbol
         if title is not None:
             self.title = title
+        self.fetcher = get_fetcher()
 
-        self.fetcher = fetcher or WIKIBASE_FETCHER
-
-    def infoboxes(self, expiry=Expiry.DEFAULT):
+    def build(self, expiry=Expiry.DEFAULT):
         """
         Returns a list of Infobox objects constructed from the article
         """
@@ -233,11 +213,15 @@ class InfoboxScraper(Logging):
         markup_source = self.fetcher.markup_source(self.symbol, expiry=expiry)
         html_source = self.fetcher.html_source(self.symbol, expiry=expiry)
 
-        infoboxes, external_templates = self._infoboxes_from_article(markup_source, html_source)
+        infoboxes, external_templates = self._infoboxes_from_article(
+            markup_source, html_source)
         for t in external_templates:
             title = 'Template:%s' % t.strip()
             try:
-                m = self.fetcher.markup_source(title, expiry=expiry)
+                # templates are not stored in the backend, so we need to fetch
+                # from live wikipedia.org
+                m = self.fetcher.markup_source(title, expiry=expiry,
+                                               force_live=True)
                 h = self.fetcher.html_source(title, expiry=expiry)
 
                 # we only follow external infobox templates once, instead of
@@ -253,7 +237,8 @@ class InfoboxScraper(Logging):
         return infoboxes
 
     def _infoboxes_from_article(self, markup_source, html_source):
-        markup_infoboxes, external_templates = self._markup_infoboxes(markup_source)
+        markup_infoboxes, external_templates = self._markup_infoboxes(
+            markup_source)
         html_infoboxes = self._html_infoboxes(html_source)
 
         assert(len(markup_infoboxes) <= len(html_infoboxes))  # TODO: remove for production
@@ -358,3 +343,15 @@ class InfoboxScraper(Logging):
             pos = html.index(best_match) + 1
 
         return infoboxes
+
+
+def get_infoboxes(symbol, cls=None):
+    try:
+        infoboxes = _INFOBOX_CACHE.get(symbol)
+    except KeyError:
+        infoboxes = InfoboxBuilder(symbol).build()
+        _INFOBOX_CACHE.set(symbol, infoboxes)
+
+    if cls:
+        return filter(lambda i: i.wikipedia_class() == cls.lower(), infoboxes)
+    return infoboxes

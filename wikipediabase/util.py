@@ -1,19 +1,17 @@
 from itertools import islice, chain
 from urlparse import urlparse
-
-import re
 import collections
+import copy
+import datetime
 import functools
 import inspect
+import re
 
 from bs4 import UnicodeDammit
-import lxml.etree as ET
-import copy
-import lxml
-from lxml import html
+from lxml import etree as ET, html
 
-_CONTEXT = dict()
-DBM_FILE = "/tmp/wikipediabase.mdb"
+_USER_AGENT = "WikipediaBase/1.0 " \
+    "(http://start.csail.mit.edu; wikibase-admins@csail.mit.edu)"
 
 
 class Expiry:
@@ -22,8 +20,47 @@ class Expiry:
     NEVER = None
 
 
+class LRUCache:
+
+    """
+    A least recently used (LRU) cache with a max capacity
+    """
+
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.cache = collections.OrderedDict()
+
+    def get(self, key):
+        """
+        Get the value of key if the key exists in the cache
+        Raises a KeyError if key is not in the cache
+        """
+        value = self.cache.pop(key)
+        self.cache[key] = value
+        return value
+
+    def set(self, key, value):
+        """
+        Insert the value if the key is not already present. When the cache
+        reaches its capacity, it should invalidate the least recently used item
+        before inserting a new item.
+        """
+        try:
+            self.cache.pop(key)
+        except KeyError:
+            if len(self.cache) >= self.capacity:
+                self.cache.popitem(last=False)
+        self.cache[key] = value
+
+
 class StringException(Exception):
     pass
+
+
+_CONTEXT = dict()
+
+DBM_FILE = "/tmp/wikipediabase.mdb"
+
 
 # General tools
 # XXX: Plug in here for permanent memoization. You may need to do some
@@ -80,32 +117,8 @@ def iwindow(seq, n):
         yield result
 
 
-def get_meta_infobox(symbol, fetcher=None):
-    """
-    Get an infobox that only has keys and not values. A quick and
-    dirty way avoid parsing the values of an infobox.
-    """
-    from wikipediabase.metainfobox import MetaInfobox
-
-    return _context_get(symbol, "meta_infobox", MetaInfobox, fetcher)
-
-
-def get_infoboxes(symbol, cls=None, fetcher=None):
-    from wikipediabase.infobox import InfoboxScraper
-
-    scraper = _context_get(symbol, "infoboxes", InfoboxScraper, fetcher)
-    infoboxes = scraper.infoboxes()
-
-    if cls:
-        return filter(lambda i: i.wikipedia_class() == cls.lower(), infoboxes)
-
-    return infoboxes
-
-
-def get_article(symbol, fetcher=None):
-    from wikipediabase.article import Article
-
-    return _context_get(symbol, "article", Article, fetcher)
+def get_user_agent():
+    return _USER_AGENT
 
 
 def get_knowledgebase(**kw):
@@ -191,9 +204,6 @@ def _context_get(symbol, domain, cls, new=False, **kwargs):
 
 # This is for printing out stuff only. It is too slow to use for too
 # much data.
-import datetime
-
-
 def time_interval(key="default", update=True):
     """
     Give me the interval from the last time I called you.
@@ -249,7 +259,7 @@ def tostring(et):
 
 
 def fromstring(txt, literal_newlines=False):
-    if isinstance(txt, lxml.etree._Element):
+    if isinstance(txt, ET._Element):
         return txt
 
     if not hasattr(fromstring, 'memoized'):
@@ -303,11 +313,6 @@ def string_reduce(string):
     # First remove quotes so the stopwords turn up at the front
     ret = re.sub(ur"([\W\s]+)", " ", string, flags=re.U | re.I).strip().lower()
     return re.sub(ur"(^the|^a|^an)\b", "", ret, flags=re.U).strip()
-
-
-def encode(txt):
-    # return txt.decode('utf-8')
-    return unicode(txt.decode("utf-8", errors='ignore'))
 
 
 def markup_unlink(markup):

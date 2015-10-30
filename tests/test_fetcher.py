@@ -20,7 +20,7 @@ from wikipediabase import fetcher
 class TestFetcher(unittest.TestCase):
 
     def setUp(self):
-        self.fetcher = fetcher.WIKIBASE_FETCHER
+        self.fetcher = fetcher.get_fetcher()
 
     def test_html(self):
         html = self.fetcher.html_source("Led Zeppelin")
@@ -39,7 +39,8 @@ class TestFetcher(unittest.TestCase):
         self.assertIn("Geobox|River", src)
 
     def test_silent_redirect(self):
-        src = self.fetcher.markup_source("Obama")
+        # redirects are only supported when force_live is set to True
+        src = self.fetcher.markup_source("Obama", force_live=True)
         self.assertFalse(re.match(fetcher.REDIRECT_REGEX, src))
 
 if __name__ == '__main__':

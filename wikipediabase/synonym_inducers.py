@@ -8,8 +8,9 @@ Synonyms are are based upon:
 
 import re
 from wikipediabase.util import subclasses, string_reduce
-from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.fetcher import get_fetcher
 
+WIKIBASE_INDUCERS = []
 TITLE_REGEX = re.compile(r"\"wgTitle\":\"(.*?)\",")
 # looks for the wgTitle element in a <script> block that contains metadata for
 # wikipedia
@@ -27,7 +28,9 @@ def lexical_synonyms(symbol):
 
     return map(string_reduce, ret)
 
+
 class BaseInducer(object):
+
     """
     All inducers should take care of also lexically inducing.
     """
@@ -36,21 +39,20 @@ class BaseInducer(object):
 
 
 class ForwardRedirectInducer(BaseInducer):
+
     """
     Finds the title of the article. Useful for redirects.
     """
 
-    def title(self, symbol, fetcher=None):
-        fetcher = fetcher or WIKIBASE_FETCHER
-        html = fetcher.html_source(symbol)
+    def title(self, symbol):
+        html = get_fetcher().html_source(symbol)
         match = re.search(TITLE_REGEX, html)
         if match:
             return match.group(1)
 
-    def induce(self, symbol, fetcher=None):
+    def induce(self, symbol):
         synonyms = []
-        fetcher = fetcher or WIKIBASE_FETCHER
-        title = self.title(symbol, fetcher=fetcher)
+        title = self.title(symbol)
         if title:
             sym = string_reduce(symbol)
             if title != sym:
@@ -60,6 +62,7 @@ class ForwardRedirectInducer(BaseInducer):
 
 
 class LexicalInducer(BaseInducer):
+
     """
     Induce just the lexicals of the symbol
     """
@@ -68,4 +71,15 @@ class LexicalInducer(BaseInducer):
         return lexical_synonyms(symbol)
 
 
-WIKIBASE_INDUCERS = subclasses(BaseInducer)
+def get_inducers():
+    global WIKIBASE_INDUCERS
+    if not WIKIBASE_INDUCERS:
+        WIKIBASE_INDUCERS = subclasses(BaseInducer)
+    return WIKIBASE_INDUCERS
+
+
+def induce(symbol):
+    synonyms = set()
+    for si in get_inducers():
+        synonyms.update(si.induce(symbol))
+    return synonyms

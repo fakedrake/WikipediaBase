@@ -30,17 +30,12 @@ class TestKnowledgebase(unittest.TestCase):
         self.assertEquals(self.fe.resources()['get'], self.kb.get)
 
     def test_get_attributes(self):
-        f = self.fe.resources()['get-attributes']
-        self.assertIn("BIRTH-DATE", f("wikipedia-president", "Bill Clinton"))
-
-    def test_attributes_format(self):
         attrs = self.fe.resources()['get-attributes']("wikipedia-president",
                                                       "Bill Clinton")
-
         for a in CLINTON_ATTRS:
             self.assertIn(a, attrs)
 
-    def test_classes(self):
+    def test_get_classes(self):
         self.assertIn("wikipedia-president",
                       str(self.fe.resources()['get-classes']("Bill Clinton")))
         # The list gets iterated and memoization fails.
@@ -48,25 +43,10 @@ class TestKnowledgebase(unittest.TestCase):
                       str(self.fe.resources()['get-classes']("Bill Clinton")),
                       "Second time failed. Memoization problem")
 
-    def test_types(self):
-        types = self.fe.resources()['get-types']("Bill Clinton")
-        self.assertIn('officeholder', types)
-        self.assertIn('president', types)
-
-    def test_categories(self):
-        self.assertIn("Presidents of the United States",
-                      self.fe.resources()['get-categories']("Bill Clinton"))
-
     def test_sort_symbols(self):
         ench = self.fe.resources()['sort-symbols']("Mary Shakespeare", "Batman")
         self.assertIs(type(ench), LispList)
         self.assertEqual(ench.val, ["Batman", "Mary Shakespeare"])
-
-    def test_synonyms(self):
-        self.assertIn("batman", self.kb.synonyms("bat man"))
-
-    def tearDown(self):
-        pass
 
 if __name__ == '__main__':
     unittest.main()

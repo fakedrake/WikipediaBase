@@ -1,8 +1,7 @@
 from wikipediabase.classifiers import is_wikipedia_class
-from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.infobox import get_infoboxes
 from wikipediabase.lispify import lispify, LispType
 from wikipediabase.resolvers.base import BaseResolver, check_resolver
-from wikipediabase.util import get_infoboxes
 
 
 class InfoboxResolver(BaseResolver):
@@ -14,13 +13,7 @@ class InfoboxResolver(BaseResolver):
     priority = 10
 
     def __init__(self, *args, **kwargs):
-        """
-        Provide a way to fetch articles. If no fetcher is provider
-        fallback to BaseFetcher.
-        """
-
         super(InfoboxResolver, self).__init__(*args, **kwargs)
-        self.fetcher = kwargs.get('fetcher', WIKIBASE_FETCHER)
         self._typecode = "html"
 
     def _should_resolve(self, cls):
@@ -40,7 +33,7 @@ class InfoboxResolver(BaseResolver):
         else:
             typecode, attr = self._typecode, attr
 
-        infoboxes = get_infoboxes(symbol, cls=cls, fetcher=self.fetcher)
+        infoboxes = get_infoboxes(symbol, cls=cls)
 
         for ibox in infoboxes:
             result = ibox.get(attr)
@@ -62,7 +55,7 @@ class InfoboxResolver(BaseResolver):
         """
 
         attributes = []
-        infoboxes = get_infoboxes(symbol, cls=cls, fetcher=self.fetcher)
+        infoboxes = get_infoboxes(symbol, cls=cls)
 
         for ibox in infoboxes:
             for k, v in ibox.markup_parsed_iter():

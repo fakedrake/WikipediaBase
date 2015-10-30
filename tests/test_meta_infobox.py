@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-test_metainfobox
+test_meta_infobox
 ----------------------------------
 
-Tests for `metainfobox` module.
+Tests for `meta_infobox` module.
 """
 
 try:
@@ -13,18 +13,18 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase.metainfobox import MetaInfobox
-from wikipediabase.util import get_meta_infobox
+from wikipediabase.meta_infobox import get_meta_infobox, MetaInfoboxBuilder
 
 
 class TestMetaInfobox(unittest.TestCase):
 
     def setUp(self):
-        self.ibx = MetaInfobox('Template:Infobox person')
+        self.builder = MetaInfoboxBuilder('Template:Infobox person')
+        self.ibx = self.builder.build()
 
     def test_clean_attribute(self):
         dirty = "  attr12 "
-        self.assertEqual(self.ibx._clean_attribute(dirty), "attr")
+        self.assertEqual(self.builder._clean_attribute(dirty), "attr")
 
     def test_newlines(self):
         ibx = get_meta_infobox('Template:Infobox weapon')
@@ -51,7 +51,7 @@ class TestMetaInfobox(unittest.TestCase):
 
     def test_attributes(self):
         self.assertIn((u'Native\xa0name', '!!!!!native_name!!!!!'),
-                      self.ibx.html_parsed())
+                      self.builder.html_parsed())
 
     def test_rendered_attributes(self):
         self.assertEqual(self.ibx.rendered_attributes()['native_name'],

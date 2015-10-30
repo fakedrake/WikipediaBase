@@ -7,8 +7,13 @@ Classes can be one of two kinds:
  * calculated classes, prefixed by "wikibase-"
 """
 
+from itertools import chain
+
 from wikipediabase.log import Logging
-from wikipediabase.util import get_infoboxes, subclasses
+from wikipediabase.infobox import get_infoboxes
+from wikipediabase.util import subclasses
+
+WIKIBASE_CLASSIFIERS = []
 
 
 def is_wikipedia_class(cls):
@@ -25,9 +30,8 @@ class BaseClassifier(Logging):
     Given a symbol provide some classes for it.
     """
     priority = 0
-    fetcher = None
 
-    def classify(self, symbol, fetcher=None):
+    def classify(self, symbol):
         raise NotImplemented("Abstract function.")
 
     def __call__(self, symbol, *av, **kw):
@@ -36,21 +40,21 @@ class BaseClassifier(Logging):
 
 class TermClassifier(BaseClassifier):
 
-    def classify(self, symbol, fetcher=None):
+    def classify(self, symbol):
         return ['wikibase-term']
 
 
 class SectionsClassifier(BaseClassifier):
 
-    def classify(self, symbol, fetcher=None):
+    def classify(self, symbol):
         return ['wikibase-sections']
 
 
 class InfoboxClassifier(BaseClassifier):
 
-    def classify(self, symbol, fetcher=None):
+    def classify(self, symbol):
         classes = []
-        for ibox in get_infoboxes(symbol, fetcher=fetcher):
+        for ibox in get_infoboxes(symbol):
             classes.append(ibox.wikipedia_class())
         return classes
 
@@ -71,14 +75,20 @@ class PersonClassifier(BaseClassifier):
 
         return False
 
-    def classify(self, symbol, fetcher=None):
-        if fetcher:
-            self.fetcher = fetcher
-
+    def classify(self, symbol):
         classes = []
         if self.is_person(symbol):
             classes += ['wikibase-person']
         return classes
 
 
-WIKIBASE_CLASSIFIERS = subclasses(BaseClassifier)
+def get_classifiers():
+    global WIKIBASE_CLASSIFIERS
+    if not WIKIBASE_CLASSIFIERS:
+        WIKIBASE_CLASSIFIERS = subclasses(BaseClassifier)
+    return WIKIBASE_CLASSIFIERS
+
+
+def classify(symbol):
+    it = chain.from_iterable((c.classify(symbol)) for c in get_classifiers())
+    return list(it)

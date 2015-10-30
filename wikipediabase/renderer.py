@@ -3,14 +3,15 @@ Turn markdown into html.
 """
 
 from wikipediabase.log import Logging
-from wikipediabase.fetcher import USER_AGENT
-from wikipediabase.util import Expiry
+from wikipediabase.util import Expiry, get_user_agent
 import logging
 import redis
 import requests
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+WIKIBASE_RENDERER = None
 
 
 class BaseRenderer(Logging):
@@ -38,7 +39,7 @@ class Renderer(BaseRenderer):
         """
 
         data = {"action": "parse", "text": wikitext, "prop": "text", "format": "json"}
-        headers = {'User-Agent': USER_AGENT}
+        headers = {'User-Agent': get_user_agent()}
         r = requests.post(self.url, data=data, headers=headers)
         if r.status_code != requests.codes.ok:
             raise LookupError("Error rendering from the Wikipedia API. "
@@ -72,4 +73,9 @@ class CachingRenderer(Renderer):
 
         return content
 
-WIKIBASE_RENDERER = CachingRenderer()
+
+def get_renderer():
+    global WIKIBASE_RENDERER
+    if WIKIBASE_RENDERER is None:
+        WIKIBASE_RENDERER = CachingRenderer()
+    return WIKIBASE_RENDERER

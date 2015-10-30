@@ -5,17 +5,22 @@ Scrape the attributes out of infoboxes.
 import json
 import re
 
-from wikipediabase.renderer import WIKIBASE_RENDERER
-from wikipediabase.fetcher import StaticFetcher
-from wikipediabase.infobox import Infobox
-from wikipediabase.util import get_article, Expiry
+from wikipediabase.article import get_article
+from wikipediabase.log import Logging
+from wikipediabase.renderer import get_renderer
+from wikipediabase.util import Expiry, fromstring, totext, tostring
 
 ATTRIBUTE_REGEX = re.compile(r"^\s*\\|\s*([a-zA-Z_\-]+)\s+=")
 TEMPLATE_DATA_REGEX = re.compile(r"<templatedata>(.*?)</templatedata>",
                                  flags=re.M | re.S)
 
+# MetaInfobox objects are cached in memory forever
+# There are about 3200 infoboxes, so these should easily fit in memory
+# Switch to util.LRUCache if memory usage becomes a problem
+_META_INFOBOX_CACHE = {}
 
-class MetaInfobox(Infobox):
+
+class MetaInfoboxBuilder(Logging):
 
     """
     This is an infobox of an infobox. It is an infobox with all the
@@ -40,7 +45,7 @@ class MetaInfobox(Infobox):
     https://en.wikipedia.org/wiki/Template:Infobox_officeholder
     """
 
-    def __init__(self, infobox_type, fetcher=None, renderer=None, **kw):
+    def __init__(self, infobox_type):
         prefix = "Template:"
         infobox_type = infobox_type.strip()
         if not infobox_type.startswith(prefix):
@@ -50,14 +55,9 @@ class MetaInfobox(Infobox):
                              % infobox_type)
 
         self.symbol, self.title = infobox_type, infobox_type.replace(prefix, "")
-        self.renderer = renderer or WIKIBASE_RENDERER
 
-        mu = self.markup_source()
-        html = self.html_source()
-        fetcher = StaticFetcher(self.renderer.render(mu, key=self.title), mu)
-        super(MetaInfobox, self).__init__(self.symbol, mu, html,
-                                          title=self.title,
-                                          fetcher=fetcher, **kw)
+    def build(self):
+        return MetaInfobox(self.symbol, self.title, self.rendered_attributes())
 
     def attributes(self):
         """
@@ -81,8 +81,55 @@ class MetaInfobox(Infobox):
                        attr in self.attributes()]) + \
             "\n}}\n"
 
+    def html_parsed(self):
+        """
+        Given the infobox html or as soup, return a list of (key, value)
+        pairs.
+        """
+
+        def escape_lists(val):
+            if not val:
+                return u""
+
+            return re.sub(
+                r"<\s*(/?\s*(br\s*/?|/?ul|/?li))\s*>", "&lt;\\1&gt;", val)
+
+        def unescape_lists(val):
+            if not val:
+                return u""
+
+            val = re.sub(r"&lt;(/?\s*(br\s*/?|ul|li))&gt;", "<\\1>", val)
+            return val
+
+        soup = fromstring(self.html_source())
+        # Render all tags except <ul> and <li> and <br>. Escape them
+        # in some way and then reparse
+
+        tpairs = []
+
+        for row in soup.findall('.//tr'):
+            try:
+                e_key, e_val = row.findall('./*')[:2]
+            except ValueError:
+                continue
+
+            if e_key is not None and e_val is not None:
+                # Turn the key into xml string, parse the other tags
+                # making brs into newlines, parse the rest of the
+                # tags, get the text back
+                key = totext(fromstring(tostring(e_key), True))
+                key = re.sub(r"\s+", " ", key).strip()
+                val = escape_lists(tostring(e_val))
+                # Extract text
+                val = fromstring(val)
+                val = totext(val)
+                val = unescape_lists(val.strip())
+                tpairs.append((key, val))
+
+        return tpairs
+
     def html_source(self):
-        return self.renderer.render(self.markup_source(), key=self.title)
+        return get_renderer().render(self.markup_source(), key=self.title)
 
     def rendered_attributes(self):
         """
@@ -115,12 +162,18 @@ class MetaInfobox(Infobox):
 
         We look at the rendered HTML of subpages and pages and use a regex 
         that looks for attributes like "| name    =  BBC News".  
+
+        We fetch markup for infoboxes from live wikipedia.org. We do this to
+        follow redirects and have up-to-date rendered attributes. Although this
+        is slower than fetching from the backend, we mitigate the performance
+        hit by caching all meta infoboxes. The work to build a meta infobox
+        should only be done once per infobox template.
         """
         template = self.symbol
 
         try:
             page = get_article(self.symbol)
-            template = page.title()
+            template = page.title
         except LookupError:
             self.log().warn("Could not find doc any template pages for "
                             "template: \"%s\".",
@@ -132,7 +185,9 @@ class MetaInfobox(Infobox):
         try:
             doc_subpage = get_article(template + '/doc')
 
-            markup = doc_subpage.markup_source(expiry=Expiry.LONG)
+            # fetch markup from live wikipedia.org
+            markup = doc_subpage.markup_source(force_live=True,
+                                               expiry=Expiry.LONG)
             attributes.extend(self._attributes_from_template_data(markup))
 
             html = doc_subpage.html_source(expiry=Expiry.LONG)
@@ -170,3 +225,28 @@ class MetaInfobox(Infobox):
         while attr[-1].isdigit():
             attr = attr[:-1]
         return attr
+
+
+class MetaInfobox(Logging):
+
+    def __init__(self, symbol, title, attrs):
+        self.symbol = symbol
+        self.title = title
+        self.attrs = attrs
+
+    def rendered_attributes(self):
+        return self.attrs
+
+
+def get_meta_infobox(symbol):
+    """
+    Get an infobox that only has keys and not values. A quick and
+    dirty way avoid parsing the values of an infobox.
+    """
+    try:
+        ibx = _META_INFOBOX_CACHE[symbol]
+        return ibx
+    except KeyError:
+        ibx = MetaInfoboxBuilder(symbol).build()
+        _META_INFOBOX_CACHE[symbol] = ibx
+        return ibx

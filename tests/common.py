@@ -1,10 +1,12 @@
 import os
-from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.fetcher import get_fetcher
 import urllib2 as urllib
 
 ALL_TEST_PAGES = []
 
+
 class MockURLOpen(object):
+
     """
     Always redirect to redirect_url and receive content.
     """
@@ -17,6 +19,7 @@ class MockURLOpen(object):
         self.original = urllib.urlopen
 
         class MyURLfd(object):
+
             def __init__(self, _):
                 pass
 
@@ -41,7 +44,7 @@ def read_data(fname):
 
 
 def download_all(pages=ALL_TEST_PAGES):
-    f = WIKIBASE_FETCHER
+    f = get_fetcher()
 
     for p in pages:
         f.download(p)

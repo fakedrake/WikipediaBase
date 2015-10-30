@@ -4,12 +4,12 @@ import re
 
 import overlay_parse
 
+from wikipediabase.article import get_article
 from wikipediabase.classifiers import InfoboxClassifier
 from wikipediabase.lispify import lispify
 from wikipediabase.provider import provide
 from wikipediabase.resolvers import InfoboxResolver
 from wikipediabase.resolvers.base import BaseResolver
-from wikipediabase.util import get_article
 
 
 def iter_paren(text, delim=None):
@@ -99,7 +99,7 @@ class PersonResolver(BaseResolver):
         female_prep = ["she", "her", "hers"]
         neuter_prep = ["it", "its", "they", "their", "theirs"]
 
-        article = get_article(symbol, fetcher=self.fetcher)
+        article = get_article(symbol)
         full_text = "\n\n".join(article.paragraphs()).lower()
 
         def word_search(w):

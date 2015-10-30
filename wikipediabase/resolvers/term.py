@@ -2,10 +2,13 @@
 
 import re
 
+from wikipediabase.article import get_article
+from wikipediabase.fetcher import get_fetcher
+from wikipediabase.infobox import get_infoboxes
+from wikipediabase.lispify import lispify
 from wikipediabase.provider import provide
 from wikipediabase.resolvers.base import BaseResolver
-from wikipediabase.lispify import lispify
-from wikipediabase.util import get_infoboxes, get_article, totext, markup_unlink
+from wikipediabase.util import totext, markup_unlink
 
 
 class TermResolver(BaseResolver):
@@ -121,7 +124,7 @@ class TermResolver(BaseResolver):
     def word_count(self, article, attribute):
         self.log().info("Trying 'word-count' tag from static resolver.")
         self._tag = "html"
-        return len(self._words(self.fetcher.html_source(article)))
+        return len(self._words(get_fetcher().html_source(article)))
 
     @staticmethod
     def _dton(s):

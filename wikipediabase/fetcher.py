@@ -3,18 +3,20 @@
 import re
 import redis
 import requests
-
 import logging
+
+from peewee import DoesNotExist
+
+from wikipediabase.dbutil import db, Article
 from wikipediabase.log import Logging
-from wikipediabase.util import Expiry
+from wikipediabase.util import Expiry, get_user_agent
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 REDIRECT_REGEX = r"#REDIRECT\s*\[\[(.*)\]\]"
-USER_AGENT = "WikipediaBase/1.0 " \
-             "(http://start.csail.mit.edu; start-admins@csail.mit.edu)"
+WIKIBASE_FETCHER = None
 
 
 class BaseFetcher(Logging):
@@ -42,7 +44,7 @@ class Fetcher(BaseFetcher):
         self.url = url.strip('/')
 
     def urlopen(self, url, params):
-        headers = {'User-Agent': USER_AGENT}
+        headers = {'User-Agent': get_user_agent()}
         r = requests.get(url, params=params, headers=headers)
 
         if r.status_code != requests.codes.ok:
@@ -55,17 +57,27 @@ class Fetcher(BaseFetcher):
 
     def html_source(self, symbol, **kwargs):
         """
-        Get the rendered HTML article of the symbol.
+        Get the rendered HTML article of the symbol. HTML is fetched from live
+        wikipedia.org.
         """
 
         params = {'action': 'view', 'title': symbol, 'redirect': 'yes'}
+        # TODO: decode HTML entities in symbol name
         return self.urlopen(self.url, params)
 
-    def markup_source(self, symbol, **kwargs):
+    def markup_source(self, symbol, force_live=False, **kwargs):
         """
         Get the wikitext markup of the symbol.
-        """
 
+        By default, markup is fetched from the backend. If force_live is set
+        to True, the markup will be fetched from live wikipedia.org
+        """
+        if force_live:
+            return self.markup_source_live(symbol)
+
+        return self.markup_source_backend(symbol)
+
+    def markup_source_live(self, symbol):
         params = {'action': 'raw', 'title': symbol}
         page = self.urlopen(self.url, params)
 
@@ -80,6 +92,17 @@ class Fetcher(BaseFetcher):
 
         return page
 
+    def markup_source_backend(self, symbol):
+        try:
+            db.connect()
+            article = Article.get(Article.title == symbol)
+            db.close()
+            return article.markup
+        except DoesNotExist:
+            db.close()
+            raise LookupError("Error fetching: %s. Symbol not found in the db" %
+                              (symbol))
+
 
 class CachingFetcher(Fetcher):
 
@@ -89,12 +112,12 @@ class CachingFetcher(Fetcher):
         super(CachingFetcher, self).__init__(url)
 
     def _caching_fetch(self, symbol, content_type, prefix, fetch,
-                       expiry=Expiry.DEFAULT):
+                       expiry=Expiry.DEFAULT, **kwargs):
         dkey = prefix + symbol
         content = self.redis.hget(dkey, content_type)
 
         if content is None:
-            content = fetch(symbol)
+            content = fetch(symbol, **kwargs)
             self.redis.hset(dkey, content_type, content)
             if expiry is not None:
                 self.redis.expire(dkey, expiry)
@@ -109,10 +132,17 @@ class CachingFetcher(Fetcher):
         assert(isinstance(html, unicode))  # TODO : remove for production
         return html
 
-    def markup_source(self, symbol, expiry=Expiry.DEFAULT):
-        source = self._caching_fetch(symbol, 'source', 'article:',
+    def markup_source(self, symbol, force_live=False, expiry=Expiry.DEFAULT):
+
+        # distinguish between markup fetched live or from the backend
+        content_type = 'source_backend'
+        if force_live:
+            content_type = 'source_live'
+
+        source = self._caching_fetch(symbol, content_type, 'article:',
                                      super(CachingFetcher, self).markup_source,
-                                     expiry=expiry)
+                                     expiry=expiry,
+                                     force_live=force_live)
 
         assert(isinstance(source, unicode))  # TODO : remove for production
         return source
@@ -134,4 +164,9 @@ class StaticFetcher(BaseFetcher):
     def markup_source(self, symbol, **kwargs):
         return self.markup
 
-WIKIBASE_FETCHER = CachingFetcher()
+
+def get_fetcher():
+    global WIKIBASE_FETCHER
+    if WIKIBASE_FETCHER is None:
+        WIKIBASE_FETCHER = CachingFetcher()
+    return WIKIBASE_FETCHER

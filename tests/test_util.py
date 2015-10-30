@@ -16,8 +16,39 @@ except ImportError:
 import datetime
 
 from wikipediabase import util
-from wikipediabase.infobox import Infobox, InfoboxScraper
-from wikipediabase.article import Article
+
+
+class TestLRUCache(unittest.TestCase):
+
+    def test_set_and_get(self):
+        cache = util.LRUCache(1)
+        cache.set('a', 'foo')
+        self.assertEquals(cache.get('a'), 'foo')
+
+    def test_lru(self):
+        cache = util.LRUCache(2)
+        cache.set('a', 'foo')
+        cache.set('b', 'bar')
+
+        # look into the cache to get the lru item
+        self.assertEquals('b', cache.cache.keys()[-1])
+
+        cache.get('a')
+        self.assertEquals('a', cache.cache.keys()[-1])
+
+    def test_pop_lru_item(self):
+        cache = util.LRUCache(3)
+        cache.set(1, 'a')
+        cache.set(2, 'b')
+        cache.set(3, 'c')
+        cache.set(4, 'd')
+        cache.set(5, 'e')
+        cache.set(6, 'f')
+        cache.set(7, 'g')
+
+        self.assertEqual(3, len(cache.cache))
+        self.assertRaises(KeyError, cache.get, 1)
+        self.assertEqual('g', cache.get(7))
 
 
 class TestUtil(unittest.TestCase):
@@ -29,18 +60,8 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(util.totext(util.fromstring("hello<br/>")), "hello")
         self.assertEqual(util.totext(util.fromstring("<br/>", True)), "\n")
 
-    def test_infoboxes(self):
-        c = InfoboxScraper(self.symbol)
-        self.assertIs(list, type(util.get_infoboxes(self.symbol)))
-        self.assertIs(Infobox, type(util.get_infoboxes(self.symbol)[0]))
-        self.assertIs(list, type(util.get_infoboxes(c)))
-
-    def test_article(self):
-        art = Article(self.symbol)
-        self.assertIs(Article, type(util.get_article(self.symbol)))
-        self.assertIs(Article, type(util.get_article(art)))
-
     side = 1
+
     def test_memoized(self):
         @util.memoized
         def side_effect(dc):
@@ -74,9 +95,6 @@ class TestUtil(unittest.TestCase):
         el = util.fromstring(html)
         self.assertEqual("yes  hi", util.totext(el).strip())
         self.assertIn("<p>", util.tostring(el))
-
-    def tearDown(self):
-        pass
 
 if __name__ == '__main__':
     unittest.main()

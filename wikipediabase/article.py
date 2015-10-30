@@ -1,16 +1,12 @@
-from itertools import chain
-
-from wikipediabase.classifiers import WIKIBASE_CLASSIFIERS
-from wikipediabase.fetcher import WIKIBASE_FETCHER
+from wikipediabase.fetcher import get_fetcher
 from wikipediabase.log import Logging
-from wikipediabase.synonym_inducers import ForwardRedirectInducer
 from wikipediabase.util import (Expiry,
+                                LRUCache,
                                 fromstring,
-                                get_infoboxes,
                                 markup_categories,
-                                memoized,
-                                tostring,
-                                totext)
+                                tostring,)
+
+_ARTICLE_CACHE = LRUCache(100)
 
 # XXX: also support images.
 
@@ -23,20 +19,13 @@ class Article(Logging):
     abstraction.
     """
 
-    def __init__(self, title, fetcher=WIKIBASE_FETCHER):
-        self._title = title
-        self.fetcher = fetcher
-        self._infoboxes = []
-        self.title_inducer = ForwardRedirectInducer()
+    def __init__(self, title):
+        self.title = title
 
-    @memoized
     def url(self):
-        symbol = self.symbol().replace(" ", "_")
+        # TODO: decode HTML entities
+        symbol = self.title.replace(" ", "_")
         return u"https://en.wikipedia.org/wiki/%s" % symbol
-
-    @memoized
-    def symbol(self):
-        return self.title_inducer.title(self._title, fetcher=self.fetcher)
 
     def _soup(self):
         if not hasattr(self, '__soup'):
@@ -47,49 +36,25 @@ class Article(Logging):
     def categories(self):
         return markup_categories(self.markup_source())
 
-    def classes(self):
-        it = chain.from_iterable((c.classify(self.symbol())
-                                  for c in WIKIBASE_CLASSIFIERS))
-        return list(it)
-
-    def infoboxes(self):
-        if not self._infoboxes:
-            self._infoboxes = get_infoboxes(self.title(), fetcher=self.fetcher)
-
-        return self._infoboxes
-
-    def types(self):
-        types = [ibox.types() for ibox in self.infoboxes()]
-        types = list(chain.from_iterable(types))  # flatten list
-        return types
-
-    def title(self):
-        """
-        The title after redirections and stuff.
-        """
-        # Warning!! dont feed this to the fetcher. This depends on the
-        # fetcher to resolve redirects and a cirular recursion will
-        # occur
-
-        heading = self._soup().get_element_by_id('firstHeading')
-        if heading is not None:
-            return totext(heading).strip()
-
-        raise Exception("No title found for '%s'" % self.symbol())
-
-    def markup_source(self, expiry=Expiry.DEFAULT):
+    def markup_source(self, force_live=False, expiry=Expiry.DEFAULT):
         """
         Markup source of the article.
         """
-
-        return self.fetcher.markup_source(self._title, expiry=expiry)
+        if not hasattr(self, '_markup_source'):
+            page = get_fetcher().markup_source(self.title,
+                                               force_live=force_live,
+                                               expiry=expiry)
+            self._markup_source = page
+        return self._markup_source
 
     def html_source(self, expiry=Expiry.DEFAULT):
         """
-        Markup source of the article.
+        HTML source of the article.
         """
-
-        return self.fetcher.html_source(self._title, expiry=expiry)
+        if not hasattr(self, '_html_source'):
+            page = get_fetcher().html_source(self.title, expiry=expiry)
+            self._html_source = page
+        return self._html_source
 
     def paragraphs(self, keep_html=False):
         """
@@ -122,3 +87,13 @@ class Article(Logging):
                 return p
 
         return None
+
+
+def get_article(symbol):
+    try:
+        article = _ARTICLE_CACHE.get(symbol)
+        return article
+    except KeyError:
+        article = Article(symbol)
+        _ARTICLE_CACHE.set(symbol, article)
+        return article

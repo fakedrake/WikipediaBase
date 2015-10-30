@@ -16,14 +16,12 @@ except ImportError:
 from common import MockURLOpen
 
 from wikipediabase.article import Article
-from wikipediabase import fetcher
 
 
 class TestArticle(unittest.TestCase):
 
     def setUp(self):
-        self.fetcher = fetcher.WIKIBASE_FETCHER
-        self.article = Article("Astaroth", self.fetcher)
+        self.article = Article("Astaroth")
 
     def test_html(self):
         self.assertIn("<body", self.article.html_source())
@@ -37,11 +35,8 @@ class TestArticle(unittest.TestCase):
         self.assertIn("Appearances in literature",
                       self.article.headings())
 
-    def test_infobox(self):
-        self.assertEqual(self.article.types(), [])
-
     def test_complex(self):
-        article = Article("Baal", self.fetcher)
+        article = Article("Baal")
         self.assertEqual(article.headings()[-1], "External links")
         # TODO : is this a good test? The number of headings keeps changing
         self.assertEqual(len(list(article.headings())), 21)
@@ -64,13 +59,19 @@ class TestArticle(unittest.TestCase):
         article = Article("Astaroth")
         self.assertEqual(article.symbol(), "astaroth")
 
-    def test_redirect(self):
-        # Actually redirects the source
-        self.assertGreater(len(Article("Barack Hussein Obama").markup_source()),
-                           30000)
+    def test_no_redirects_in_db(self):
+        # WikipediaBase assumes that symbols are titles of Wikipedia articles.
+        # If symbol is a redirect, the behavior of WikipediaBase is undefined.
+        # This is a safe assumption to make. WikipediaBase generates a list of
+        # symbols for Omnibase. We make sure that that the list of symbols does
+        # not contain redirects. WikipediaBase is only called with symbols from
+        # this list.
+        article = Article("Barack Hussein Obama")
+        self.assertRaises(LookupError, article.markup_source, force_live=False)
 
-    def tearDown(self):
-        pass
+    def test_redirects_live(self):
+        markup = Article("Barack Hussein Obama").markup_source(force_live=True)
+        self.assertGreater(len(markup), 30000)
 
 if __name__ == '__main__':
     unittest.main()

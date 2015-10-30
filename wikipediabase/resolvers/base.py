@@ -1,4 +1,3 @@
-from wikipediabase.fetcher import Fetcher
 from wikipediabase.lispify import lispify, LispType
 from wikipediabase.provider import Provider
 
@@ -19,14 +18,8 @@ class BaseResolver(Provider):
 
     priority = 1
 
-    def __init__(self, fetcher=None, *args, **kwargs):
-        """
-        Provide a way to fetch articles. If no fetcher is provider
-        fallback to BaseFetcher.
-        """
-
+    def __init__(self, *args, **kwargs):
         super(BaseResolver, self).__init__(*args, **kwargs)
-        self.fetcher = fetcher or Fetcher()
 
         self._tag = None
 
