@@ -69,11 +69,11 @@ def download_all():
 # wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')
 testcfg.ref.test.offline_cache = DbmPersistentDict(data('pages.dumbdbm'))
 
-configuration.ref.remote.base = 'mediawiki/index.php'
-configuration.ref.remote.url = 'http://ashmore.csail.mit.edu:8080'
+# configuration.ref.remote.base = 'mediawiki/index.php'
+# configuration.ref.remote.url = 'http://ashmore.csail.mit.edu:8080'
 
-# configuration.ref.remote.url = 'http://wikipedia.org'
-# configuration.ref.remote.base = 'w/index.php'
+configuration.ref.remote.url = 'http://wikipedia.org'
+configuration.ref.remote.base = 'w/index.php'
 
 testcfg.ref.cache.pages = dict()
 testcfg.ref.offline = False
