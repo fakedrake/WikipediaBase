@@ -26,7 +26,7 @@ class MetaInfobox(Infobox):
 
     """
 
-    def __init__(self, infobox_type, fetcher=None, configuration=configuration):
+    def __init__(self, infobox_type, configuration=configuration):
         childcfg = configuration.child()
         super(MetaInfobox, self).__init__(infobox_type, configuration=childcfg)
 

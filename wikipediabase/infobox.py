@@ -141,7 +141,7 @@ class Infobox(Configurable):
         Get the markup source of this infobox.
         """
 
-        txt = self.fetcher.source(self.symbol.url_friendly()).raw()
+        txt = self.fetcher.source(self.symbol).raw()
         return self._braces_markup(txt)
 
     def html_source(self):

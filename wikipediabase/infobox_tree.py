@@ -35,7 +35,7 @@ class InfoboxSuperclasses(Configurable):
 
         while True:
             try:
-                type_, parents_ = next(self.typeiter)
+                type_, parents_ = next(self.typeiter, None)
             except TypeError:
                 break
 
@@ -68,7 +68,7 @@ class InfoboxSuperclasses(Configurable):
     def infobox_lists(self, source):
         ret = self.lists(self.infobox_levels(source))
         # Skip the space between the first item and top
-        next(ret)
+        next(ret, None)
         return ret
 
     def category_header_infobox(self, source):

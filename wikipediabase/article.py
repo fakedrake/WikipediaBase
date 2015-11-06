@@ -57,7 +57,7 @@ class Article(Configurable):
         # fetcher to resolve redirects and a cirular recursion will
         # occur
 
-        heading = next(self.xml().xpath(".//*[@id='firstHeading']"))
+        heading = next(self.xml().xpath(".//*[@id='firstHeading']"), None)
         if heading is not None:
             return heading.text().strip()
 

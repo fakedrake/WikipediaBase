@@ -26,11 +26,13 @@ class SandboxRenderer(Configurable):
         self.xml_string = configuration.ref.strings.xml_string_class
         self.url = (configuration.ref.remote.url & configuration.ref.remote.base) \
             .lens(lambda u,b: u+'/'+b)
+        self.sandbox_title = configuration.ref.remote.sandbox_title
 
     def post_data(self, data, get, form_id):
         """
         Get a dict with the default post data.
         """
+
         soup = self.xml_string(self.uopen(get).read())
         inputs = soup.xpath(".//input")
         fields = dict([(i.get('name'), i.get('value')) for i in inputs
@@ -55,13 +57,13 @@ class SandboxRenderer(Configurable):
         """
 
         if not key:
-            key = str(hash(string))
+            key = str(hash((self.url, string)))
 
         if key in self.cache:
             return util.encode(self.cache[key])
 
         # XXX: here we assume tha t the mediawiki project name is wikipedia.
-        get = dict(title="CSAIL_Wikipedia:Sandbox", action="edit")
+        get = dict(title=self.sandbox_title, action="edit")
         post = self.post_data(dict(wpTextbox1=string, wpSave="Save page"),
                               get, 'editForm')
         get['action'] = 'submit'

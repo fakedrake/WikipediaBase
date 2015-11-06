@@ -9,6 +9,7 @@ configuration.ref.offline = False
 # Wikipedia mirror
 configuration.ref.remote.url = 'http://ashmore.csail.mit.edu:8080'
 configuration.ref.remote.base = 'mediawiki/index.php'
+configuration.ref.remote.sandbox_title = "CSAIL_Wikipedia:Sandbox"
 
 # Caching
 def get_persistent_dict(filename):

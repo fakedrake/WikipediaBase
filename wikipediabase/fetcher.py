@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 try:
-    import urllib2 as ul
+    import urllib2 as urllib
 except:
-    import urllib as ul
+    import urllib
 
 from urllib import urlencode
 import re
@@ -57,7 +57,12 @@ class WikipediaSiteFetcher(BaseFetcher):
         """
         Get the source from an html soup of the edit page.
         """
-        for box in xml_string.xpath(".//*[@id='wpTextbox1']"):
+        # Edit tag:
+        # <textarea tabindex="1" accesskey="," id="wpTextbox1"
+        # cols="80" rows="25" style="" lang="en" dir="ltr"
+        # name="wpTextbox1">
+
+        for box in xml_string.xpath(".//textarea[@id='wpTextbox1']"):
             return MarkupString(box.text(), symbol=symbol)
 
     def download(self, *args, **kwargs):
@@ -77,10 +82,14 @@ class WikipediaSiteFetcher(BaseFetcher):
             symbol = SymbolString(symbol)
 
         url = symbol.url(extra_get=get, configuration=self.configuration)
-        return ul.urlopen(url.raw())
+        try:
+            return urllib.urlopen(url.raw())
+        except urllib.URLError:
+            raise LookupError("Urllib failed to open:" + url.raw())
+
         # try:
-        #     return ul.urlopen(url)
-        # except ul.HTTPError:
+        #     return urllib.urlopen(url)
+        # except urllib.HTTPError:
         #     raise LookupError("404 - Uropen args: %s" % repr(url))
 
 
@@ -89,7 +98,11 @@ class WikipediaSiteFetcher(BaseFetcher):
         if not isinstance(symbol, SymbolString):
             sym = SymbolString(symbol)
 
-        redirect_sym = self.source(sym, redirect=False).redirect_target() or sym
+        src = self.source(sym, redirect=False)
+        redirect_sym = sym
+        if src is not None:
+            redirect_sym = src.redirect_target()
+
         return redirect_sym.url().raw()
 
 
@@ -98,18 +111,13 @@ class WikipediaSiteFetcher(BaseFetcher):
         Get the full wiki markup of the symbol.
         """
 
-        # Edit tag:
-        # <textarea tabindex="1" accesskey="," id="wpTextbox1"
-        # cols="80" rows="25" style="" lang="en" dir="ltr"
-        # name="wpTextbox1">
         get_request = get_request or dict(action="edit")
         html = self.download(symbol=symbol, get=get_request)
         xml = self.xml_string(html)
 
         src = self.get_wikisource(xml, str(symbol))
         if src is None:
-            raise ValueError("Got invalid source page for article '%s'." %
-                             symbol.url_friendly())
+            return None
 
         redirect_target = src.redirect_target()
         if redirect and redirect_target:
