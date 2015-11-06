@@ -94,7 +94,16 @@ class TestConfig(unittest.TestCase):
             tmp = a.hello + 1
 
         cfg['hello'] = 1
+        self.assertIn('hello', a.local_config_scope)
         self.assertEqual(a.hello, 1)
+        a.hello = 2
+        self.assertNotIn('hello', a.local_config_scope)
+        self.assertEqual(a.hello, 2)
+
+        cfg.ref.hello = 3
+        self.assertEqual(a.hello, 2,
+                         "The attribute is no longer a reference to config")
+
 
     def test_refsetting(self):
         cfg = Configuration()
@@ -128,6 +137,95 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(multilens.deref(), 6)
         cfg.ref.a = 11
         self.assertEqual(multilens.deref(), 16)
+
+    def test_versioned_items(self):
+        def constructor(x):
+            constructor.times_called += 1
+            return "Item:" + x
+
+        # Side effect to keep track of how often this is called.
+        constructor.times_called = 0
+
+        # Creates an item that is constructed by calling the
+        # constructor
+        item = VersionedItem(constructor, 'first')
+        self.assertEqual(item.eval(), "Item:first")
+        self.assertEqual(constructor.times_called, 1)
+
+        # Calling with the same args just returns the original
+        item2 = item.with_args('first')
+        self.assertEqual(item2.eval(), "Item:first")
+        self.assertEqual(constructor.times_called, 1)
+
+        # We can actually have multiple (more than one) versions of an
+        # object
+        item3 = item.with_args('second')
+        self.assertEqual(item3.eval(), "Item:second")
+        self.assertEqual(constructor.times_called, 2)
+
+        # Versions of the item are also versioned items
+        item31 = item3.with_args('3.1')
+        self.assertEqual(item31.eval(), "Item:3.1")
+        self.assertEqual(constructor.times_called, 3)
+
+        # All this time the original item did not change it's state
+        self.assertEqual(item.eval(), "Item:first")
+        self.assertEqual(constructor.times_called, 3)
+        self.assertEqual(item3.eval(), "Item:second")
+        self.assertEqual(constructor.times_called, 3)
+        self.assertEqual(item.eval(), "Item:first")
+        self.assertEqual(constructor.times_called, 3)
+
+        # references
+        cfg = Configuration()
+        class A(Configurable):
+            pass
+
+        # We can configure configurables
+        cfg.ref.item = item3
+        a = A()
+        a.item = cfg.ref.item
+        self.assertEqual(a.item, "Item:second")
+        self.assertEqual(constructor.times_called, 3)
+
+        # And get new versions of the items
+        a.item = cfg.ref.item.with_args('third')
+        self.assertEqual(a.item, "Item:third")
+        self.assertEqual(constructor.times_called, 4)
+
+        # Or assert that we use already existing ones
+        a.item = cfg.ref.item.with_args('second')
+        self.assertEqual(a.item, "Item:second")
+        self.assertEqual(constructor.times_called, 4)
+
+        # And when we change the config to a non-versioned item that
+        # is handled accordingly
+        cfg.ref.item = 'hello'
+        self.assertEqual(a.item, "hello")
+        self.assertEqual(constructor.times_called, 4)
+
+        # A 'downside' of versioned items is that the configurable now
+        # has a reference to an item that is not directly accessible
+        # by the configuration. Therefore changing the configuration
+        # will have no effect on the configurable's percieved
+        # state.
+        cfg.ref.item = item
+        self.assertEqual(a.item, "Item:second")
+        self.assertEqual(constructor.times_called, 4)
+
+        # For this reason, and in general to avoid state handling and
+        # sharing, the user is strongly discouraged from editing the
+        # configuration. Instead you are advised to create config
+        # children and create from scratch. (A case where the
+        # configuration is passed to the configurable would be much
+        # more demostrative)
+        cfg1 = cfg.child()
+        a1 = A()
+        self.assertEqual(a.item, "Item:second")
+        a1.item = cfg1.ref.item.with_args('first')
+        self.assertEqual(a.item, "Item:second")
+        self.assertEqual(a1.item, "Item:first")
+        self.assertEqual(constructor.times_called, 4)
 
     def tearDown(self):
         pass
