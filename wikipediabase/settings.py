@@ -20,6 +20,8 @@ configuration.ref.cache.path = os.getenv('HOME') + '/.wikipediabase/'
 configuration.ref.cache.pages = VersionedItem(pkv.DbmPersistentDict, filename='pages')
 configuration.ref.cache.rendered_pages = VersionedItem(pkv.DbmPersistentDict, filename='rendered_pages')
 configuration.ref.cache.persistent_dict = VersionedItem(pkv.DbmPersistentDict, filename='pages')
+from wikipediabase.caching import DictCacheManager
+configuration.ref.cache.manager = VersionedItem(DictCacheManager, dict())
 
 # Logging. Use lenses for this:
 #    self.log = config.ref.log.lens(lambda log, this: log(this), self)
