@@ -11,6 +11,7 @@ from urllib import urlencode
 import lxml.etree as ET
 import copy
 import lxml
+import lxml.html.clean
 from lxml import html
 
 from wikipediabase.config import Configurable, configuration
@@ -111,8 +112,9 @@ class UrlString(WebString):
         return ret
 
     def raw(self):
-        ret = "%s?%s" % (self.url, urlencode(self.get_data()))
-        return urllib.unquote(ret)
+        get = '&'.join("%s=%s" % (k,v) for k, v in self.get_data().iteritems())
+        ret = "%s?%s" % (self.url, get)
+        return ret
 
     def literal(self):
         return self.raw()
@@ -185,6 +187,12 @@ class LxmlStringState(object):
     _text = None
     _raw = None
 
+class NullHtmlElement(html.HtmlElement):
+    """
+    Keeping type consistency with a null empty element.
+    """
+    def __nonzero__(self):
+        return False
 
 class LxmlString(XmlString):
     """
@@ -198,6 +206,8 @@ class LxmlString(XmlString):
         state object (state)
         """
         super(LxmlString, self).__init__(data, configuration=configuration)
+        self.cleaner = configuration.ref.strings.lxml_cleaner
+        self.prune_tags = configuration.ref.strings.xml_prune_tags
 
         if isinstance(self.data, LxmlStringState):
             self.state = data
@@ -209,11 +219,41 @@ class LxmlString(XmlString):
             return
 
         if isinstance(self.data, types.StringType):
-            self.state._raw = self.data
+            self.state._raw = reduce(self.raw_pruned, self.prune_tags, data)
             return
 
         raise ValueError("Bad type of data '%s'" % type(data))
 
+    def raw_pruned(self, raw, tagname):
+        """
+        Prune the xml tree with just sting operations. It is used to
+        remove style and script tags. This function accounts for
+        unclosed tags by removing them completely.
+        """
+        end_tag = r"</\s*%s\s*>" % tagname
+        start_tag = r"<\s*%s.*?>" % tagname
+        ended_blocks = [re.split(start_tag, eb) for eb in
+                            re.split(end_tag, raw)]
+
+        def merge_blocks(ret_block, next_block):
+            if len(next_block) == 0:
+                # invalid next block
+                return ret_block
+
+            if len(ret_block) == 0:
+                # Actually illegal
+                return next_block
+
+            if len(ret_block) == 1:
+                # Unstarted closing block.
+                return [ret_block[0] + next_block[0]] + next_block[1:]
+
+            # Normal case where the closed ret_block has a start. Pop
+            # ret_block and merge with next_block
+            mid_text = ret_block[-2] + next_block[0]
+            return ret_block[:-2] + [mid_text] + next_block[1:]
+
+        return "".join(reduce(merge_blocks, ended_blocks))
 
     def raw(self):
         if self.state._raw is None:
@@ -253,7 +293,13 @@ class LxmlString(XmlString):
             return self.state._soup
 
 
+        if not len(self.raw()):
+            return NullHtmlElement()
+
         self.state._soup = html.fromstring(self.raw())
+
+        # XXX: I am assuming we will never need the scripts.
+        self.cleaner(self.state._soup)
         return self.state._soup
 
 class LxmlIgnoringString(LxmlString):
@@ -283,10 +329,10 @@ class LxmlIgnoringString(LxmlString):
 
     def xpath(self, xpath):
         objs = super(LxmlIgnoringString, self).xpath(xpath)
-        return (LxmlIgnoringString(o.state,
-                                   trusted_state=True,
-                                   tags=self.tags,
-                                   configuration=self.configuration)
+        return (self.__class__(o.state,
+                               trusted_state=True,
+                               tags=self.tags,
+                               configuration=self.configuration)
                 for o in objs)
 
 

@@ -23,9 +23,27 @@ class TestWebString(unittest.TestCase):
     def setUp(self):
         pass
 
+    def test_lxml_pruning(self):
+        cfg = testcfg.child()
+        cfg.ref.strings.xml_prune_tags = ['script']
+        raw = '<a attr="val"><script>Should be ignored</script><b id="bid">b body</b> after b</a>'
+        lxmlstr = web_string.LxmlString(raw, configuration=cfg)
+        self.assertEqual(lxmlstr.raw_pruned('hello', 'b'), 'hello')
+        self.assertEqual(lxmlstr.raw_pruned(
+            'a<b/>first<b>in<b><b></b>in2</b></b>median<b some_arg=hello>single</b>last<b><b/>', 'b'),"afirstmedianlast")
+        self.assertEqual(lxmlstr.raw_pruned(raw, 'b'),
+                         '<a attr="val"><script>Should be ignored</script> after b</a>')
+        self.assertEqual(lxmlstr.raw(),
+                         '<a attr="val"><b id="bid">b body</b> after b</a>')
+
     def test_lxml_string(self):
-        lxmlstr = web_string.LxmlString('<a attr="val"><b id="bid">b body</b> after b</a>')
-        self.assertEqual(lxmlstr.raw(), '<a attr="val"><b id="bid">b body</b> after b</a>')
+        raw = '<a attr="val"><script>Should be ignored</script><b id="bid">b body</b> after b</a>'
+        cfg = testcfg.child()
+        cfg.ref.strings.xml_prune_tags = []
+        lxmlstr = web_string.LxmlString(raw, configuration=cfg)
+        self.assertEqual(lxmlstr.raw(), raw)
+
+        # Make sure scripts are ignored
         self.assertEqual(lxmlstr.text(), "b body after b")
         self.assertEqual(lxmlstr.get('attr'), "val")
         self.assertEqual(lxmlstr.get('attr1'), None)
@@ -54,9 +72,9 @@ class TestWebString(unittest.TestCase):
         symbol_url = web_string.UrlString('sym', cfg)
         self.assertEqual(symbol_url.raw(),
                          "example.com/base/index.php?action=edit&title=sym")
-        self.assertEqual(str(example_url.symbol()), "a title")
-        self.assertEqual(str(title_url.symbol()), "b title")
-        self.assertEqual(str(edit_url.symbol()), "b title")
+        self.assertEqual(str(example_url.symbol()), "a_title")
+        self.assertEqual(str(title_url.symbol()), "b_title")
+        self.assertEqual(str(edit_url.symbol()), "b_title")
         self.assertEqual(edit_url.edit, True)
 
     def test_symbol_string(self):

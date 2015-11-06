@@ -51,9 +51,17 @@ configuration.ref.classifiers = SubclassesItem(BaseClassifier, configuration=con
 # True if we want newlines instead of <br/>
 configuration.ref.strings.literal_newlines = False
 
+# Lxml cleaner applied to the lxml string.
+import lxml.html.clean
+cleaner_args = dict(links=False, safe_attrs_only=False,
+                    style=True, forms=False)
+configuration.ref.strings.lxml_cleaner = VersionedItem(lxml.html.clean.Cleaner,
+                                                       **cleaner_args)
+
 from wikipediabase.web_string import LxmlString, SymbolString
 configuration.ref.strings.xml_string_class = LxmlString
 configuration.ref.strings.symbol_string_class = SymbolString
+configuration.ref.strings.xml_prune_tags = ['script', 'style']
 
 ## Object caches
 from wikipediabase.infobox import Infobox
