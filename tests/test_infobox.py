@@ -34,12 +34,10 @@ class TestInfobox(unittest.TestCase):
     def test_infobox_markup_raw(self):
         self.assertIn("| name = Led Zeppelin", self.ibox.markup_source())
         clinton = get_infobox("Bill Clinton", configuration=testcfg)
-        self.assertNotIn("|death_place ", clinton.markup_source())
         self.assertIn("|birth_place ", clinton.markup_source())
 
     def test_rendered_keys(self):
         clinton = get_infobox("Bill Clinton", configuration=testcfg)
-        self.assertEqual(clinton.rendered_keys().get("death_place"), None)
         self.assertEqual(clinton.rendered_keys().get("birth_place"), "Born")
 
     def test_infobox_html_parsed(self):
@@ -50,9 +48,9 @@ class TestInfobox(unittest.TestCase):
         self.assertEqual(self.ibox.get("origin"), "London, England")
         clinton = get_infobox("Bill Clinton", configuration=testcfg)
 
-        self.assertNotIn("death-place",
-                         [k for k, v in clinton.markup_parsed()])
-
+        # XXX: maybe not a good idea to check for missing attributes
+        # like 'death-date'. In live wikipedia they are there and
+        # empty, on the mirror they are missing.
         self.assertIn("term-start",
                       [k for k, v in clinton.markup_parsed()])
 
@@ -63,12 +61,17 @@ class TestInfobox(unittest.TestCase):
 
     def test_types_redirect(self):
         clinton = get_infobox("Bill Clinton", configuration=testcfg)
-        # self.assertIn('wikipedia-president', clinton.start_types())
 
     def test_html_keys(self):
-        bbc = get_infobox("BBC News", configuration=testcfg)
+        # XXX: bbc news was vandalized on the mirror, until this is
+        # fixed use live just for this
+        bbccfg = testcfg.child()
+        bbccfg.ref.remote.url = 'http://wikipedia.org'
+        bbccfg.ref.remote.base = 'w/index.php'
+
+        bbc = get_infobox("BBC News", configuration=bbccfg)
         self.assertEquals("Owner(s)", bbc.rendered_keys().get("owner"),
-                          bbc.rendered_keys().keys())
+                          bbc.rendered_keys())
 
     def tearDown(self):
         pass
