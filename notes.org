@@ -1,0 +1,74 @@
+* Thesis
+** Configuration
+*** Centralized configurations
+    Avoid having the logic implementation make decisions that are not
+    related to it's function. Also some decisions are case dependent.
+
+    Eg. A fetcher shouldn't have to decide which wikipedia mirror to
+    use.
+*** Decoupling, abstracted dependencies
+**** Module load sequence doesn't matter
+*** Inspired by the reader monad
+**** Immutable configuration ensures consistency
+*** Versioned items
+**** Usually-singleton classes tied to the configuration
+** Caching
+*** No caching related decisions from implementations
+*** Use implicit state (not exacty memoization)
+** Web strings
+*** Different from LispTypes
+    They are for purely internal representation regardless of the
+    interface with start or wikipediabase's use as a library.
+*** Type inconsistency created bugs
+    Raw xml, parsed xml, titles, symbols, urls, etc are inherently
+    different. Debugging becomes much easier.
+*** Abstract properties of text
+    Was too closely tied to lxml and the encoding policy.
+*** Separation of concerns
+    Symbols can create urls and vise versa in a very specific way. The
+    fetcher shouldn't contain code related to this.
+** Language
+*** Methods and functions
+    A function type (not a callable type) when accessed from an
+    object. From a cpython perspective =tp_getattro= of
+    =PyInstance_Type= in =Objects/classobject.c= will call the
+    =get_descr= property of a function or function-like in
+    =Object/funcobject.c=. In order to fake this one can either
+    intercept the =tp_getattro= with =__getattr__= or intercept the
+    function =get_desct= with =__get__=.
+
+    #+BEGIN_EXAMPLE
+    PyInstance_Type.tp_getattro ~ Override with __getattr__
+    -> instance_getattr
+    -> instance_getattr1
+    -> instance_getattr2
+    -> TP_DESCR_GET(function_type)
+    -> PyFunction_Type.get_descr ~ Override with __get__
+    -> func_descr_get
+    -> PyMethod_New
+    #+END_EXAMPLE
+
+**** Cache
+
+     Here there is a 1-1 correlation between the python model and what
+     we are trying to do, only we are collecting information about the
+     caching behavior:
+
+     - function definition (ie the function itself and the local
+       context it depends on). To get this we decorate the method.
+     - Accessing the function (ie the arguments passed, the current
+       state of the local context and the owning instance). To get
+       this we implement a description getter.
+
+     Another point to be made is that a =CachingMethod= has an
+     inherent dependency on the Caching object since the object knows
+     the caching policy (ie it has =CacheManager=)
+
+**** Configuration
+
+     In the case of the configuration however we use =__getattr__=
+     method. The reason still has to do with mimicing the Cpython
+     model: A =Configurable= object is an object that has special
+     treatment for =ConfigRefs=. =ConfigRefs= have a broader scope in
+     that since they are an interface they may implement further
+     behavior than the trivial.
