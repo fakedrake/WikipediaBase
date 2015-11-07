@@ -101,7 +101,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         src = self.source(sym, redirect=False)
         redirect_sym = sym
         if src is not None:
-            redirect_sym = src.redirect_target()
+            redirect_sym = src.redirect_target() or sym
 
         return redirect_sym.url().raw()
 
