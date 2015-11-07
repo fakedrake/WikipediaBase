@@ -25,6 +25,7 @@ setup(
         'fuzzywuzzy',
         'hiredis',
         'lxml',
+        'mwparserfromhell',
         'namedentities',
         'overlay-parse',
         'redis',

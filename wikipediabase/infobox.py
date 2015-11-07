@@ -2,6 +2,7 @@ import json
 import re
 
 from fuzzywuzzy import fuzz, process
+import mwparserfromhell
 
 from wikipediabase.article import get_article
 from wikipediabase.fetcher import get_fetcher
@@ -85,10 +86,19 @@ class Infobox(Logging):
         """
 
         items = []
-        for m in re.finditer(InfoboxUtil.ATTRIBUTE_VALUE_REGEX, self.markup):
-            key = m.group("attr").replace("_", "-").lower()
-            val = m.group("val").strip()
-            items.append((key, val))
+        wikicode = mwparserfromhell.parse(self.markup)
+        templates = wikicode.filter_templates(recursive=False)
+
+        if not templates:
+            return items
+
+        infobox = templates[0]
+        for item in infobox.params:
+            # only include items with a named attribute
+            if item.showkey:
+                attr = item.name.strip().replace("_", "-").lower()
+                val = item.value.strip()
+                items.append((attr, val))
         return items
 
 
@@ -432,10 +442,6 @@ class MetaInfoboxBuilder(Logging):
 class InfoboxUtil:
     ATTRIBUTE_REGEX = re.compile(r"\|\s*(?P<attr>[a-z\-_0-9]+)\s*=",
                                  flags=re.IGNORECASE | re.DOTALL)
-
-    ATTRIBUTE_VALUE_REGEX = re.compile(r"\|\s*(?P<attr>[a-z\-_0-9]+)\s*="
-                                       "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)",
-                                       flags=re.IGNORECASE | re.DOTALL)
 
     TEMPLATE_DATA_REGEX = re.compile(r"<templatedata>(.*?)</templatedata>",
                                      flags=re.M | re.S)
