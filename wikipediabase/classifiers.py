@@ -55,7 +55,7 @@ class InfoboxClassifier(BaseClassifier):
     def classify(self, symbol):
         classes = []
         for ibox in get_infoboxes(symbol):
-            classes.append(ibox.wikipedia_class())
+            classes.append(ibox.wikipedia_class)
         return classes
 
 
@@ -65,7 +65,7 @@ class PersonClassifier(BaseClassifier):
         # TODO : test the precision of this method of determining is_person
         infoboxes = get_infoboxes(symbol)
         for ibx in infoboxes:
-            if ibx.wikipedia_class() == 'wikipedia-person' or \
+            if ibx.wikipedia_class == 'wikipedia-person' or \
                     ibx.get('birth-date'):
                 return True
 

@@ -28,7 +28,7 @@ class TermResolver(BaseResolver):
     @provide(name="coordinates")
     def coordinates(self, article, _):
         for ibox in get_infoboxes(article):
-            src = ibox.html_source()
+            src = ibox.html
             if src is None:
                 return None
 

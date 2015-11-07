@@ -58,9 +58,7 @@ class InfoboxResolver(BaseResolver):
         infoboxes = get_infoboxes(symbol, cls=cls)
 
         for ibox in infoboxes:
-            for k, v in ibox.markup_parsed_iter():
-                rendered = ibox.rendered_attributes().get(k.replace('-', '_'))
-                tmp = dict(code=k.upper(), rendered=rendered)
-                attributes.append(tmp)
+            for k, v in ibox.attributes.items():
+                attributes.append({'code': k.upper(), 'rendered': v})
 
         return lispify(attributes)

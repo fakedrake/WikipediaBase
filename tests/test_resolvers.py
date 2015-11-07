@@ -56,12 +56,12 @@ class TestResolvers(unittest.TestCase):
         self.assertEqual(len(self.term_resolver._words(ARTICLE_BODY)), 100)
 
     def test_url(self):
-        url = self.term_resolver.resolve('wikibase-term', 'Barack obama', 'url')
+        url = self.term_resolver.resolve('wikibase-term', 'Barack Obama', 'url')
         self.assertEquals('https://en.wikipedia.org/wiki/Barack_Obama', url.val)
 
     def test_infobox(self):
         band_name = self.fe.eval('(get "wikipedia-album" "%s" "Name")' %
-                                 "Def_Leppard_EP")
+                                 "The Def Leppard E.P.")
         self.assertEqual(band_name, '((:html "The Def Leppard E.P."))')
 
     def test_get(self):

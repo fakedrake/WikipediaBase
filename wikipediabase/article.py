@@ -6,7 +6,6 @@ from wikipediabase.util import (Expiry,
                                 markup_categories,
                                 tostring,)
 
-_ARTICLE_CACHE = LRUCache(100)
 
 # XXX: also support images.
 
@@ -87,6 +86,8 @@ class Article(Logging):
                 return p
 
         return None
+
+_ARTICLE_CACHE = LRUCache(20)
 
 
 def get_article(symbol):

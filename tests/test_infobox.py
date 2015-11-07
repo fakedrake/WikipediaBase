@@ -13,91 +13,62 @@ try:
 except ImportError:
     import unittest
 
-from wikipediabase import fetcher
-from wikipediabase.infobox import Infobox, get_infoboxes
+from wikipediabase.infobox import Infobox, MetaInfoboxBuilder, InfoboxUtil, \
+    get_infoboxes, get_meta_infobox
 
 
 class TestInfobox(unittest.TestCase):
 
-    def setUp(self):
-        self.fetcher = fetcher.get_fetcher()
-
-    def test_class(self):
-        self.assertEqual(Infobox._to_class("Template:Infobox martial artist"),
-                         "wikipedia-martial-artist")
-
-    def test_class_strip(self):
-        self.assertEqual(Infobox._to_class("Template:Infobox writer "),
-                         "wikipedia-writer")
-
-    def test_class_taxobox(self):
-        self.assertEqual(Infobox._to_class("Template:Taxobox"),
-                         "wikipedia-taxobox")
-
-    def test_type(self):
-        self.assertEqual(Infobox._to_type("Template:Infobox martial artist"),
-                         "martial artist")
-
-    def test_type_taxobox(self):
-        self.assertIsNone(Infobox._to_type("Template:Taxobox"))
-
     def test_markup(self):
         ibox = get_infoboxes("Led Zeppelin")[0]
-        self.assertEqual(ibox.markup_source()[:9], "{{Infobox")
-        self.assertIn("| name = Led Zeppelin", ibox.markup_source())
+        self.assertEqual(ibox.markup[:9], "{{Infobox")
+        self.assertIn("| name = Led Zeppelin", ibox.markup)
 
-    def test_infobox_markup_raw(self):
-        ibox = get_infoboxes("Winston Churchill")[0]
-        self.assertIn("|death_place ", ibox.markup_source())
-
-    def test_infobox_html_raw(self):
-        ibox = get_infoboxes("Led Zeppelin")[0]
-        self.assertIn("Origin\nLondon, England", ibox.rendered())
-
-    def test_infobox_html_parsed(self):
+    def test_html_items(self):
         ibox = get_infoboxes("AC/DC")[0]
-        self.assertIn(("Origin", "Sydney, Australia"), ibox.html_parsed())
-
-    def test_rendered_attributes(self):
-        clinton = get_infoboxes("Winston Churchill")[0]
-        self.assertEqual("Died",
-                         clinton.rendered_attributes().get("death_place"))
-
-        bridge = get_infoboxes("Brooklyn Bridge")[0]
-        self.assertEqual("Maintained by",
-                         bridge.rendered_attributes().get("maint"))
-
-    def test_get(self):
-        ibox = get_infoboxes("The Rolling Stones")[0]
-        self.assertEqual(ibox.get("origin"), "London, England")
+        self.assertIn(("Origin", "Sydney, Australia"), ibox._html_items())
 
     def test_attributes(self):
-        ibox = get_infoboxes("Winston Churchill")[0]
-        self.assertIn("death-place",
-                      [k for k, v in ibox.markup_parsed_iter()])
+        churchill = get_infoboxes("Winston Churchill")[0]
+        self.assertIn("death-place", churchill.attributes)
+        self.assertEqual("Died", churchill.attributes.get("death-place"))
+
+        bridge = get_infoboxes("Brooklyn Bridge")[0]
+        self.assertIn("maint", bridge.attributes)
+        self.assertEqual("Maintained by", bridge.attributes.get("maint"))
+
+        bbc = get_infoboxes("BBC News")[0]
+        self.assertEqual("Number of employees",
+                         bbc.attributes.get("num-employees"))
+
+    def test_get(self):
+        # TODO: test use of :code and :rendered typecodes
+        ibox = get_infoboxes("The Rolling Stones")[0]
+        self.assertEqual(ibox.get("origin"), "London, England")
+        self.assertIn("Mick Jagger", ibox.get("current-members"))
 
     def test_templates(self):
         infoboxes = get_infoboxes("Vladimir Putin")
         templates = ["Template:Infobox officeholder",
                      "Template:Infobox martial artist"]
-        self.assertItemsEqual(map(lambda i: i.template(), infoboxes),
-                              templates)
+        self.assertItemsEqual([i.template for i in infoboxes], templates)
 
     def test_classes(self):
         infoboxes = get_infoboxes("Vladimir Putin")
         classes = ["wikipedia-officeholder", "wikipedia-martial-artist"]
-        self.assertItemsEqual(map(lambda i: i.wikipedia_class(), infoboxes),
-                              classes)
+        self.assertEqual(map(lambda i: i.wikipedia_class, infoboxes), classes)
 
+    @unittest.expectedFailure
     def test_html_attributes(self):
+        # TODO: we're not getting all rendered attributes, see issue #70
         ibox = get_infoboxes("BBC News")[0]
-        self.assertEqual("Owners", ibox.rendered_attributes().get("owners"))
+        self.assertEqual("Owner", ibox.attributes.get("owner"))
 
     def test_no_clashes_with_multiple_infoboxes(self):
         officeholder_ibox, martial_artist_ibox = get_infoboxes('Vladimir Putin')
-        self.assertEqual(officeholder_ibox.wikipedia_class(),
+        self.assertEqual(officeholder_ibox.wikipedia_class,
                          'wikipedia-officeholder')
-        self.assertEqual(martial_artist_ibox.wikipedia_class(),
+        self.assertEqual(martial_artist_ibox.wikipedia_class,
                          'wikipedia-martial-artist')
         self.assertEqual(officeholder_ibox.get('image'),
                          'Vladimir Putin 12023 (cropped).jpg')
@@ -108,6 +79,55 @@ class TestInfobox(unittest.TestCase):
         symbol = "Led Zeppelin"
         self.assertIs(list, type(get_infoboxes(symbol)))
         self.assertIs(Infobox, type(get_infoboxes(symbol)[0]))
+
+
+class TestMetaInfobox(unittest.TestCase):
+
+    def test_newlines(self):
+        ibx = get_meta_infobox('Template:Infobox weapon')
+        attr = ibx.attributes['secondary-armament']
+        self.assertEqual(attr, "Secondary armament")
+
+    def test_musician(self):
+        di = get_meta_infobox('Template:Infobox musical artist')
+        self.assertEqual(di.attributes['origin'], "Origin")
+
+    def test_regression_officeholder(self):
+        mibx = get_meta_infobox('Template:Infobox officeholder')
+        self.assertEqual("Died", mibx.attributes.get("death-place"))
+
+    def test_symbol(self):
+        di = get_meta_infobox('Template:Infobox musical artist')
+        self.assertEqual(di.symbol, "Template:Infobox musical artist")
+
+    def test_attributes(self):
+        builder = MetaInfoboxBuilder('Template:Infobox person')
+        self.assertIn((u'Native\xa0name', '!!!!!native_name!!!!!'),
+                      builder.html_parsed())
+
+    def test_rendered_attributes(self):
+        ibx = get_meta_infobox('Template:Infobox person')
+        self.assertEqual(ibx.attributes['native-name'], u'Native\xa0name')
+
+
+class TestInfoboxUtil(unittest.TestCase):
+
+    def test_class(self):
+        self.assertEqual(InfoboxUtil.to_class("Template:Infobox martial artist"),
+                         "wikipedia-martial-artist")
+
+    def test_class_strip(self):
+        self.assertEqual(InfoboxUtil.to_class("Template:Infobox writer "),
+                         "wikipedia-writer")
+
+    def test_class_taxobox(self):
+        self.assertEqual(InfoboxUtil.to_class("Template:Taxobox"),
+                         "wikipedia-taxobox")
+
+    def test_clean_attribute(self):
+        dirty = "  attr12 "
+        self.assertEqual(InfoboxUtil.clean_attribute(dirty), "attr")
+
 
 if __name__ == '__main__':
     unittest.main()

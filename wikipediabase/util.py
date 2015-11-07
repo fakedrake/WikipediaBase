@@ -3,7 +3,6 @@ from urlparse import urlparse
 import collections
 import copy
 import datetime
-import functools
 import inspect
 import re
 
@@ -61,46 +60,6 @@ _CONTEXT = dict()
 
 DBM_FILE = "/tmp/wikipediabase.mdb"
 
-
-# General tools
-# XXX: Plug in here for permanent memoization. You may need to do some
-# garbage collection here.
-
-# XXX: I deepcopy objects. If you disable that be very
-# careful. However use this only on out facing functions.
-DEEPCOPY = True
-
-
-def memoized(fn):
-    @functools.wraps(fn)
-    def wrap(*args, **kw):
-        try:
-            kwkey = hash(tuple(kw.items()))
-            argkey = hash(args)
-            key = hash((kwkey, argkey))
-        except TypeError:
-            return wrap(*args, **kw)
-
-        if key in wrap.memoized:
-            if DEEPCOPY:
-                return copy.deepcopy(wrap.memoized[key])
-            else:
-                return wrap.memoized[key]
-
-        ret = fn(*args, **kw)
-        wrap.memoized[key] = copy.deepcopy(ret)
-        return ret
-
-    wrap.memoized = dict()
-    # I dont worry too much about the rest of the signature but I
-    # really need the name.
-    if hasattr(fn, '_provided'):
-        wrap.__name__ = fn.__name__
-        wrap._provided = fn._provided
-
-    return wrap
-
-
 def iwindow(seq, n):
     """
     Returns a sliding window (of width n) over data from the iterable
@@ -126,7 +85,7 @@ def get_knowledgebase(**kw):
 
     ret = _context_get(None, "knowledgebase", KnowledgeBase, **kw)
 
-    # It is important to have the correnct frontend or the fronted
+    # It is important to have the correct frontend or the frontend
     # will fail to find methods.
     if kw.get('frontend') is not None and \
        kw.get('frontend') is not ret.frontend:

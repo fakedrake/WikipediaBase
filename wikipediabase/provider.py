@@ -1,22 +1,17 @@
 from itertools import chain
 
 from wikipediabase.log import Logging
-from wikipediabase.util import memoized
 
 
 def provide(name=None, memoize=True):
     """
     Argumented decorator for methods of providers to be automagically
-    provided. It also may provide memoization. The returned functions
-    are unbound.
+    provided. The returned functions are unbound.
     """
 
     def decorator(fn):
         fn._provided = name.lower() if name else name
-        if memoize:
-            return memoized(fn)
-        else:
-            return fn
+        return fn
 
     return decorator
 
@@ -79,11 +74,11 @@ class Provider(Logging):
 
 
 class Acquirer(Provider):
+
     """
     An aquirer is also a provder by default to itself. Any methods an
     acquirer privides are available to itself.
     """
-
 
     def __init__(self, providers=None, *arg, **kw):
         super(Acquirer, self).__init__(*arg, **kw)

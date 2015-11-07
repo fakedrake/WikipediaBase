@@ -62,18 +62,6 @@ class TestUtil(unittest.TestCase):
 
     side = 1
 
-    def test_memoized(self):
-        @util.memoized
-        def side_effect(dc):
-            self.side += 1
-            return self.side + 2
-
-        self.assertEqual(side_effect(1), 4)
-        # Should have been 5 if not memoized
-        self.assertEqual(side_effect(1), 4)
-        # Also nothng was called so side should remain the same
-        self.assertEqual(self.side, 2)
-
     def test_interval(self):
         class DateTime(datetime.datetime):
             x = 0

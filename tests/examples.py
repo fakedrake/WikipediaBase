@@ -11,7 +11,7 @@ WIKI_EXAMPLES = [
     # tests for 'get' -- attributes from infoboxes
     # ============================================
 
-    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
+    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION-M"))',
      '((:html "8848"))'),
     ('(get "wikipedia-president" "Bill Clinton" (:code "SUCCESSOR"))',
      '((:html "George W. Bush"))'),
@@ -306,7 +306,7 @@ WIKI_EXAMPLES_RX = [
     # tests for 'get' -- attributes from infoboxes
     # ============================================
 
-    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
+    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION-M"))',
      r'^\(\(:html "8848"\)\)$'),
     ('(get "wikipedia-military-conflict" "American Civil War" (:code "RESULT"))',
      re.compile(r'<ul>.*<li>.*<\/ul>', re.DOTALL),
@@ -408,7 +408,7 @@ WIKI_EXAMPLES_NOT_RX = [
     # tests for 'get' -- attributes from infoboxes
     # ============================================
 
-    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION_M"))',
+    ('(get "wikipedia-mountain" "Mount Everest" (:code "ELEVATION-M"))',
      r':code'),
     ('(get "wikipedia-film" "Gone with the Wind (film)" (:code "DIRECTOR"))',
      r'George CukorSam Wood',
