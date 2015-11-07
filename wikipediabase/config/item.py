@@ -51,7 +51,11 @@ class VersionedItem(LazyItem):
     A LazyItem that can create and remember different versions of
     itself with with_args. This is also useful as an object cache.
 
-    Versioned items are sort of like tree structures
+    Versioned items are organized in a tree-like way in the sense that
+    each node can generate any other versioned items. However each
+    child has a reference to the parent's cache so if an object that
+    exists anywere in the tree is requested from any node, that node
+    is returned.
     """
     def __init__(self, constructor, *args, **kwargs):
         super(VersionedItem, self).__init__(constructor, *args, **kwargs)
