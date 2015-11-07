@@ -76,7 +76,7 @@ class CacheKey(object):
 
 class Caching(Configurable):
     def __init__(self, configuration=configuration):
-        self.cache_manager = configuration.ref.cache.cache_manager
+        self.cache_manager = configuration.ref.cache.manager
 
 class NoCacheManager(Configurable):
     """

@@ -32,7 +32,7 @@ class TestCaching(unittest.TestCase):
                 return "hello"
 
         self.cfg = configuration.child()
-        self.cfg.ref.cache.cache_manager = caching.DictCacheManager()
+        self.cfg.ref.cache.manager = caching.DictCacheManager()
         self.CachingClass = A
 
     def test_dict(self):
