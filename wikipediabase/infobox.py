@@ -250,8 +250,7 @@ class InfoboxBuilder(Logging):
         """
 
         bs = fromstring(html)
-        return [t for t in bs.findall(".//table")
-                if 'infobox' in t.get('class', '')]
+        return bs.cssselect('table.infobox')
 
     def _best_html_infoboxes(self, markup, html):
         """
@@ -495,7 +494,7 @@ class InfoboxUtil:
                 # Turn the key into xml string, parse the other tags
                 # making brs into newlines, parse the rest of the
                 # tags, get the text back
-                key = totext(fromstring(tostring(e_key), True))
+                key = totext(fromstring(tostring(e_key), literal_newlines=True))
                 key = re.sub(r"\s+", " ", key).strip()
                 val = escape_lists(tostring(e_val))
                 # Extract text

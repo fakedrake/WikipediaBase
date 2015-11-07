@@ -1,7 +1,6 @@
 from itertools import islice, chain
 from urlparse import urlparse
 import collections
-import copy
 import datetime
 import inspect
 import re
@@ -28,6 +27,9 @@ class LRUCache:
     def __init__(self, capacity):
         self.capacity = capacity
         self.cache = collections.OrderedDict()
+
+    def __contains__(self, item):
+        return self.cache.__contains__(item)
 
     def get(self, key):
         """
@@ -59,6 +61,7 @@ class StringException(Exception):
 _CONTEXT = dict()
 
 DBM_FILE = "/tmp/wikipediabase.mdb"
+
 
 def iwindow(seq, n):
     """
@@ -214,31 +217,19 @@ def tostring(et):
     assert(isinstance(s, unicode))  # TODO : remove for production
     return s
 
-# A memoization
-
 
 def fromstring(txt, literal_newlines=False):
     if isinstance(txt, ET._Element):
         return txt
 
-    if not hasattr(fromstring, 'memoized'):
-        fromstring.memoized = dict()
+    if literal_newlines:
+        txt = re.sub('<\s*br\s*/?>', u"\n", txt)
+        if not txt.strip():
+            return txt
 
-    if txt in fromstring.memoized:
-        ret = copy.deepcopy(fromstring.memoized[txt])
-    else:
-        if literal_newlines:
-            txt = re.sub('<\s*br\s*/?>', u"\n", txt)
-            if not txt.strip():
-                return txt
-
-        # force lxml to do unicode encoding
-        ud = UnicodeDammit(txt, is_html=True)
-        ret = html.fromstring(ud.unicode_markup)
-
-        # Keep a separate copy in the cache
-        fromstring.memoized[txt] = copy.deepcopy(ret)
-
+    # force lxml to do unicode encoding
+    ud = UnicodeDammit(txt, is_html=True)
+    ret = html.fromstring(ud.unicode_markup)
     return ret
 
 
