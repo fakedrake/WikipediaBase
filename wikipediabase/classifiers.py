@@ -8,9 +8,11 @@ Classes can be one of two kinds:
 """
 
 from itertools import chain
+import re
 
-from wikipediabase.log import Logging
+from wikipediabase.article import get_article
 from wikipediabase.infobox import get_infoboxes
+from wikipediabase.log import Logging
 from wikipediabase.util import subclasses
 
 WIKIBASE_CLASSIFIERS = []
@@ -61,17 +63,51 @@ class InfoboxClassifier(BaseClassifier):
 
 class PersonClassifier(BaseClassifier):
 
-    def is_person(self, symbol):
-        # TODO : test the precision of this method of determining is_person
-        infoboxes = get_infoboxes(symbol)
-        for ibx in infoboxes:
-            if ibx.wikipedia_class == 'wikipedia-person' or \
-                    ibx.get('birth-date'):
-                return True
+    CATEGORY_REGEXES = [re.compile(p) for p in [
+        ".* people",
+        ".* person",
+        "^\d+ deaths.*",
+        "^\d+ births.*",
+        ".* actors",
+        ".* musicians",
+        ".* players",
+        ".* singers",
+    ]]
 
-        from wikipediabase.resolvers import PersonResolver
-        if PersonResolver().birth_date(symbol, 'birth-date'):
-            return True
+    CATEGORY_MATCHES = [
+        "american actors",
+        "american television actor stubs",
+        "american television actors",
+        "architects",
+        "british mps",
+        "character actors"
+        "computer scientist",
+        "dead people rumoured to be living",
+        "disappeared people",
+        "fictional characters",
+        "film actors",
+        "living people",
+        "musician stubs",
+        "singer stubs",
+        "star stubs",
+        "united kingdom writer stubs",
+        "united states singer stubs",
+        "writer stubs",
+        "year of birth missing",
+        "year of death missing",
+    ]
+
+    def is_person(self, symbol):
+        article = get_article(symbol)
+        for category in article.categories():
+            category = category.lower()
+            for pattern in self.CATEGORY_REGEXES:
+                if pattern.match(category):
+                    return True
+
+            for substring in self.CATEGORY_MATCHES:
+                if substring in category:
+                    return True
 
         return False
 
