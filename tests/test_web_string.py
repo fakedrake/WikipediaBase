@@ -23,16 +23,24 @@ class TestWebString(unittest.TestCase):
     def setUp(self):
         pass
 
+    def test_xml_preprocessor(self):
+        cfg = testcfg.child()
+        cfg.ref.strings.xml_prune_tags = ['script']
+        raw = '<a attr="val"><script>Should be ignored</script><b id="bid">b body</b> after b</a>'
+        pp = web_string.XmlStringPreprocessor(configuration=testcfg)
+        self.assertEqual(pp.raw_pruned('hello', 'b'), 'hello')
+        self.assertEqual(pp.raw_pruned(
+            'a<b/>first<b>in<b><b></b>in2</b></b>median<b some_arg=hello>single</b>last<b><b/>', 'b'),"afirstmedianlast")
+        self.assertEqual(pp.raw_pruned(raw, 'b'),
+                         '<a attr="val"><script>Should be ignored</script> after b</a>')
+        self.assertEqual(pp.preprocess(raw),
+                         '<a attr="val"><b id="bid">b body</b> after b</a>')
+
     def test_lxml_pruning(self):
         cfg = testcfg.child()
         cfg.ref.strings.xml_prune_tags = ['script']
         raw = '<a attr="val"><script>Should be ignored</script><b id="bid">b body</b> after b</a>'
         lxmlstr = web_string.LxmlString(raw, configuration=cfg)
-        self.assertEqual(lxmlstr.raw_pruned('hello', 'b'), 'hello')
-        self.assertEqual(lxmlstr.raw_pruned(
-            'a<b/>first<b>in<b><b></b>in2</b></b>median<b some_arg=hello>single</b>last<b><b/>', 'b'),"afirstmedianlast")
-        self.assertEqual(lxmlstr.raw_pruned(raw, 'b'),
-                         '<a attr="val"><script>Should be ignored</script> after b</a>')
         self.assertEqual(lxmlstr.raw(),
                          '<a attr="val"><b id="bid">b body</b> after b</a>')
 

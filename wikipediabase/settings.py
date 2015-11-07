@@ -59,9 +59,11 @@ cleaner_args = dict(links=False, safe_attrs_only=False,
 configuration.ref.strings.lxml_cleaner = VersionedItem(lxml.html.clean.Cleaner,
                                                        **cleaner_args)
 
-from wikipediabase.web_string import LxmlString, SymbolString
-configuration.ref.strings.xml_string_class = LxmlString
-configuration.ref.strings.symbol_string_class = SymbolString
+import wikipediabase.web_string as ws
+configuration.ref.strings.xml_string_class = ws.LxmlString
+configuration.ref.strings.symbol_string_class = ws.SymbolString
+configuration.ref.strings.xml_preprocessor = VersionedItem(ws.XmlStringPreprocessor,
+                                                       configuration=configuration)
 configuration.ref.strings.xml_prune_tags = ['script', 'style']
 
 ## Object caches

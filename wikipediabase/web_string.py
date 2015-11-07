@@ -194,35 +194,12 @@ class NullHtmlElement(html.HtmlElement):
     def __nonzero__(self):
         return False
 
-class LxmlString(XmlString):
-    """
-    An lxml xmlstring implementation. It is a very thin wrapper but it
-    is lazy with actually creating the lxml element.
-    """
-
-    def __init__(self, data=None, configuration=configuration):
-        """
-        Data can either be a string (raw) or an lxml element (soup) or
-        state object (state)
-        """
-        super(LxmlString, self).__init__(data, configuration=configuration)
-        self.cleaner = configuration.ref.strings.lxml_cleaner
+class XmlStringPreprocessor(Configurable):
+    def __init__(self, configuration=configuration):
         self.prune_tags = configuration.ref.strings.xml_prune_tags
 
-        if isinstance(self.data, LxmlStringState):
-            self.state = data
-            return
-
-        self.state = LxmlStringState()
-        if isinstance(self.data, lxml.etree._Element):
-            self.state._soup = self.data
-            return
-
-        if isinstance(self.data, types.StringType):
-            self.state._raw = reduce(self.raw_pruned, self.prune_tags, data)
-            return
-
-        raise ValueError("Bad type of data '%s'" % type(data))
+    def preprocess(self, raw_data):
+        return reduce(self.raw_pruned, self.prune_tags, raw_data)
 
     def raw_pruned(self, raw, tagname):
         """
@@ -254,6 +231,39 @@ class LxmlString(XmlString):
             return ret_block[:-2] + [mid_text] + next_block[1:]
 
         return "".join(reduce(merge_blocks, ended_blocks))
+
+
+class LxmlString(XmlString):
+    """
+    An lxml xmlstring implementation. It is a very thin wrapper but it
+    is lazy with actually creating the lxml element.
+    """
+
+    def __init__(self, data=None, configuration=configuration):
+        """
+        Data can either be a string (raw) or an lxml element (soup) or
+        state object (state)
+        """
+        super(LxmlString, self).__init__(data, configuration=configuration)
+        self.cleaner = configuration.ref.strings.lxml_cleaner
+        self.prune_tags = configuration.ref.strings.xml_prune_tags
+        self.preprocessor = configuration.ref.strings.xml_preprocessor. \
+                            with_args(configuration=configuration)
+
+        if isinstance(self.data, LxmlStringState):
+            self.state = data
+            return
+
+        self.state = LxmlStringState()
+        if isinstance(self.data, lxml.etree._Element):
+            self.state._soup = self.data
+            return
+
+        if isinstance(self.data, types.StringType):
+            self.state._raw = self.preprocessor.preprocess(data)
+            return
+
+        raise ValueError("Bad type of data '%s'" % type(data))
 
     def raw(self):
         if self.state._raw is None:
