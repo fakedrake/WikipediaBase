@@ -12,7 +12,7 @@ class cached(object):
         depends on.
         """
 
-        self.method = CachedMethod(local_keys)
+        self.method = CachedFunction(local_keys)
 
     def __call__(self, func):
         """
@@ -20,9 +20,20 @@ class cached(object):
         """
         return self.method.function(func)
 
-class CachedMethod(object):
-    def __init__(self, local_keys_used=None, function=None, _self=None):
+
+class CachedFunction(object):
+    def __init__(self, local_keys_used=None, function=None):
         """
+        This is more like a CachedMethod factory. The naming is us
+        following the CPython ontology where if a function type is
+        accessed from within an instance object it becomes a
+        CachedMethod.
+
+        A cached function should never be called, therefore we assert
+        that cached methods are called only from Caching objects and
+        don't fallback to something unintuitive if the owning instance
+        is not a Caching object.
+
         :param local_keys_used: The attributes of self that the underlying
         method uses. They are used to create separate entries based on
         the self object's state.
@@ -30,13 +41,11 @@ class CachedMethod(object):
         """
         self._local_keys_used = local_keys_used
         self._function = function
-        self._self = _self
 
     def copy(self, **kw):
-        return CachedMethod(
+        return CachedFunction(
             local_keys_used=kw.get("local_keys_used", self._local_keys_used),
-            function=kw.get("function", self.function),
-            _self=kw.get("_self", self._self))
+            function=kw.get("function", self.function))
 
     def function(self, function):
         return self.copy(function=function)
@@ -45,19 +54,20 @@ class CachedMethod(object):
         return self.copy(local_keys_used=local_keys_used)
 
     def __get__(self, instance, owner):
-        # We mutate instead of creating a new one each time so that
-        #    a.cachedmethod is a.cachedmethod
-        # succeeds
-        self._self = instance
-        assert isinstance(self._self, Caching), \
-            "Only caching objects can have cached methods"
+        assert isinstance(instance, Caching), \
+            "Only caching objects can have cached methods, not %s" % instance
 
-        return self
+        return CachedMethod(self, instance)
+
+class CachedMethod(object):
+    def __init__(self, parent, instance):
+        self._self = instance
+        self._parent = parent
 
     def __call__(self, *args, **kw):
-        local_state = [(k, getattr(self._self, k)) for k in self._local_keys_used]
-        func = self._function
-        return self._self.cache_manager.maybe_call(func, (args, kw),
+        local_state = [(k, getattr(self._self, k))
+                       for k in self._parent._local_keys_used]
+        return self._self.cache_manager.maybe_call(self._parent._function, (args, kw),
                                                    state=local_state,
                                                    _self=self._self)
 
