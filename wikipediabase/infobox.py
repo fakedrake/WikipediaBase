@@ -85,9 +85,9 @@ class Infobox(Logging):
         """
 
         items = []
-        for m in re.finditer(InfoboxUtil.ATTRIBUTE_REGEX, self.markup):
-            key = m.group("key").replace("_", "-").lower()
-            val = m.group("val")
+        for m in re.finditer(InfoboxUtil.ATTRIBUTE_VALUE_REGEX, self.markup):
+            key = m.group("attr").replace("_", "-").lower()
+            val = m.group("val").strip()
             items.append((key, val))
         return items
 
@@ -422,7 +422,7 @@ class MetaInfoboxBuilder(Logging):
 
     def _attributes_from_html(self, html):
         match = re.finditer(InfoboxUtil.ATTRIBUTE_REGEX, html)
-        return [m.group('key') for m in match]
+        return [m.group('attr') for m in match]
 
 # -------
 # Utilities to parse and extract values from wikimarkup and article HTML
@@ -430,9 +430,12 @@ class MetaInfoboxBuilder(Logging):
 
 
 class InfoboxUtil:
-    ATTRIBUTE_REGEX = re.compile(r"\|\s*(?P<key>[a-z\-_0-9]+)\s*="
-                                 "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)",
+    ATTRIBUTE_REGEX = re.compile(r"\|\s*(?P<attr>[a-z\-_0-9]+)\s*=",
                                  flags=re.IGNORECASE | re.DOTALL)
+
+    ATTRIBUTE_VALUE_REGEX = re.compile(r"\|\s*(?P<attr>[a-z\-_0-9]+)\s*="
+                                       "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)",
+                                       flags=re.IGNORECASE | re.DOTALL)
 
     TEMPLATE_DATA_REGEX = re.compile(r"<templatedata>(.*?)</templatedata>",
                                      flags=re.M | re.S)
@@ -469,7 +472,6 @@ class InfoboxUtil:
 
             val = re.sub(r"&lt;(/?\s*(br\s*/?|ul|li))&gt;", "<\\1>", val)
             return val
-
 
         soup = fromstring(html_source)
         # Render all tags except <ul> and <li> and <br>. Escape them
