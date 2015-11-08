@@ -413,8 +413,12 @@ class MetaInfoboxBuilder(Logging):
             self.log().warn("Could not find doc subpage for template: \"%s\".",
                             template)
 
-        html = doc_page.html_source(expiry=Expiry.LONG)
-        attributes.extend(self._attributes_from_html(html))
+        try:
+            html = doc_page.html_source(expiry=Expiry.LONG)
+            attributes.extend(self._attributes_from_html(html))
+        except LookupError:
+            self.log().warn("Could not find doc page for template: \"%s\".",
+                            template)
 
         return attributes
 

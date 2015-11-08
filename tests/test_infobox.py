@@ -80,6 +80,12 @@ class TestInfobox(unittest.TestCase):
         self.assertIs(list, type(get_infoboxes(symbol)))
         self.assertIs(Infobox, type(get_infoboxes(symbol)[0]))
 
+    def test_illegal_meta_infobox(self):
+        ibox = get_infoboxes('Chickasaw County, Iowa')[0]
+        ibox.markup = '{{Infobox rubbish made up template\n |foo = bar\n}}'
+        # even if the MetaInfobox is illegal, attributes should be parsed
+        self.assertIn("foo", ibox.attributes)
+
 
 class TestMetaInfobox(unittest.TestCase):
 
