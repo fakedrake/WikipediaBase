@@ -19,6 +19,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'beautifulsoup4',
+        'cssselect',
         'docopt',
         'edn_format',
         'flake8 < 3.0.0',
@@ -28,6 +29,7 @@ setup(
         'mwparserfromhell',
         'namedentities',
         'overlay-parse',
+        'peewee',
         'redis',
         'requests',
         'sqlitedict',
