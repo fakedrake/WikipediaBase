@@ -511,7 +511,7 @@ class InfoboxUtil:
         Remove numeric suffixes from attributes
         """
         attr = attr.strip()
-        while attr[-1].isdigit():
+        while attr and attr[-1].isdigit():
             attr = attr[:-1]
         return attr
 
