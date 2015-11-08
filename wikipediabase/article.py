@@ -1,10 +1,6 @@
 from wikipediabase.fetcher import get_fetcher
 from wikipediabase.log import Logging
-from wikipediabase.util import (Expiry,
-                                LRUCache,
-                                fromstring,
-                                markup_categories,
-                                tostring,)
+from wikipediabase.util import Expiry, LRUCache, fromstring, tostring
 
 
 # XXX: also support images.
@@ -33,7 +29,11 @@ class Article(Logging):
         return self.__soup
 
     def categories(self):
-        return markup_categories(self.markup_source())
+        """
+        A list of categories
+        """
+        return map(lambda s: s.split(']]', 1)[0],
+                   self.markup_source().split("[[Category:")[1:])
 
     def markup_source(self, force_live=False, expiry=Expiry.DEFAULT):
         """
