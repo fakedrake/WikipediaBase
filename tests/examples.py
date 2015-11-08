@@ -271,6 +271,10 @@ WIKI_EXAMPLES_RX = [
     ('(get-classes \"World War I\")',
      r'wikipedia-military-conflict'),
 
+    # recognize taxoboxes
+    ('(get-classes \"Ulva anandii\")',
+     r'wikipedia-taxobox'),
+
     # ========================
     # tests for get-attributes
     # ========================

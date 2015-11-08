@@ -452,8 +452,8 @@ class InfoboxUtil:
 
     # Various names under which you may find an infobox
     # TODO: include geobox
-    BOX_REGEX = r"\b(infobox|Infobox|taxobox|Taxobox)\b"
-    TEMPLATE_REGEX = re.compile(r'{{\s*(?P<infobox>%s\s+[\w ]*)' % BOX_REGEX)
+    BOX_REGEX = r"\b([iI]nfobox|[tT]axobox)\b"
+    TEMPLATE_REGEX = re.compile(r'{{\s*(?P<infobox>%s[\w\s]*)' % BOX_REGEX)
 
     # Infoboxes may be defined in a separate article and included
     # using a special template
