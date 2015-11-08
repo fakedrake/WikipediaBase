@@ -96,7 +96,8 @@ class Infobox(Logging):
         for item in infobox.params:
             # only include items with a named attribute
             if item.showkey:
-                attr = item.name.strip().replace("_", "-").lower()
+                attr = item.name.strip().replace("_", "-")\
+                    .replace(" ", "-").lower()
                 val = item.value.strip()
                 items.append((attr, val))
         return items

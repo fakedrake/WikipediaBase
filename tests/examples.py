@@ -301,6 +301,8 @@ WIKI_EXAMPLES_RX = [
      r':code \"INDUSTRY\" :rendered \"Industry\"'),
     ('(get-attributes "wikipedia-bridge" "Brooklyn Bridge")',
      r':code \"OPEN\"'),
+    ('(get-attributes "wikipedia-french-commune" "Bouix")',
+     r':code \"ELEVATION-M\"'), # should return dashes instead of whitespace
 
     # ============================================
     # tests for 'get' -- attributes from infoboxes
