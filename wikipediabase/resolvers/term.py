@@ -5,7 +5,7 @@ import re
 from wikipediabase.article import get_article
 from wikipediabase.fetcher import get_fetcher
 from wikipediabase.infobox import get_infoboxes
-from wikipediabase.lispify import lispify
+from wikipediabase.lispify import lispify, lispify_error
 from wikipediabase.provider import provide
 from wikipediabase.resolvers.base import BaseResolver
 from wikipediabase.util import totext, markup_unlink
@@ -75,6 +75,10 @@ class TermResolver(BaseResolver):
         # First paragraph refers more often to the symbol itself
         # rather than things related to it.
         txt = get_article(article).first_paragraph()
+        if txt is None:
+            message = 'Could not calculate NUMBER: the article does not '\
+                'have a first paragraph'
+            return lispify_error('attribute-value-not-found', message=message)
 
         nay = sum(map(txt.count, [' is ', ' was ', ' has ']))
         yay = sum(map(txt.count, [' are ', ' were ', ' have ']))

@@ -1,7 +1,10 @@
+# -*- coding: utf-8 -*-
+
 """
 Just some examples to be run by.
 """
 
+from __future__ import unicode_literals
 import re
 
 # A list of (query, expected-answer) tuples
@@ -198,6 +201,8 @@ DEGENERATE_EXAMPLES = [
      '((:calculated nil))'),
     ('(get "wikibase-term" "The Beatles" (:calculated "NUMBER"))',
      '((:calculated t))'),
+    ('(get "wikibase-term" "2000–01 Northampton Town F.C. season" (:calculated "NUMBER"))',
+     '((:error attribute-value-not-found :message "Could not calculate NUMBER: the article does not have a first paragraph"))'),
 
     ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
      '((:error attribute-value-not-found :reply "Currently alive"))'),

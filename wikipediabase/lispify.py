@@ -437,4 +437,11 @@ def lispify(obj, typecode=None, infobox_attr=None):
         "Implement LispType for typecode: %s, val: %s or"
         "provide fallback error." % (typecode, obj))
 
-__all__ = ['lispify']
+
+def lispify_error(error_type, **kwargs):
+    """
+    Return a Lisp-like encoded error.
+    """
+    return lispify({'symbol': error_type, 'kw': kwargs}, typecode='error')
+
+__all__ = ['lispify', 'lispify_error']

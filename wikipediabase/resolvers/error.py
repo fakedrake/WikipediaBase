@@ -1,6 +1,6 @@
 from wikipediabase.resolvers.base import MIN_PRIORITY, BaseResolver
 from wikipediabase.util import get_knowledgebase
-from wikipediabase.lispify import lispify, LispType
+from wikipediabase.lispify import lispify_error, LispType
 
 
 class ErrorResolver(BaseResolver):
@@ -10,12 +10,6 @@ class ErrorResolver(BaseResolver):
     """
 
     priority = MIN_PRIORITY
-
-    @staticmethod
-    def _err(repl=None, sym=None):
-        return lispify({'symbol': sym or 'attribute-value-not-found',
-                        'kw': {'reply': repl or 'No such attribute'}},
-                       typecode='error')
 
     def resolve_error(self, cls, symbol, attr):
         kb = get_knowledgebase()
@@ -32,6 +26,8 @@ class ErrorResolver(BaseResolver):
         if 'wikibase-person' in kb.get_classes(symbol) and \
            attr.lower().startswith('death-') and \
            kb.get(cls, symbol, 'birth-date'):
-            return self._err("Currently alive")
+            return lispify_error('attribute-value-not-found',
+                                 reply='Currently alive')
 
-        return self._err("Unknown")
+        # TODO: come up with a more descriptive error message
+        return lispify_error('attribute-value-not-found', message='Unknown')
