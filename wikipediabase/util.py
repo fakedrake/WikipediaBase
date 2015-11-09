@@ -4,6 +4,7 @@ import collections
 import datetime
 import inspect
 import re
+import copy
 
 from bs4 import UnicodeDammit
 from lxml import etree as ET, html
@@ -231,6 +232,13 @@ def fromstring(txt, literal_newlines=False):
     ud = UnicodeDammit(txt, is_html=True)
     ret = html.fromstring(ud.unicode_markup)
     return ret
+
+
+def n_copies_without_children(elem_with_children, n):
+    element = copy.copy(elem_with_children)  # shallow copy
+    for e in element.iterchildren():
+        element.remove(e)
+    return [copy.copy(element) for i in xrange(n)]
 
 
 def expand(fn, ite):

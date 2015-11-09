@@ -1,3 +1,5 @@
+from collections import OrderedDict
+from os.path import commonprefix
 import json
 import re
 
@@ -8,13 +10,16 @@ from wikipediabase.article import get_article
 from wikipediabase.fetcher import get_fetcher
 from wikipediabase.log import Logging
 from wikipediabase.renderer import get_renderer
-from wikipediabase.util import Expiry, LRUCache, fromstring, totext, tostring
+from wikipediabase.util import Expiry, LRUCache, fromstring, totext,\
+    tostring, n_copies_without_children
 
 
 class Infobox(Logging):
 
-    def __init__(self, symbol, markup, html):
+    def __init__(self, symbol, template, cls, markup, html):
         self.symbol = symbol
+        self.template = template
+        self.cls = cls
         self.markup = markup
         self.html = html
 
@@ -42,6 +47,11 @@ class Infobox(Logging):
 
         return attrs
 
+    @property
+    def wikipedia_class(self):
+        # TODO: remove
+        return self.cls
+
     def get(self, attr, source=None):
         """
         - First try plain markup attributes
@@ -63,16 +73,6 @@ class Infobox(Logging):
         for k, v in self._markup_items():
             if k == markup_attr:
                 return v
-
-    @property
-    def template(self):
-        for m in re.finditer(InfoboxUtil.TEMPLATE_REGEX, self.markup):
-            template = "Template:" + m.group('infobox').strip()
-            return template
-
-    @property
-    def wikipedia_class(self):
-        return InfoboxUtil.to_class(self.template)
 
     def _html_items(self):
         """
@@ -171,30 +171,34 @@ class InfoboxBuilder(Logging):
         return infoboxes
 
     def _infoboxes_from_article(self, markup, html):
+        """
+        Gets a list of Infobox objects and external templates
+        """
         markup_infoboxes, external_templates = self._markup_infoboxes(markup)
         html_infoboxes = self._html_infoboxes(html)
 
-        # TODO: not a valid assumption, assertion frequently fails
-        # e.g. "IS (manga)"
-        # TODO: remove for production
-        assert(len(markup_infoboxes) <= len(html_infoboxes))
-
         if len(markup_infoboxes) != len(html_infoboxes):
-            # hack/optimization: remove sidebar table about article series
-            # for an example, see Barack Obama or JFK's article
-            series_txt = 'This article is part of a series about'
-            html_infoboxes = filter(lambda t: series_txt not in totext(t),
-                                    html_infoboxes)
+            # article contains non-infobox tables such as sidebars
+            html_infoboxes = self._filter_html_infoboxes(html_infoboxes)
+
+        if len(markup_infoboxes) > len(html_infoboxes):
+            # article contains infobox sub-templates
+            # e.g. 'Infobox animanga/Video' and 'Infobox animanga/Header'
+            separated = self._handle_infobox_sub_templates(markup_infoboxes,
+                                                           html_infoboxes)
+            markup_infoboxes, html_infoboxes = separated
 
         if len(markup_infoboxes) != len(html_infoboxes):
             # filter out infobox-like tables that don't match the infobox markup
-            # this operation is expensive. Try to find optimizations like above
+            # this operation is expensive. It's better if non-infobox tables
+            # are filtered out in _filter_html_infoboxes()
             html_infoboxes = self._best_html_infoboxes(markup_infoboxes,
                                                        html_infoboxes)
 
         infoboxes = []
-        for i, source in enumerate(markup_infoboxes):
-            ibox = Infobox(self.symbol, source, html_infoboxes[i])
+        for i, t in enumerate(markup_infoboxes):
+            ibox = Infobox(self.symbol, t['template'], t['cls'], t['markup'],
+                           html_infoboxes[i])
             infoboxes.append(ibox)
 
         return infoboxes, external_templates
@@ -228,15 +232,111 @@ class InfoboxBuilder(Logging):
 
         # There may be more than one infobox
         for s, e in rngs:
-            infoboxes.append(source[s:e])
+            markup = source[s:e]
+            template = self._find_template(markup)
+            cls = InfoboxUtil.to_class(template)
+            infoboxes.append({'markup': markup, 'template': template,
+                              'cls': cls})
 
         external_templates = []
-        for m in re.finditer(InfoboxUtil.SPECIAL_INFOBOX_REGEX, source):
+        for m in re.finditer(InfoboxUtil.EXTERNAL_INFOBOX_REGEX, source):
             template = m.group('template')
             if template:
                 external_templates.append(template)
 
         return infoboxes, external_templates
+
+    def _find_template(self, markup):
+        for m in re.finditer(InfoboxUtil.TEMPLATE_REGEX, markup):
+            template = "Template:" + m.group('infobox').strip()
+            return template
+
+    def _handle_infobox_sub_templates(self, markup_infoboxes, html_infoboxes):
+        groups = self._group_infobox_sub_templates(markup_infoboxes)
+        assert(len(groups) <= len(html_infoboxes))  # TODO: remove for production
+
+        i = 0
+        split_html_infoboxes = []
+
+        for group, infoboxes in groups.items():
+            html = html_infoboxes[i]
+            if len(infoboxes) == 1:
+                split_html_infoboxes.append(html)
+            else:
+                split_html = self._split_html_infobox(html, len(infoboxes))
+                split_html_infoboxes.extend(split_html)
+            i += 1
+
+        # there may be additional infoboxes
+        # this happens when non-infobox tables were not successfully filtered
+        split_html_infoboxes.extend(html_infoboxes[i:])
+        return markup_infoboxes, split_html_infoboxes
+
+    def _group_infobox_sub_templates(self, markup_infoboxes):
+        """
+        Group together markup sub-templates with a common prefix
+
+        These templates may render into one single HTML infobox
+          e.g. 'Infobox animanga/Header' and 'Infobox animanga/Print'
+          e.g. 'Infobox ship career' and 'Infobox ship characteristics'
+
+        Order matters: we can use the fact that sub-templates are included
+        sequentially so they render into one HTML template
+
+        Given:
+            'Infobox officeholder'
+            'Infobox martial artist'
+            'Infobox ship begin'
+            'Infobox ship career'
+            'Infobox ship characteristics'
+
+        The output should be:
+        {
+            'Infobox officeholder': ['Infobox officeholder'],
+            'Infobox martial artist': ['Infobox martial artist'],
+            'Infobox ship': [
+                'Infobox ship begin',
+                'Infobox ship career',
+                'Infobox ship characteristics',
+            ]
+        }
+        """
+        groups = OrderedDict()
+        last_group = None
+        last_ibox = None
+
+        for ibox in markup_infoboxes:
+            template = ibox['template']
+            if last_ibox is None:
+                last_ibox = ibox
+                continue
+
+            if last_group:
+                if template.startswith(last_group):
+                    groups[last_group].append(ibox)
+                else:
+                    last_group = None
+                    groups[template] = [ibox]
+            else:
+                last_two = [last_ibox['template'], template]
+                prefix = commonprefix(last_two)
+                if len(prefix) > len("infobox "):
+                    # remove the trailing character to find the group name
+                    # e.g. 'Infobox animanga/Header', 'Infobox animanga/Print'
+                    # e.g. 'Infobox ship career', 'Infobox ship characteristics'
+                    last_group = prefix
+                    if prefix[-1] in ('/', ' '):
+                        last_group = prefix[:-1]
+                    groups[last_group] = last_two
+                else:
+                    groups[last_ibox['template']] = [last_ibox]
+
+            last_ibox = ibox
+
+        if last_group is None:
+            groups[last_ibox['template']] = [last_ibox]
+
+        return groups
 
     def _html_infoboxes(self, html):
         """
@@ -253,6 +353,51 @@ class InfoboxBuilder(Logging):
         bs = fromstring(html)
         return bs.cssselect('table.infobox')
 
+    def _filter_html_infoboxes(self, html_infoboxes):
+        """
+        Filter out non-infobox tables such as sidebars
+        """
+
+        # hack/optimization: remove sidebar table about article series
+        # for an example, see Barack Obama or JFK's article
+        series_txt = 'This article is part of a series about'
+        return filter(lambda t: series_txt not in totext(t), html_infoboxes)
+
+    def _split_html_infobox(self, html, n):
+        """
+        Split an HTML infobox into n partitions, where partitions are
+        <th> or <td> tags with a background
+
+        Multiple markup infobox sub-templates may render into one HTML infobox.
+        Two infobox sub-templates may have the same attribute with different
+        values. To prevent clases, we need to split the HTML infobox into n
+        logical partitions.
+
+        Each partition usually starts with a light purple header
+        See https://en.wikipedia.org/wiki/IS_(manga) for an example
+
+        :param html is an lxml HtmLElement representing an infobox (<table>)
+        """
+
+        # select all <tr> elements that have a <td> or <th> child with
+        # 'background' in @style
+        xpath = "tr[(td|th)[contains(@style, 'background')]]"
+        headers = html.xpath(xpath)
+
+        # we should find at least n logical headers
+        assert(len(headers) >= n)  # TODO: remove for production
+
+        partitions = n_copies_without_children(html, n)
+
+        pointer = 0
+
+        for i, e in enumerate(html.iterchildren()):
+            if pointer + 1 < n and e == headers[pointer + 1]:
+                pointer += 1
+            partitions[pointer].append(e)
+
+        return partitions
+
     def _best_html_infoboxes(self, markup, html):
         """
         Given n markup infoboxes and n+m infobox-like html tables
@@ -265,7 +410,7 @@ class InfoboxBuilder(Logging):
 
         for ibox in markup:
             choices = html[pos:pos + m]
-            best_match, score = process.extractOne(totext(ibox),
+            best_match, score = process.extractOne(totext(ibox['markup']),
                                                    choices,
                                                    processor=totext,
                                                    scorer=fuzz.token_set_ratio)
@@ -453,12 +598,15 @@ class InfoboxUtil:
     # Various names under which you may find an infobox
     # TODO: include geobox
     BOX_REGEX = r"\b([iI]nfobox|[tT]axobox)\b"
-    TEMPLATE_REGEX = re.compile(r'{{\s*(?P<infobox>%s[\w\s]*)' % BOX_REGEX)
+
+    # matches infobox templates like 'Infobox animanga' and sub-templates like
+    # 'Infobox animanga/Video'
+    TEMPLATE_REGEX = re.compile(r'{{\s*(?P<infobox>%s[\w\/\s]*)' % BOX_REGEX)
 
     # Infoboxes may be defined in a separate article and included
-    # using a special template
+    # using an external template
     # for an example, see WWI's "{{World War I infobox}}"
-    SPECIAL_INFOBOX_REGEX = re.compile(
+    EXTERNAL_INFOBOX_REGEX = re.compile(
         r"{{\s*(?P<template>([\w ]+)[Ii]nfobox)}}")
 
     INFOBOX_REGEX = "((?P<open>{{)\s*(?P<ibox>%s)?|(?P<close>}}))" % BOX_REGEX
