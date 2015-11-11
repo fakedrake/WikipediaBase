@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from os.path import commonprefix
+import copy
 import json
 import re
 
@@ -46,11 +47,6 @@ class Infobox(Logging):
                 attrs[attr] = meta_attributes[clean_attr]
 
         return attrs
-
-    @property
-    def wikipedia_class(self):
-        # TODO: remove
-        return self.cls
 
     def get(self, attr, source=None):
         """
@@ -260,11 +256,19 @@ class InfoboxBuilder(Logging):
 
         for group, infoboxes in groups.items():
             html = html_infoboxes[i]
-            if len(infoboxes) == 1:
+            size = len(infoboxes)
+            if size == 1:
                 split_html_infoboxes.append(html)
             else:
-                split_html = self._split_html_infobox(html, len(infoboxes))
-                split_html_infoboxes.extend(split_html)
+                try:
+                    split_html = self._split_html_infobox(html, size)
+                    split_html_infoboxes.extend(split_html)
+                except ValueError as e:
+                    self.log().exception(e)
+                    # if we're unable to split the HTML, we just copy the whole
+                    # HTML infobox for each sub-template
+                    copies = [copy.deepcopy(html) for k in xrange(size)]
+                    split_html_infoboxes.extend(copies)
             i += 1
 
         # there may be additional infoboxes
@@ -320,14 +324,15 @@ class InfoboxBuilder(Logging):
             else:
                 last_two = [last_ibox['template'], template]
                 prefix = commonprefix(last_two)
-                if len(prefix) > len("infobox "):
+                if len(prefix) > len("Template:Infobox "):
                     # remove the trailing character to find the group name
                     # e.g. 'Infobox animanga/Header', 'Infobox animanga/Print'
                     # e.g. 'Infobox ship career', 'Infobox ship characteristics'
-                    last_group = prefix
-                    if prefix[-1] in ('/', ' '):
-                        last_group = prefix[:-1]
-                    groups[last_group] = last_two
+                    if prefix.endswith('/'):
+                        prefix = prefix[:-1]
+
+                    last_group = prefix.strip()
+                    groups[last_group] = [last_ibox, ibox]
                 else:
                     groups[last_ibox['template']] = [last_ibox]
 
@@ -385,7 +390,9 @@ class InfoboxBuilder(Logging):
         headers = html.xpath(xpath)
 
         # we should find at least n logical headers
-        assert(len(headers) >= n)  # TODO: remove for production
+        if (len(headers) < n):
+            raise ValueError('Failed to find %d logical partitions; '
+                             'only found %d' % (n, len(headers)))
 
         partitions = n_copies_without_children(html, n)
 
@@ -496,7 +503,7 @@ class MetaInfoboxBuilder(Logging):
         attrs = dict()
         for k, v in self.html_parsed():
             for m in re.finditer("!!!!!([^!]+)!!!!!", v):
-                attr = m.group(1).replace("_", "-").lower()
+                attr = m.group(1).replace("_", "-").replace(' ', '-').lower()
                 attrs[attr] = k
 
         return attrs
@@ -704,7 +711,7 @@ def get_infoboxes(symbol, cls=None):
         _INFOBOX_CACHE.set(symbol, infoboxes)
 
     if cls:
-        return filter(lambda i: i.wikipedia_class == cls.lower(), infoboxes)
+        return filter(lambda i: i.cls == cls.lower(), infoboxes)
     return infoboxes
 
 

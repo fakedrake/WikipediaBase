@@ -57,7 +57,7 @@ class InfoboxClassifier(BaseClassifier):
     def classify(self, symbol):
         classes = []
         for ibox in get_infoboxes(symbol):
-            classes.append(ibox.wikipedia_class)
+            classes.append(ibox.cls)
         return classes
 
 
