@@ -58,14 +58,14 @@ class CachingRenderer(Renderer):
                                        decode_responses=True)
         super(CachingRenderer, self).__init__(url)
 
-    def render(self, wikitext, key=None, expiry=Expiry.LONG):
+    def render(self, wikitext, key=None, force_live=False, expiry=Expiry.LONG):
         if key is None:
             key = hash(wikitext)
 
         dkey = u'renderer:' + key
         content = self.redis.get(dkey)
 
-        if content is None:
+        if content is None or force_live:
             content = super(CachingRenderer, self).render(wikitext, key=key)
             self.redis.set(dkey, content)
             if expiry is not None:
