@@ -207,10 +207,11 @@ class LispDate(LispType):
             return True
 
     def _range_middle(self, date):
+        # TODO: decide what to do with date ranges. For now, arbitrarily
+        # pick the first
         # Very imprecise
-
         (d1, d2) = date
-        return tuple(int((i + j) / 2) for i, j in zip(d1, d2))
+        return d1
 
     def parse_val(self, txt):
         # Might be already parsed

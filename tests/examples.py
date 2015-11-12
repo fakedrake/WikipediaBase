@@ -51,11 +51,14 @@ WIKI_EXAMPLES = [
     ('(get "wikibase-person" "Stephen Gray (scientist)" "DEATH-DATE")',
      '((:yyyymmdd 17360207))'),
 
+    # TODO: decide what's the right behavior with this test case
     ('(get "wikibase-person" "Jesus" "BIRTH-DATE")',
-     '((:yyyymmdd -00050000))'),  # Used to be 4BC but the correct
+     '((:yyyymmdd -00070000))'),  # Used to be 4BC but the correct
     # answer would be a range 7-2BC amyway
+
+    # TODO: decide what's the right behavior with this test case
     ('(get "wikibase-person" "Jesus" "DEATH-DATE")',
-     '((:yyyymmdd 00310000))'),  # Used to be '((:yyyymmdd
+     '((:yyyymmdd 00300000))'),  # Used to be '((:yyyymmdd
     # 00300000))'), But both are equally correct i think. For the same
     # reasons: range I choose 31 instead of 33
 
