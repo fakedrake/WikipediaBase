@@ -59,16 +59,6 @@ class TestArticle(unittest.TestCase):
         article = Article("Astaroth")
         self.assertEqual(article.symbol(), "astaroth")
 
-    def test_no_redirects_in_db(self):
-        # WikipediaBase assumes that symbols are titles of Wikipedia articles.
-        # If symbol is a redirect, the behavior of WikipediaBase is undefined.
-        # This is a safe assumption to make. WikipediaBase generates a list of
-        # symbols for Omnibase. We make sure that that the list of symbols does
-        # not contain redirects. WikipediaBase is only called with symbols from
-        # this list.
-        article = Article("Barack Hussein Obama")
-        self.assertRaises(LookupError, article.markup_source, force_live=False)
-
     def test_redirects_live(self):
         markup = Article("Barack Hussein Obama").markup_source(force_live=True)
         self.assertGreater(len(markup), 30000)
