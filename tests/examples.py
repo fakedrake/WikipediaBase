@@ -204,6 +204,8 @@ DEGENERATE_EXAMPLES = [
      '((:calculated nil))'),
     ('(get "wikibase-term" "The Beatles" (:calculated "NUMBER"))',
      '((:calculated t))'),
+    ('(get "wikibase-term" "Chang and Eng Bunker" (:calculated "NUMBER"))',
+     '((:calculated t))'),
     ('(get "wikibase-term" "2000–01 Northampton Town F.C. season" (:calculated "NUMBER"))',
      '((:error attribute-value-not-found :message "Could not calculate NUMBER: the article does not have a first paragraph"))'),
 
