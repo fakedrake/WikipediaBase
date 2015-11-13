@@ -13,12 +13,37 @@ try:
 except ImportError:
     import unittest
 
-# TODO: add tests
+from wikipediabase.sort_symbols import sort_by_length, sort_named
 
 
 class TestSortSymbols(unittest.TestCase):
-    pass
+
+    def test_sort_cake(self):
+        symbols = ["Cake (TV series)", "Cake (firework)", "Cake (2005 film)",
+                   "Cake (drug)", "Cake", "Cake (band)",
+                   "Cake (advertisement)", "The Cake"]
+
+        expected = ["Cake (band)", "Cake (advertisement)", "Cake",
+                    "Cake (TV series)", "The Cake", "Cake (2005 film)",
+                    "Cake (firework)", "Cake (drug)"]
+
+        self.assertEquals(expected, sort_by_length(*symbols))
+
+    def test_sort_obama(self):
+        symbols = ["Obama (surname)", "Barack Obama"]
+        expected = ["Barack Obama", "Obama (surname)"]
+        self.assertEquals(expected, sort_by_length(*symbols))
 
 
 class TestSortSymbolsNamed(unittest.TestCase):
-    pass
+
+    def test_cake(self):
+        symbols = ["Cake (TV series)", "Cake (firework)", "Cake (2005 film)",
+                   "Cake (drug)", "Cake", "Cake (band)",
+                   "Cake (advertisement)", "The Cake"]
+
+        expected = ["Cake", "Cake (band)", "Cake (advertisement)",
+                    "Cake (TV series)", "The Cake", "Cake (2005 film)",
+                    "Cake (firework)", "Cake (drug)"]
+
+        self.assertEquals(expected, sort_named("cake", *symbols))

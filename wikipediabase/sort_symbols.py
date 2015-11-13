@@ -2,12 +2,18 @@ from wikipediabase.article import get_article
 
 
 def sort_by_length(*args):
+    """
+    Sorts any number of symbols by the length of the associated article
+    """
     key = lambda a: len(get_article(a).markup_source())
     return sorted(args, reverse=True, key=key)
 
 
 def sort_named(named, *args):
-    # TODO: clean up, this was directly translated from Ruby WikipediaBase
+    """
+    Takes a synonym and any number of symbols and sorts the symbols.
+    If any symbol name is the same as the synonym, it is sorted to the front.
+    """
     article_lengths = {}
     for a in args:
         try:
@@ -27,10 +33,10 @@ def sort_named(named, *args):
             len_a = article_lengths[a]
             len_b = article_lengths[b]
             if len_a < len_b:
-                return -1
+                return 1
             elif len_a == len_b:
                 return 0
             elif len_a > len_b:
-                return 1
+                return -1
 
     return sorted(article_lengths.keys(), cmp=compare)
