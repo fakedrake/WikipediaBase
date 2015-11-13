@@ -100,7 +100,7 @@ class PersonResolver(BaseResolver):
         neuter_prep = ["it", "its", "they", "their", "theirs"]
 
         article = get_article(symbol)
-        full_text = "\n\n".join(article.paragraphs()).lower()
+        full_text = article.markup_source().lower()
 
         def word_search(w):
             return len(re.findall(r"\b%s\b" % w, full_text, re.I))
