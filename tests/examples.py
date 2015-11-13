@@ -251,7 +251,7 @@ WIKI_EXAMPLES_RX = [
     ('(get "wikipedia-writer" "Alexander Pushkin" (:CODE "LANGUAGE"))',
      r'Russian, French'),
     ('(get "wikipedia-language" "Persian language" (:CODE "STATES"))',
-     r'Iran.*Afghanistan'),
+     re.compile(r'Iran.*Afghanistan', flags=re.S)),
 
     # =====================
     # tests for get-classes
@@ -287,9 +287,8 @@ WIKI_EXAMPLES_RX = [
     # Instead of the next dozen tests, should have an assert-subset operator.
     ('(get-attributes "wikipedia-company" "BBC News")',
      r':code \"KEY-PEOPLE\"'),
-    # TODO : uncomment after issue with rendering aliases is fixed
-    #('(get-attributes "wikipedia-company" "BBC News")',
-    # r'(:code \"OWNER\" :rendered \"Owner\(s\)\")'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r'(:code \"OWNER\" :rendered \"Owner\")'),
     ('(get-attributes "wikipedia-company" "BBC News")',
      r'(:code \"SERVICES\" :rendered \"Services\")'),
     ('(get-attributes "wikipedia-company" "BBC News")',
@@ -303,10 +302,9 @@ WIKI_EXAMPLES_RX = [
     ('(get-attributes "wikipedia-company" "BBC News")',
      r':code \"LOCATION-CITY\"'),
     ('(get-attributes "wikipedia-company" "BBC News")',
-     r'(:code \"TYPE\" :rendered \"Former type\")'),
-    # XXX: I have no idea what intl is
-    # ('(get-attributes "wikipedia-company" "BBC News")',
-    #  r':code \"INTL\"'),
+     r'(:code \"TYPE\" :rendered \"Type\")'),
+    ('(get-attributes "wikipedia-company" "BBC News")',
+     r':code \"INTL\"'),
     ('(get-attributes "wikipedia-company" "BBC News")',
      r':code \"NUM-EMPLOYEES\"'),
     ('(get-attributes "wikipedia-company" "BBC News")',

@@ -73,9 +73,7 @@ class TestInfobox(unittest.TestCase):
         ]
         self.assertEqual(map(lambda i: i.cls, infoboxes), classes)
 
-    @unittest.expectedFailure
     def test_html_attributes(self):
-        # TODO: we're not getting all rendered attributes, see issue #70
         ibox = get_infoboxes("BBC News")[0]
         self.assertEqual("Owner", ibox.attributes.get("owner"))
 

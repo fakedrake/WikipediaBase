@@ -526,16 +526,58 @@ class MetaInfoboxBuilder(Logging):
         attributes = list(set(attributes))
         return attributes
 
+    def group_attributes(self, attributes, prefix_length=3):
+        """
+        Group attributes into lists with non-overlapping prefixes. Returns
+        a list of lists
+
+        Wikipedia deduplicates synonymous attributes before rendering an
+        infobox. If both SUCCESSOR and SUCCEEDING are in infobox president,
+        only one gets rendered.
+
+        The algorithm tries to balance the length of groups by inserting
+        an attribute into the smallest group with non-overlapping prefixes.
+        This hopes to reduce the chance of two synonymous attributes with
+        different prefixes ending up in the same group.
+        """
+        def make_group():
+            return {'prefixes': set(), 'attributes': []}
+
+        groups = [make_group()]
+        attributes = sorted(attributes)
+
+        for attr in attributes:
+            prefix = attr[:prefix_length]
+            candidates = filter(lambda group: prefix not in group['prefixes'],
+                                groups)
+            if candidates:
+                smallest_group = reduce(lambda x, y: x if len(x) < len(y) else y,
+                                        candidates)
+                smallest_group['prefixes'].add(prefix)
+                smallest_group['attributes'].append(attr)
+            else:
+                groups.append(make_group())
+                groups[-1]['prefixes'].add(prefix)
+                groups[-1]['attributes'].append(attr)
+
+        return [group['attributes'] for group in groups]
+
     def markup_source(self):
         """
         Markup of the meta infobox. Each attribute has a value that
         contains all possible attributes for this type of infobox.
         """
 
-        return '{{' + self.symbol.replace("Template:", "") + "\n" + \
-            '\n'.join(["| %s = !!!!!%s!!!!!" % (attr, attr) for
-                       attr in self.attributes()]) + \
-            "\n}}\n"
+        markup = ''
+
+        attributes = self.attributes()
+        for group in self.group_attributes(attributes):
+            markup += '{{' + self.symbol.replace("Template:", "") + "\n" + \
+                '\n'.join(["| %s = !!!!!%s!!!!!" % (attr, attr) for
+                           attr in group]) + \
+                "\n}}\n"
+
+        return markup
 
     def html_parsed(self):
         return InfoboxUtil.parse_infobox_html(self.html_source())
@@ -599,8 +641,7 @@ class MetaInfoboxBuilder(Logging):
             doc_subpage = get_article(template + '/doc')
 
             # fetch markup from live wikipedia.org
-            markup = doc_subpage.markup_source(force_live=True,
-                                               expiry=Expiry.LONG)
+            markup = doc_subpage.markup_source(expiry=Expiry.LONG)
             attributes.extend(self._attributes_from_template_data(markup))
 
             html = doc_subpage.html_source(expiry=Expiry.LONG)
