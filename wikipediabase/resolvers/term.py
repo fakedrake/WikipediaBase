@@ -4,7 +4,7 @@ import re
 
 from wikipediabase.article import get_article
 from wikipediabase.fetcher import get_fetcher
-from wikipediabase.infobox import get_infoboxes
+from wikipediabase.infobox import get_infoboxes, get_rendered_infoboxes
 from wikipediabase.lispify import lispify, lispify_error
 from wikipediabase.provider import provide
 from wikipediabase.resolvers.base import BaseResolver
@@ -27,7 +27,7 @@ class TermResolver(BaseResolver):
 
     @provide(name="coordinates")
     def coordinates(self, article, _):
-        for ibox in get_infoboxes(article):
+        for ibox in get_rendered_infoboxes(article):
             src = ibox.html
             if src is None:
                 return None
@@ -49,7 +49,7 @@ class TermResolver(BaseResolver):
         # Make sure we are not getting back a LispType.
 
         infoboxes = get_infoboxes(article)
-        imgs = [ibx.get('image') for ibx in infoboxes]
+        imgs = [ibx.get_from_markup('image') for ibx in infoboxes]
         if not imgs:
             return None
 
@@ -63,7 +63,7 @@ class TermResolver(BaseResolver):
         if "{{!}}border" in img:
             fnam = fnam.split("{{!}}border")[0]
 
-        caps = [ibx.get('caption') for ibx in infoboxes]
+        caps = [ibx.get_from_markup('caption') for ibx in infoboxes]
         caps = filter(lambda x: x, caps)  # remove None values
         return lispify([0, fnam] + ([markup_unlink(caps[0])] if caps else []))
 

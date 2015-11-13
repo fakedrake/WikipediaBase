@@ -87,7 +87,7 @@ class Article(Logging):
 
         return None
 
-_ARTICLE_CACHE = LRUCache(20)
+_ARTICLE_CACHE = LRUCache(100)
 
 
 def get_article(symbol):

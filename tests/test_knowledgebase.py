@@ -17,7 +17,50 @@ from wikipediabase.knowledgebase import KnowledgeBase
 from wikipediabase.provider import Acquirer
 from wikipediabase.lispify import LispList
 
-CLINTON_ATTRS = ('(:code "NAME")', '(:code "IMAGE")', '(:code "ORDER")', '(:code "OFFICE")', '(:code "VICEPRESIDENT" :rendered "Vice President")', '(:code "TERM-START")', '(:code "TERM-END")', '(:code "PREDECESSOR")', '(:code "SUCCESSOR")', '(:code "ORDER1")', '(:code "OFFICE1")', '(:code "LIEUTENANT1")', '(:code "TERM-START1")', '(:code "TERM-END1")', '(:code "PREDECESSOR1")', '(:code "SUCCESSOR1")', '(:code "LIEUTENANT2")', '(:code "TERM-START2")', '(:code "TERM-END2")', '(:code "PREDECESSOR2")', '(:code "SUCCESSOR2")', '(:code "ORDER3")', '(:code "OFFICE3")', '(:code "GOVERNOR3")', '(:code "TERM-START3")', '(:code "TERM-END3")', '(:code "PREDECESSOR3")', '(:code "SUCCESSOR3")', '(:code "BIRTH-NAME" :rendered "Born")', '(:code "BIRTH-DATE" :rendered "Born")', '(:code "BIRTH-PLACE" :rendered "Born")', '(:code "PARTY" :rendered "Political party")', '(:code "PROFESSION" :rendered "Profession")', '(:code "PARENTS" :rendered "Parents")', '(:code "RELATIONS" :rendered "Relations")', '(:code "SPOUSE" :rendered "Spouse(s)', ')', '(:code "CHILDREN" :rendered "Children")', '(:code "ALMA-MATER" :rendered "Alma mater")', '(:code "RELIGION" :rendered "Religion")', '(:code "SIGNATURE")', '(:code "SIGNATURE-ALT")')
+# TODO: update when issue with rendered attributes is fixed, see #70
+CLINTON_ATTRS = (
+    '(:code "ALMA-MATER" :rendered "Alma mater")',
+    '(:code "BIRTH-DATE" :rendered "Born")',
+    '(:code "BIRTH-NAME" :rendered "Born")',
+    '(:code "BIRTH-PLACE" :rendered "Born")',
+    '(:code "CHILDREN" :rendered "Children")',
+    '(:code "GOVERNOR3" :rendered "Governor")',
+    '(:code "IMAGE")',
+    '(:code "LIEUTENANT1")',
+    '(:code "LIEUTENANT2")',
+    '(:code "NAME")',
+    '(:code "OFFICE")',
+    '(:code "OFFICE1")',
+    '(:code "OFFICE3")',
+    '(:code "ORDER")',
+    '(:code "ORDER1")',
+    '(:code "ORDER3")',
+    '(:code "PARENTS" :rendered "Parents")',
+    '(:code "PARTY" :rendered "Political party")',
+    '(:code "PREDECESSOR")',
+    '(:code "PREDECESSOR1")',
+    '(:code "PREDECESSOR2")',
+    '(:code "PREDECESSOR3")',
+    '(:code "PROFESSION" :rendered "Profession")',
+    '(:code "RELATIONS" :rendered "Relations")',
+    '(:code "RELIGION" :rendered "Religion")',
+    '(:code "SIGNATURE")',
+    '(:code "SIGNATURE-ALT")',
+    '(:code "SPOUSE" :rendered "Spouse(s)")',
+    '(:code "SUCCESSOR")',
+    '(:code "SUCCESSOR1")',
+    '(:code "SUCCESSOR2")',
+    '(:code "SUCCESSOR3")',
+    '(:code "TERM-END")',
+    '(:code "TERM-END1")',
+    '(:code "TERM-END2")',
+    '(:code "TERM-END3")',
+    '(:code "TERM-START")',
+    '(:code "TERM-START1")',
+    '(:code "TERM-START2")',
+    '(:code "TERM-START3")',
+    '(:code "VICEPRESIDENT")',
+)
 
 
 class TestKnowledgebase(unittest.TestCase):

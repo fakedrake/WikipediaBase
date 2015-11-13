@@ -1,5 +1,5 @@
 from wikipediabase.classifiers import is_wikipedia_class
-from wikipediabase.infobox import get_infoboxes
+from wikipediabase.infobox import get_infoboxes, get_rendered_infoboxes
 from wikipediabase.lispify import lispify, LispType
 from wikipediabase.resolvers.base import BaseResolver, check_resolver
 
@@ -33,7 +33,7 @@ class InfoboxResolver(BaseResolver):
         else:
             typecode, attr = self._typecode, attr
 
-        infoboxes = get_infoboxes(symbol, cls=cls)
+        infoboxes = get_rendered_infoboxes(symbol, cls=cls)
 
         for ibox in infoboxes:
             result = ibox.get(attr)

@@ -13,9 +13,12 @@ try:
 except ImportError:
     import unittest
 
+import mwparserfromhell
+
 from wikipediabase.article import get_article
 from wikipediabase.infobox import Infobox, InfoboxBuilder, InfoboxUtil, \
-    MetaInfoboxBuilder, get_infoboxes, get_meta_infobox
+    MetaInfoboxBuilder, RenderedInfoboxBuilder, get_infoboxes, \
+    get_meta_infobox, get_rendered_infoboxes
 from wikipediabase.util import tostring
 
 
@@ -27,7 +30,7 @@ class TestInfobox(unittest.TestCase):
         self.assertIn("| name = Led Zeppelin", ibox.markup)
 
     def test_html_items(self):
-        ibox = get_infoboxes("AC/DC")[0]
+        ibox = get_rendered_infoboxes("AC/DC")[0]
         self.assertIn(("Origin", "Sydney, Australia"), ibox._html_items())
 
     def test_attributes(self):
@@ -45,7 +48,7 @@ class TestInfobox(unittest.TestCase):
 
     def test_get(self):
         # TODO: test use of :code and :rendered typecodes
-        ibox = get_infoboxes("The Rolling Stones")[0]
+        ibox = get_rendered_infoboxes("The Rolling Stones")[0]
         self.assertEqual(ibox.get("origin"), "London, England")
         self.assertIn("Mick Jagger", ibox.get("current-members"))
 
@@ -77,7 +80,8 @@ class TestInfobox(unittest.TestCase):
         self.assertEqual("Owner", ibox.attributes.get("owner"))
 
     def test_no_clashes_with_multiple_infoboxes(self):
-        officeholder_ibox, martial_artist_ibox = get_infoboxes('Vladimir Putin')
+        officeholder_ibox, martial_artist_ibox = \
+            get_rendered_infoboxes('Vladimir Putin')
         self.assertEqual(officeholder_ibox.cls,
                          'wikipedia-officeholder')
         self.assertEqual(martial_artist_ibox.cls,
@@ -94,7 +98,8 @@ class TestInfobox(unittest.TestCase):
 
     def test_illegal_meta_infobox(self):
         ibox = get_infoboxes('Chickasaw County, Iowa')[0]
-        ibox.markup = '{{Infobox rubbish made up template\n |foo = bar\n}}'
+        ibox.markup = mwparserfromhell.parse(
+            '{{Infobox rubbish made up template\n |foo = bar\n}}')
         # even if the MetaInfobox is illegal, attributes should be parsed
         self.assertIn("foo", ibox.attributes)
 
@@ -165,9 +170,8 @@ class TestInfoboxSubTemplates(unittest.TestCase):
             'Template:Infobox animanga/Footer'
         ]
 
-        builder = InfoboxBuilder(symbol)
-        markup = get_article(symbol).markup_source()
-        markup_infoboxes, _ = builder._markup_infoboxes(markup)
+        markup_infoboxes = get_infoboxes(symbol)
+        builder = RenderedInfoboxBuilder(symbol, markup_infoboxes)
         groups = builder._group_infobox_sub_templates(markup_infoboxes)
 
         # tests that the 4 sub-templates are grouped into one common prefix
@@ -175,12 +179,12 @@ class TestInfoboxSubTemplates(unittest.TestCase):
 
         # tests that the correct 4 sub-templates are retrieved
         animanga_infoboxes = groups['Template:Infobox animanga']
-        templates = [ibox['template'] for ibox in animanga_infoboxes]
+        templates = [ibox.template for ibox in animanga_infoboxes]
         self.assertItemsEqual(animanga_templates, templates)
 
         # checks that markup segments are partitioned correctly
         # each substring below is unique to different sub-templates
-        infoboxes = [ibox['markup'] for ibox in animanga_infoboxes]
+        infoboxes = [ibox.markup for ibox in animanga_infoboxes]
         self.assertIn('image', infoboxes[0])
         self.assertIn('volume_list', infoboxes[1])
         self.assertIn('episode_list', infoboxes[2])
@@ -202,9 +206,8 @@ class TestInfoboxSubTemplates(unittest.TestCase):
             'Template:Infobox ship characteristics',
         ]
 
-        builder = InfoboxBuilder(symbol)
-        markup = get_article(symbol).markup_source()
-        markup_infoboxes, _ = builder._markup_infoboxes(markup)
+        markup_infoboxes = get_infoboxes(symbol)
+        builder = RenderedInfoboxBuilder(symbol, markup_infoboxes)
         groups = builder._group_infobox_sub_templates(markup_infoboxes)
 
         # tests that the 4 sub-templates are grouped into one common prefix
@@ -212,12 +215,12 @@ class TestInfoboxSubTemplates(unittest.TestCase):
 
         # tests that the correct 4 sub-templates are retrieved
         ship_infoboxes = groups['Template:Infobox ship']
-        templates = [ibox['template'] for ibox in ship_infoboxes]
+        templates = [ibox.template for ibox in ship_infoboxes]
         self.assertItemsEqual(ship_templates, templates)
 
         # checks that markup segments are partitioned correctly
         # each substring below is unique to different sub-templates
-        infoboxes = [ibox['markup'] for ibox in ship_infoboxes]
+        infoboxes = [ibox.markup for ibox in ship_infoboxes]
         self.assertIn('caption', infoboxes[0])
         self.assertIn('Ship image', infoboxes[1])
         self.assertIn('Ship commissioned', infoboxes[2])
@@ -235,9 +238,14 @@ class TestInfoboxSubTemplates(unittest.TestCase):
             '{{Infobox ship characteristics}}',
         ])
 
-        builder = InfoboxBuilder('Foo')
+        symbol = 'Foo'
+        builder = InfoboxBuilder(symbol)
         markup_infoboxes, _ = builder._markup_infoboxes(markup)
-        groups = builder._group_infobox_sub_templates(markup_infoboxes)
+
+        infoboxes = [Infobox(symbol, m['template'], m['cls'], m['markup'])
+                     for m in markup_infoboxes]
+        rendered_builder = RenderedInfoboxBuilder('Foo', infoboxes)
+        groups = rendered_builder._group_infobox_sub_templates(infoboxes)
 
         expected = {
             'Template:Infobox officeholder': [
@@ -256,7 +264,7 @@ class TestInfoboxSubTemplates(unittest.TestCase):
             ]
         }
 
-        result = {g: [x['template'] for x in groups[g]] for g in groups}
+        result = {g: [x.template for x in groups[g]] for g in groups}
         self.assertEquals(expected, result)
 
     def test_split_html_infobox_animanga(self):
@@ -267,9 +275,10 @@ class TestInfoboxSubTemplates(unittest.TestCase):
         # The HTML infobox can be split into 4 logical partitions by looking
         # at <td> or <th> elements with a light-purple background
         symbol = 'IS (manga)'
-        builder = InfoboxBuilder(symbol)
         html = get_article(symbol).html_source()
+        infoboxes = get_infoboxes(symbol)
 
+        builder = RenderedInfoboxBuilder(symbol, infoboxes)
         html_infobox = builder._html_infoboxes(html)[0]
         split_html = builder._split_html_infobox(html_infobox, 4)
         split_html = [tostring(ibox) for ibox in split_html]
@@ -294,9 +303,10 @@ class TestInfoboxSubTemplates(unittest.TestCase):
         # actually need to be split because it comes from one single
         # markup infobox
         symbol = 'Bill Clinton'
-        builder = InfoboxBuilder(symbol)
         html = get_article(symbol).html_source()
+        infoboxes = get_infoboxes(symbol)
 
+        builder = RenderedInfoboxBuilder(symbol, infoboxes)
         html_infobox = builder._html_infoboxes(html)[0]
         split_html = builder._split_html_infobox(html_infobox, 4)
         split_html = [tostring(ibox) for ibox in split_html]
@@ -320,7 +330,8 @@ class TestInfoboxSubTemplates(unittest.TestCase):
         # The HTML infobox cannot be split into 2 logical partitions because
         # there are no logical headers (<td>/<th> elements with a background)
         symbol = 'LTV L450F'
-        builder = InfoboxBuilder(symbol)
+        infoboxes = get_infoboxes(symbol)
+        builder = RenderedInfoboxBuilder(symbol, infoboxes)
         html = get_article(symbol).html_source()
         html_infobox = builder._html_infoboxes(html)[0]
         self.assertRaises(ValueError, builder._split_html_infobox,
@@ -332,7 +343,7 @@ class TestInfoboxSubTemplates(unittest.TestCase):
         # of infobox animanga. These 4 templates (defined in markup as separate
         # infoboxes) are rendered into one single HTML infobox.
 
-        infoboxes = get_infoboxes('IS (manga)')
+        infoboxes = get_rendered_infoboxes('IS (manga)')
         self.assertEqual(4, len(infoboxes))
 
         classes = [

@@ -2,7 +2,7 @@ from wikipediabase.article import get_article
 
 
 def sort_by_length(*args):
-    key = lambda a: len(' '.join(get_article(a).paragraphs()))
+    key = lambda a: len(get_article(a).markup_source())
     return sorted(args, reverse=True, key=key)
 
 
@@ -11,7 +11,7 @@ def sort_named(named, *args):
     article_lengths = {}
     for a in args:
         try:
-            article_lengths[a] = len(' '.join(get_article(a).paragraphs()))
+            article_lengths[a] = len(get_article(a).markup_source())
         except LookupError:
             pass
 

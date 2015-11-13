@@ -11,18 +11,17 @@ from wikipediabase.article import get_article
 from wikipediabase.fetcher import get_fetcher
 from wikipediabase.log import Logging
 from wikipediabase.renderer import get_renderer
-from wikipediabase.util import Expiry, LRUCache, fromstring, totext,\
-    tostring, n_copies_without_children
+from wikipediabase.util import Expiry, LRUCache, fromstring, \
+    n_copies_without_children, tostring, totext
 
 
 class Infobox(Logging):
 
-    def __init__(self, symbol, template, cls, markup, html):
+    def __init__(self, symbol, template, cls, markup):
         self.symbol = symbol
         self.template = template
         self.cls = cls
-        self.markup = markup
-        self.html = html
+        self.markup = mwparserfromhell.parse(markup)
 
     @property
     def attributes(self):
@@ -49,32 +48,13 @@ class Infobox(Logging):
         return attrs
 
     def get(self, attr, source=None):
-        """
-        - First try plain markup attributes
-        - Then translating each markup's translations
-        """
+        raise NotImplemented('get should only be called on a RenderedInfobox')
 
-        # Look into html first. The results here are much more readable
-        html_attr = attr.lower().replace(u"-", u" ")
-        markup_attr = attr.lower()
-        rendered_attr = self.attributes.get(markup_attr)
-
-        if source is None or source == 'html':
-            for k, v in self._html_items():
-                if k.lower().replace(u".", u"") == html_attr or \
-                   k == rendered_attr:
-                    return v
-
-        # Then look into the markup
+    def get_from_markup(self, attr):
+        attr = attr.lower()
         for k, v in self._markup_items():
-            if k == markup_attr:
+            if k == attr:
                 return v
-
-    def _html_items(self):
-        """
-        HTML parsed as a list of (key, val)
-        """
-        return InfoboxUtil.parse_infobox_html(self.html)
 
     def _markup_items(self):
         """
@@ -82,8 +62,7 @@ class Infobox(Logging):
         """
 
         items = []
-        wikicode = mwparserfromhell.parse(self.markup)
-        templates = wikicode.filter_templates(recursive=False)
+        templates = self.markup.filter_templates(recursive=False)
 
         if not templates:
             return items
@@ -97,6 +76,38 @@ class Infobox(Logging):
                 val = item.value.strip()
                 items.append((attr, val))
         return items
+
+
+class RenderedInfobox(Infobox):
+
+    def __init__(self, symbol, template, cls, markup, html):
+        super(RenderedInfobox, self).__init__(symbol, template, cls, markup)
+        self.html = html
+
+    def get(self, attr, source=None):
+        """
+        - First try plain markup attributes
+        - Then translating each markup's translations
+        """
+
+        # Look into html first. The results here are much more readable
+        markup_attr = attr.lower()
+        html_attr = attr.lower().replace(u"-", u" ")
+        rendered_attr = self.attributes.get(markup_attr)
+
+        if source is None or source == 'html':
+            for k, v in self._html_items():
+                if k.lower().replace(u".", u"") == html_attr or \
+                   k == rendered_attr:
+                    return v
+
+        return self.get_from_markup(markup_attr)
+
+    def _html_items(self):
+        """
+        HTML parsed as a list of (key, val)
+        """
+        return InfoboxUtil.parse_infobox_html(self.html)
 
 
 class MetaInfobox(Logging):
@@ -140,25 +151,18 @@ class InfoboxBuilder(Logging):
 
         fetcher = get_fetcher()
         markup = fetcher.markup_source(self.symbol, expiry=expiry)
-        html = fetcher.html_source(self.symbol, expiry=expiry)
-
-        infoboxes, external = self._infoboxes_from_article(markup, html)
+        infoboxes, external = self._markup_infoboxes_from_article(markup)
 
         for template in external:
             title = 'Template:%s' % template.strip()
             try:
-                # templates are not stored in the backend, so we need to fetch
-                # from live wikipedia.org
-                # TODO: revisit. now that templates are in the backend, what
-                # is more convenient?
-                m = fetcher.markup_source(title, expiry=expiry, force_live=True)
-                h = fetcher.html_source(title, expiry=expiry)
+                m = fetcher.markup_source(title, expiry=expiry)
 
                 # we only follow external infobox templates once, instead of
                 # looping until we can't find additional external templates.
                 # it seems dangerous to keep following template links. It's
                 # possible to get stuck in a long redirect loop
-                external_infoboxes, _ = self._infoboxes_from_article(m, h)
+                external_infoboxes, _ = self._markup_infoboxes_from_article(m)
                 infoboxes.extend(external_infoboxes)
             except LookupError:
                 self.log().warn("Could not find external infobox template '%s'",
@@ -166,35 +170,14 @@ class InfoboxBuilder(Logging):
 
         return infoboxes
 
-    def _infoboxes_from_article(self, markup, html):
+    def _markup_infoboxes_from_article(self, markup, title=None):
         """
         Gets a list of Infobox objects and external templates
         """
         markup_infoboxes, external_templates = self._markup_infoboxes(markup)
-        html_infoboxes = self._html_infoboxes(html)
-
-        if len(markup_infoboxes) != len(html_infoboxes):
-            # article contains non-infobox tables such as sidebars
-            html_infoboxes = self._filter_html_infoboxes(html_infoboxes)
-
-        if len(markup_infoboxes) > len(html_infoboxes):
-            # article contains infobox sub-templates
-            # e.g. 'Infobox animanga/Video' and 'Infobox animanga/Header'
-            separated = self._handle_infobox_sub_templates(markup_infoboxes,
-                                                           html_infoboxes)
-            markup_infoboxes, html_infoboxes = separated
-
-        if len(markup_infoboxes) != len(html_infoboxes):
-            # filter out infobox-like tables that don't match the infobox markup
-            # this operation is expensive. It's better if non-infobox tables
-            # are filtered out in _filter_html_infoboxes()
-            html_infoboxes = self._best_html_infoboxes(markup_infoboxes,
-                                                       html_infoboxes)
-
         infoboxes = []
         for i, t in enumerate(markup_infoboxes):
-            ibox = Infobox(self.symbol, t['template'], t['cls'], t['markup'],
-                           html_infoboxes[i])
+            ibox = Infobox(self.symbol, t['template'], t['cls'], t['markup'])
             infoboxes.append(ibox)
 
         return infoboxes, external_templates
@@ -234,6 +217,17 @@ class InfoboxBuilder(Logging):
             infoboxes.append({'markup': markup, 'template': template,
                               'cls': cls})
 
+        # note that by extracting markup infoboxes separately from external
+        # infoboxes, we're not preserving the ordering of the infoboxes
+        # in the article
+
+        # this may mess up the RenderedInfoboxBuilder:
+        # let m_i = markup infobox in position i in the article
+        # let e_i = external infobox in position i in the article
+        # if an article has [m_1, e_2, m_3] ==> [m_1, m_3], [e_2]
+
+        # but we haven't found an example of an article that contains both
+        # markup and external infoboxes
         external_templates = []
         for m in re.finditer(InfoboxUtil.EXTERNAL_INFOBOX_REGEX, source):
             template = m.group('template')
@@ -246,6 +240,60 @@ class InfoboxBuilder(Logging):
         for m in re.finditer(InfoboxUtil.TEMPLATE_REGEX, markup):
             template = "Template:" + m.group('infobox').strip()
             return template
+
+
+class RenderedInfoboxBuilder(InfoboxBuilder):
+
+    """
+    RenderedInfoboxBuilder scrapes the HTML of an article to build a list
+    of rendered infoboxes
+    """
+
+    def __init__(self, symbol, infoboxes):
+        self.symbol = symbol
+        self.infoboxes = copy.deepcopy(infoboxes)
+
+    def build(self, expiry=Expiry.DEFAULT):
+        """
+        Returns a list of RenderedInfobox objects constructed from the article
+        """
+
+        fetcher = get_fetcher()
+        html = fetcher.html_source(self.symbol, expiry=expiry)
+        rendered_infoboxes = self._html_infoboxes_from_article(html)
+        return rendered_infoboxes
+
+    def _html_infoboxes_from_article(self, html):
+        """
+        Gets a list of RenderedInfobox objects
+        """
+        html_infoboxes = self._html_infoboxes(html)
+
+        if len(self.infoboxes) != len(html_infoboxes):
+            # article contains non-infobox tables such as sidebars
+            html_infoboxes = self._filter_html_infoboxes(html_infoboxes)
+
+        if len(self.infoboxes) > len(html_infoboxes):
+            # article contains infobox sub-templates
+            # e.g. 'Infobox animanga/Video' and 'Infobox animanga/Header'
+            html_infoboxes = self._handle_infobox_sub_templates(self.infoboxes,
+                                                                html_infoboxes)
+
+        if len(self.infoboxes) != len(html_infoboxes):
+            # filter out infobox-like tables that don't match the infobox markup
+            # this operation is expensive. It's better if non-infobox tables
+            # are filtered out in _filter_html_infoboxes()
+            html_infoboxes = self._best_html_infoboxes(self.infoboxes,
+                                                       html_infoboxes)
+
+        rendered_infoboxes = []
+        for i, ibox in enumerate(self.infoboxes):
+            rendered_ibox = RenderedInfobox(ibox.symbol, ibox.template,
+                                            ibox.cls, ibox.markup,
+                                            html_infoboxes[i])
+            rendered_infoboxes.append(rendered_ibox)
+
+        return rendered_infoboxes
 
     def _handle_infobox_sub_templates(self, markup_infoboxes, html_infoboxes):
         groups = self._group_infobox_sub_templates(markup_infoboxes)
@@ -274,7 +322,7 @@ class InfoboxBuilder(Logging):
         # there may be additional infoboxes
         # this happens when non-infobox tables were not successfully filtered
         split_html_infoboxes.extend(html_infoboxes[i:])
-        return markup_infoboxes, split_html_infoboxes
+        return split_html_infoboxes
 
     def _group_infobox_sub_templates(self, markup_infoboxes):
         """
@@ -310,7 +358,7 @@ class InfoboxBuilder(Logging):
         last_ibox = None
 
         for ibox in markup_infoboxes:
-            template = ibox['template']
+            template = ibox.template
             if last_ibox is None:
                 last_ibox = ibox
                 continue
@@ -322,7 +370,7 @@ class InfoboxBuilder(Logging):
                     last_group = None
                     groups[template] = [ibox]
             else:
-                last_two = [last_ibox['template'], template]
+                last_two = [last_ibox.template, template]
                 prefix = commonprefix(last_two)
                 if len(prefix) > len("Template:Infobox "):
                     # remove the trailing character to find the group name
@@ -334,12 +382,12 @@ class InfoboxBuilder(Logging):
                     last_group = prefix.strip()
                     groups[last_group] = [last_ibox, ibox]
                 else:
-                    groups[last_ibox['template']] = [last_ibox]
+                    groups[last_ibox.template] = [last_ibox]
 
             last_ibox = ibox
 
         if last_group is None:
-            groups[last_ibox['template']] = [last_ibox]
+            groups[last_ibox.template] = [last_ibox]
 
         return groups
 
@@ -390,7 +438,7 @@ class InfoboxBuilder(Logging):
         headers = html.xpath(xpath)
 
         # we should find at least n logical headers
-        if (len(headers) < n):
+        if len(headers) < n:
             raise ValueError('Failed to find %d logical partitions; '
                              'only found %d' % (n, len(headers)))
 
@@ -417,7 +465,7 @@ class InfoboxBuilder(Logging):
 
         for ibox in markup:
             choices = html[pos:pos + m]
-            best_match, score = process.extractOne(totext(ibox['markup']),
+            best_match, score = process.extractOne(ibox.markup,
                                                    choices,
                                                    processor=totext,
                                                    scorer=fuzz.token_set_ratio)
@@ -691,11 +739,12 @@ class InfoboxUtil:
 # Caching
 # -------
 
-# Infobox objects are cached in memory
+# Infobox and RenderedInfobox objects are cached in memory
 # The cache size was determined from a typical WikipediaBase workload where
 # START calls get-classes and get-attributes for many symbols, and get only
 # for the few symbols that contain the matching classes and attributes
-_INFOBOX_CACHE = LRUCache(20)
+_INFOBOX_CACHE = LRUCache(100)
+_RENDERED_INFOBOX_CACHE = LRUCache(100)
 
 # MetaInfobox objects are cached in memory forever
 # There are about 3200 infoboxes, so these should easily fit in memory
@@ -713,6 +762,19 @@ def get_infoboxes(symbol, cls=None):
     if cls:
         return filter(lambda i: i.cls == cls.lower(), infoboxes)
     return infoboxes
+
+
+def get_rendered_infoboxes(symbol, cls=None):
+    try:
+        rendered_infoboxes = _RENDERED_INFOBOX_CACHE.get(symbol)
+    except KeyError:
+        infoboxes = get_infoboxes(symbol)
+        rendered_infoboxes = RenderedInfoboxBuilder(symbol, infoboxes).build()
+        _RENDERED_INFOBOX_CACHE.set(symbol, rendered_infoboxes)
+
+    if cls:
+        return filter(lambda i: i.cls == cls.lower(), rendered_infoboxes)
+    return rendered_infoboxes
 
 
 def get_meta_infobox(symbol):
