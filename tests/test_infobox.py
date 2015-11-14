@@ -123,12 +123,12 @@ class TestMetaInfobox(unittest.TestCase):
 
     def test_attributes(self):
         builder = MetaInfoboxBuilder('Template:Infobox person')
-        self.assertIn((u'Native\xa0name', '!!!!!native_name!!!!!'),
+        self.assertIn((u'Native name', '!!!!!native_name!!!!!'),
                       builder.html_parsed())
 
     def test_rendered_attributes(self):
         ibx = get_meta_infobox('Template:Infobox person')
-        self.assertEqual(ibx.attributes['native-name'], u'Native\xa0name')
+        self.assertEqual(ibx.attributes['native-name'], u'Native name')
 
 
 class TestInfoboxUtil(unittest.TestCase):
@@ -356,9 +356,9 @@ class TestInfoboxSubTemplates(unittest.TestCase):
         ibox_print, ibox_video = infoboxes[1:3]
 
         # test for correct rendered attributes
-        self.assertEquals(u'Published\xa0by',
+        self.assertEquals(u'Published by',
                           ibox_print.attributes['publisher'])
-        self.assertEquals(u'Produced\xa0by',
+        self.assertEquals(u'Produced by',
                           ibox_video.attributes['producer'])
 
         # test for no clashes in get

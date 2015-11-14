@@ -744,11 +744,18 @@ class InfoboxUtil:
                 # making brs into newlines, parse the rest of the
                 # tags, get the text back
                 key = totext(fromstring(tostring(e_key), literal_newlines=True))
-                key = re.sub(r"\s+", " ", key).strip()
+
+                # replace multiple spaces (including nbsp) with a single space
+                key = re.sub(r"\s+", u" ", key, flags=re.U).strip()
+
                 val = escape_lists(tostring(e_val))
                 # Extract text
                 val = fromstring(val)
                 val = totext(val)
+
+                # replace nbsp (unicode code 160) with space
+                val = val.replace(unichr(160), u' ')
+
                 val = unescape_lists(val.strip())
                 tpairs.append((key, val))
 
