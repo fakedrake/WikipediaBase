@@ -37,7 +37,6 @@ class Configurable(object):
         """
 
         lcs = self.__dict__.get('local_config_scope', {})
-
         if attr in lcs:
             return lcs[attr].deref()
 

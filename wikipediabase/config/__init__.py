@@ -8,6 +8,7 @@ configuration = Configuration()
 __all__ = ['LazyItem',
            'VersionedItem',
            'SubclassesItem',
+           'ConfigRef',
            'Configuration',
            'Configurable',
            'configuration']

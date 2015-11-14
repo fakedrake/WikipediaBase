@@ -27,6 +27,13 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(conf.get('a', 3), 1)
         self.assertEqual(conf.get('b', 3), 3)
 
+    def test_parent_setting(self):
+        cfg = Configurable()
+        cfgr = ConfigRef()
+        cfgr.deref = lambda : "hello"
+        cfg.ref = cfgr
+        self.assertEqual(cfg.ref, "hello")
+
     def test_children(self):
         root = Configuration({'isroot': True})
         default = root.child({'isroot': False})

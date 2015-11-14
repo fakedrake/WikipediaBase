@@ -1,6 +1,65 @@
-from .item import BaseItem, VersionedItem
+from wikipediabase.config.item import BaseItem, VersionedItem
 
-class ConfigRef(object):
+class AttributeFallback(object):
+    """
+    Python will always try to resolve an attribute traversing the
+    class hierarchy until it finds a class that defines __getattr__
+    and it will use that.
+
+    In the case of set it first checks the class for a special way of
+    setting attributes. That involves traversing the ancenstry tree
+    fot a __setattr__ method. If that fails we fallback to
+    instance_setattr1 which just sets the attribute in the
+    instance (see instance_setattr Cpython's Objects/classobject.c)
+
+    The problem is that with ConfigRefs we need to get the attributes
+    we define from memory and when we ask for something we don't know
+    about we should create a reference to that.
+
+    As for setting attributes we want to be able to override
+    attributes that are already in memory (ie the things we defined
+    here) but we need to define new items in the configuration when
+    something is not already in memory.
+
+    To solve both these problems we define an ancestor to ConfigRef to
+    handle the get/set trickery. This way all ConfigRef (and sons')
+    methods will be evaluated before this class is queried. Also
+    setting attributes will only be allowed for.
+
+    To define anything that you want to behave in the tranditional way
+    you need to define also as a class member. For example
+
+        class A(AttributeFallback):
+            nofallback = None
+            def __init__(self):
+                self.nofallback = "No Fallback"
+                self.fallback = "value"
+            def _setattr_fallback(self, attr, val):
+                print "Setting:", attr, "to", val+"-wrapped"
+                self.__dict__[attr] = val+"-wrapped"
+
+         a = A() # Setting: fallback to value-wrapped
+
+    """
+
+    def __getattr__(self, attr):
+        return self._getattr_fallback(attr)
+
+    def __setattr__(self, attr, val):
+        if hasattr(self.__class__, attr):
+            self.__dict__[attr] = val
+            return
+
+        self._setattr_fallback(attr, val)
+
+    def _setattr_fallback(self, attr, val):
+        raise LookupError("Couldn't set '%s' in %s." % (attr, repr(self)))
+
+    def _getattr_fallback(self, attr):
+        raise LookupError("'%s' not found in %s." % (attr, repr(self)))
+
+
+class ConfigRef(AttributeFallback):
     """
     Convenience class to provide configurations that change
     dynamically. Basically a reference to a configuration ref that is
@@ -9,30 +68,30 @@ class ConfigRef(object):
     lenses.
     """
 
+    _config = None
+    _path = None
+    _children = None
+
     def __init__(self, config=None, path=None):
         """
         Create a reference to a member of a config object. The lens attribute
         """
         self._config = config
         self._path = path or []
+        self._children = {}
 
-    def __getattr__(self, key):
+    def _getattr_fallback(self, key):
         """
-        Get a new ConfigRef that can be dereferenced.
+        Used as the
         """
-        if key.startswith('_'):
-            return self.__dict__[key]
 
         return ConfigRef(config=self._config, path=self._path + [key])
 
-    def __setattr__(self, key, val):
+    def _setattr_fallback(self, key, val):
         """
         Realize the reference path so far, creating empty dicts where
         necessary and set the value to the final key.
         """
-
-        if key.startswith('_'):
-            return super(ConfigRef, self).__setattr__(key, val)
 
         tip = self._config
         for k in self._path:
@@ -53,7 +112,7 @@ class ConfigRef(object):
 
         return MultiLensConfigRef([self, argument])
 
-    def lens(self, lens):
+    def lens(self, lens, *args, **kw):
         """
         Return a ConfigRef that when checked will use the provided
         lens function to deref. Eg
@@ -78,9 +137,21 @@ class ConfigRef(object):
 
         """
 
-        return LensConfigRef(self, lens)
+        # Multilenses provide extra arguments and make no assumptions
+        # about kw.
+        def closure(*cargs, **ckw):
+            ccargs = cargs + args
+            cckw = kw.copy()
+            cckw.update(ckw)
+
+            return lens(*ccargs, **cckw)
+
+        return LensConfigRef(self, closure)
 
     def with_args(self, *args, **kwargs):
+        """
+        For versioned items only. Apply arguments to the versioned item.
+        """
         def maybe_with_args(x):
             if isinstance(x, VersionedItem):
                 return x.with_args(*args, **kwargs)
@@ -127,6 +198,9 @@ class LensConfigRef(ConfigRef):
     >>> Configuration({'hello': {'there': 2}}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2).there.deref()
     2
     """
+    _parent = None
+    _lens = None
+
     def __init__(self, parent, lens):
         self._parent = parent
         self._lens = lens
@@ -145,7 +219,8 @@ class LensConfigRef(ConfigRef):
 class ShallowLensConfigRef(LensConfigRef):
     """
     For internal use. Like a lens only it does not deref before
-    applying lens.
+    applying lens. This is useful if our lens function acts on items
+    instead of their underlying values.
 
     Note the case where the underlying ConfigItem changes and the lens
     will now raise an error. This case happens here:
@@ -173,6 +248,9 @@ class MultiLensConfigRef(ConfigRef):
     """
     Many arguments to a lens
     """
+
+    _arguments = None
+    _lens = None
 
     def __init__(self, arguments, lens=None):
         self._lens = lens
