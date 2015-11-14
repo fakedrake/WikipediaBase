@@ -3,13 +3,57 @@ import re
 
 from wikipediabase.config import *
 
+
+class CurryingFactory(object):
+    """
+    An immutable factory that remembers arguemntes. One way to think
+    of it is that each time you update the arguments you get a new
+    factory. Another way to think of this (if you are half-mad) is as
+    a comonadic structure.
+
+    For the initiated this is a typical comonadic structure:
+
+    -- Definitions
+    data Factory a = Monoid context => Factory {ctx::context, constructor::(ctx->a)}
+    withContext ctx (Factory _ f) = Factory ctx f
+    withConstructor f (Factory ctx _) = Factory ctx f
+
+    -- Comonad (all the merging logic is encapsulated here)
+    expand (Factory ctx constructor) = Factory (ctx, \newCtx -> Factory (newCtx <> ctx) constructor)
+    unpack (Factory ctx constructor) = constructor ctx
+
+    -- Factory for factories, provide context, create factory
+    kw :: context -> Factory a -> Factory a
+    kw factory ctx = unpack $ withContext ctx $ expand factory
+    """
+
+    def __init__(self, cls=None, **kw):
+        self._cls = cls
+        self._kwargs = kw
+
+    def cls(self, cls):
+        return CurryingFactory(cls, **self._kwargs)
+
+    def kw(self, **kwargs):
+        return CurryingFactory(self._cls, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        kwargs.update(self._kwargs)
+        return self._cls(*args, **kwargs)
+
 # Do everything offline
 configuration.ref.offline = False
 
 # Wikipedia mirror
-configuration.ref.remote.url = 'http://ashmore.csail.mit.edu:8080'
-configuration.ref.remote.base = 'mediawiki/index.php'
-configuration.ref.remote.sandbox_title = "CSAIL_Wikipedia:Sandbox"
+# configuration.ref.remote.url = 'http://ashmore.csail.mit.edu:8080'
+# configuration.ref.remote.base = 'mediawiki/index.php'
+# configuration.ref.remote.sandbox_title = "CSAIL_Wikipedia:Sandbox"
+
+# Wikipedia
+configuration.ref.remote.url = 'http://wikipedia.org'
+configuration.ref.remote.base = 'w/index.php'
+configuration.ref.remote.sandbox_title = "Wikipedia:Sandbox"
+configuration.ref.remote.api_base = 'w/api.php'
 
 # Caching
 def get_persistent_dict(filename):
@@ -60,10 +104,18 @@ configuration.ref.strings.lxml_cleaner = VersionedItem(lxml.html.clean.Cleaner,
                                                        **cleaner_args)
 
 import wikipediabase.web_string as ws
-configuration.ref.strings.xml_string_class = ws.LxmlString
-configuration.ref.strings.symbol_string_class = ws.SymbolString
+configuration.ref.strings.xml_string_class = VersionedItem(CurryingFactory(ws.LxmlString).kw,
+                                                           configuration=configuration)
+configuration.ref.strings.symbol_string_class = VersionedItem(CurryingFactory(ws.SymbolString).kw,
+                                                              configuration=configuration)
+configuration.ref.strings.url_api_string_class = VersionedItem(CurryingFactory(ws.ApiUrlString).kw,
+                                                           configuration=configuration)
+configuration.ref.strings.url_edit_string_class = VersionedItem(CurryingFactory(ws.EditUrlString).kw,
+                                                           configuration=configuration)
+configuration.ref.strings.url_page_string_class = VersionedItem(CurryingFactory(ws.PageUrlString).kw,
+                                                           configuration=configuration)
 configuration.ref.strings.xml_preprocessor = VersionedItem(ws.XmlStringPreprocessor,
-                                                       configuration=configuration)
+                                                           configuration=configuration)
 configuration.ref.strings.xml_prune_tags = ['script', 'style']
 
 ## Object caches

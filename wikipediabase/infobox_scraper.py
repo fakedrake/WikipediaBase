@@ -30,7 +30,9 @@ class MetaInfobox(Infobox):
         childcfg = configuration.child()
         super(MetaInfobox, self).__init__(infobox_type, configuration=childcfg)
 
-        self.symbol.prefix = self.symbol.prefix or "Template"
+        if not self.symbol.prefix:
+            self.symbol.prefix = "Template"
+
         # Infobox or ambox
         self.type = self.symbol.literal().split(" ")[0]
         self.renderer = configuration.ref.renderer.with_args(
@@ -39,7 +41,7 @@ class MetaInfobox(Infobox):
         # Create an infobox that will read the result of a renderer
         mu = self.markup_source()
         childcfg.ref.fetcher = StaticFetcher(
-            self.renderer.render(mu, key=self.title()), mu)
+            self.renderer.render(mu), mu)
 
     def attributes(self):
         """
@@ -66,7 +68,7 @@ class MetaInfobox(Infobox):
             (self.symbol.url_friendly(), '\n'.join(attr_pairs))
 
     def html_source(self):
-        return self.xml_string(self.renderer.render(self.markup_source()))
+        return self.renderer.render(self.markup_source())
 
     def rendered_keys(self):
         """

@@ -11,7 +11,8 @@ class SymbolString(WebString):
         self.fetcher = configuration.ref.fetcher.with_args(
             configuration=configuration)
         self.prefix = None
-        self.symbol = re.sub(r"\s*:\s*", ":", self.data)
+        self.symbol = re.sub(r"\s*:\s*", ":", str(data))
+
         self.symbol = re.sub(r"\s+", " ", self.symbol).strip()
 
         if ':' in self.symbol:
@@ -46,7 +47,10 @@ class SymbolString(WebString):
 
         real_url = self.fetcher.redirect_url(self)
         urlstr = UrlString.from_url(real_url, configuration=configuration)
-        return urlstr.symbol()
+        if isinstance(urlstr, PageUrlString):
+            return urlstr.symbol
+
+        return self
 
     def literal(self):
         return re.sub(r"(\s+|_)", " ", self.symbol)

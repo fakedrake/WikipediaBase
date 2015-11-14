@@ -3,6 +3,8 @@ import copy
 import lxml
 import lxml.html.clean
 from lxml import html
+import types
+import re
 
 from wikipediabase.config import configuration, Configurable
 from wikipediabase.web_string.base import WebString
@@ -126,7 +128,7 @@ class LxmlString(XmlString):
             self.state._raw = self.preprocessor.preprocess(data)
             return
 
-        raise ValueError("Bad type of data '%s'" % type(data))
+        raise ValueError("Can't convert type '%s' to xml" % type(data))
 
     def raw(self):
         if self.state._raw is None:

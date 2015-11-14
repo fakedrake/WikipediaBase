@@ -1,5 +1,22 @@
 * Thesis
 ** Configuration
+*** Avoid dependency injection
+
+    Objects that can create other objects end up having on a logical
+    level the dependencies of their children
+
+    Laziness means the order of instantiation does not matter
+
+    Global state is not so bad if it's immutable (see C defines)
+    It's ok to edit global space when metaprogramming.
+
+*** Implicit monadic structures
+
+    The components of the configuration are Configurable,
+    Configuraiton, Ref, Item.
+
+    Refs are monadic
+
 *** Centralized configurations
     Avoid having the logic implementation make decisions that are not
     related to it's function. Also some decisions are case dependent.
@@ -72,3 +89,18 @@
      treatment for =ConfigRefs=. =ConfigRefs= have a broader scope in
      that since they are an interface they may implement further
      behavior than the trivial.
+*** Comments
+
+    Comments should always answer the question "why?" instead of the
+    question "what?". The "what?" should be obvious by the
+    code. Ideally the answers of the two questions should completely
+    overlap but that tends to be harder in an imperative environment.
+
+** Math
+*** Comonadic objects [overenginerd]
+
+    Most objects that have updateable properties are treate in a
+    comonadic way. The simple way to put it is: we treat all objcts as
+    immutables
+*** Homotopy theory
+    A type theory where propositional equality is paths in a space.

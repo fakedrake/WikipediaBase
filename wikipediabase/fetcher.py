@@ -28,8 +28,8 @@ class BaseFetcher(Configurable):
     priority = 0
 
     def __init__(self, configuration=configuration):
-        self.log = self.config.ref.log.lens(lambda log, this: log(this),
-                                            self)
+        self.log = configuration.ref.log.lens(lambda log, this: log(this),
+                                              self)
 
     def download(self, symbol, get=None):
         return symbol
@@ -63,12 +63,15 @@ class WikipediaSiteFetcher(BaseFetcher):
         # name="wpTextbox1">
 
         for box in xml_string.xpath(".//textarea[@id='wpTextbox1']"):
-            return MarkupString(box.text(), symbol=symbol)
+            return MarkupString(box.text())
 
-    def download(self, *args, **kwargs):
-        return self.urlopen(*args, **kwargs).read()
+        open("/tmp/err.html", "w").write(str(xml_string))
+        raise Exception("Couldn't get wikisource")
 
-    def urlopen(self, symbol, get=None, base=None):
+    def download(self, symbol, get=None):
+        return self.urlopen(symbol, get=get).read()
+
+    def urlopen(self, symbol, get=None):
         """
         Download a wikipedia article.
 
@@ -81,7 +84,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         if not isinstance(symbol, SymbolString):
             symbol = SymbolString(symbol)
 
-        url = symbol.url(extra_get=get, configuration=self.configuration)
+        url = symbol.url(get=get, configuration=self.configuration)
         try:
             return urllib.urlopen(url.raw())
         except urllib.URLError:
@@ -112,7 +115,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         """
 
         get_request = get_request or dict(action="edit")
-        html = self.download(symbol=symbol, get=get_request)
+        html = self.download(symbol, get=get_request)
         xml = self.xml_string(html)
 
         src = self.get_wikisource(xml, str(symbol))
@@ -156,11 +159,10 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         self.data[key] = ret
         return ret
 
-    def download(self, symbol, get=None, base=None):
-        dkey = "%s;%s" % (symbol, get) if not base else \
-               "%s:%s;%s" % (base, symbol, get)
+    def download(self, symbol, get=None):
+        dkey = "%s;%s" % (symbol, get)
         callback = super(CachingSiteFetcher, self).download
-        return self.caching_fetch(dkey, callback, symbol, get=get, base=base)
+        return self.caching_fetch(dkey, callback, symbol, get=get)
 
     def caching_fetch(self, dkey, callback, *args, **kwargs):
         ret = None

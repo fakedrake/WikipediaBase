@@ -61,7 +61,8 @@ class Article(Configurable):
         if heading is not None:
             return heading.text().strip()
 
-        raise Exception("No title found for '%s'" % self.symbol.url_friendly())
+        open("/tmp/err.html", "w").write(self.xml().raw())
+        raise Exception("No title found for '%s' url: %s" % (self.symbol.url_friendly(), self.url()))
 
     def markup_source(self):
         """
@@ -75,7 +76,7 @@ class Article(Configurable):
         Markup source of the article.
         """
 
-        return self.xml_string(self.fetcher.download(self.symbol.url_friendly()))
+        return self.xml_string(self.fetcher.download(self.symbol))
 
     def paragraphs(self):
         """

@@ -32,25 +32,28 @@ class UrlString(WebString):
         ret.get_data.update(get_dict)
         return ret
 
-    @staticmethod
-    def from_url(url, configuration=configuration):
+    @classmethod
+    def from_url(cls, url, configuration=configuration):
+        """
+        Depth first return the first subclass that accepts thafirst intfind all the
+        """
         try:
-            base, get = url.split('?')
-
+            base, _get = url.split('?')
+            get = dict(tuple(kv.split('=')) for kv in _get.split('&'))
         except ValueError:
             base, get = url, None
 
-        kv = dict()
-        if get is not None:
-            kv = dict((seq_pairs.split('=') for seq_pairs in get.split('&')))
+        def search_subclasses(class_list):
+            if len(class_list) == 0:
+                return None
 
-        return ApiUrlString(kw, configuration=configuration)
-        if not title.endswith(".php"):
-            cls = PageUrlString
-            if kv.get('action') == 'edit':
-                cls = EditUrlString
+            first = class_list[0].from_url(base, get,
+                                            configuration=configuration)
+            return first or \
+                search_subclasses(class_list[0].__subclasses__()) or \
+                search_subclasses(class_list[1:])
 
-            return retcls(symbol=symbol, configuration=configuration).with_get(kw)
+        return search_subclasses(cls.__subclasses__())
 
 
 class PageUrlString(UrlString):
@@ -63,18 +66,19 @@ class PageUrlString(UrlString):
             self.symbol = SymbolString(symbol, configuration=configuration)
 
         self.url = (configuration.ref.remote.url & \
-                    configuration.ref.remote.api_base) \
+                    configuration.ref.remote.base) \
             .lens(lambda a,b: a+'/'+b)
-        if not self.url:
-            import pdb; pdb.set_trace()
+        self.get_data['title'] = symbol.url_friendly()
 
     @classmethod
     def from_url(cls, base, get, configuration=configuration):
-        title = kv.get('title', None) or os.path.basename(url)
+        title = get.get('title', None) or os.path.basename(url)
+        symbol_cls = configuration.ref.strings.symbol_string_class.deref()
         if get.get('action') != 'edit' and not title.endswith(".php"):
-            return cls(title, configuration=configuration)
+            return cls(symbol_cls(title, configuration=configuration),
+                       configuration=configuration)
 
-        return Nonex
+        return None
 
 class EditUrlString(PageUrlString):
     def __init__(self, symbol, configuration=configuration):
@@ -83,9 +87,11 @@ class EditUrlString(PageUrlString):
 
     @classmethod
     def from_url(cls, base, get, configuration=configuration):
-        title = kv.get('title', None) or os.path.basename(url)
+        title = get.get('title', None) or os.path.basename(url)
+        symbol_cls = configuration.ref.strings.symbol_string_class.deref()
         if get.get('action') == 'edit' and not title.endswith(".php"):
-            return cls(title, configuration=configuration)
+            return cls(symbol_cl(title, configuration=configuration),
+                       configuration=configuration)
 
         return None
 
@@ -98,7 +104,7 @@ class ApiUrlString(UrlString):
 
     @classmethod
     def from_url(cls, base, get, configuration=configuration):
-        title = kv.get('title', None) or os.path.basename(url)
+        title = get.get('title', None) or os.path.basename(url)
         if title == configuration.ref.remote.api_base:
             return cls(title, configuration=configuration)
 

@@ -21,6 +21,11 @@ def data(fname):
 
 
 class MockUrlFd(Configurable):
+    """
+    Common interface to urllib's open. Use this for debugging requests
+    and for abstracting the remote server.
+    """
+
     def __init__(self, url, data=None):
         self.cache = testcfg.ref.test.offline_cache
         self.post_data = data
@@ -30,8 +35,6 @@ class MockUrlFd(Configurable):
         return json.dumps((self.url, self.post_data))
 
     def geturl(self):
-        import pdb; pdb.set_trace()
-
         return self.operation('geturl')
 
     def read(self):
@@ -68,12 +71,15 @@ def download_all():
 
 # wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')
 testcfg.ref.test.offline_cache = DbmPersistentDict(data('pages.dumbdbm'))
+testcfg.ref.strings.xml_prune_tags = ['script', 'style', r'div.*navigation', 'head']
 
 # configuration.ref.remote.base = 'mediawiki/index.php'
 # configuration.ref.remote.url = 'http://ashmore.csail.mit.edu:8080'
 
-configuration.ref.remote.url = 'http://wikipedia.org'
-configuration.ref.remote.base = 'w/index.php'
+testcfg.ref.remote.url = 'http://wikipedia.org'
+testcfg.ref.remote.base = 'w/index.php'
+testcfg.ref.remote.sandbox_title = "Wikipedia:Sandbox"
+
 
 testcfg.ref.cache.pages = dict()
 testcfg.ref.offline = False
