@@ -1,3 +1,12 @@
+import lxml.etree as ET
+import copy
+import lxml
+import lxml.html.clean
+from lxml import html
+
+from wikipediabase.config import configuration, Configurable
+from wikipediabase.web_string.base import WebString
+
 class XmlString(WebString):
     """
     Interface to xml strings to avoid do close entanglement with lxml.

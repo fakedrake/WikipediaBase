@@ -1,28 +1,26 @@
 import os
 
 from wikipediabase.web_string.base import WebString
-from wikipediabase.config import SubclassesItem
+from wikipediabase.config import SubclassesItem, configuration
 
 class UrlString(WebString):
     """
     Abstract class for urls.
     """
 
-    def __init__(self, configuration=configuration):
-        super(UrlString, self).__init__(configuration=configuration)
+    def __init__(self, data, configuration=configuration):
+        super(UrlString, self).__init__(data, configuration=configuration)
 
         self.get_data = {}
-        self.url = None
         self.configuration = configuration
 
     def copy(self):
-        ret = self.__class__(configuration=self.configuration)
+        ret = self.__class__(self.data, configuration=self.configuration)
         ret.get_data = self.get_data.copy()
-        ret.url = self.url
         return ret
 
     def raw(self):
-        get = '&'.join("%s=%s" % (k,v) for k, v in self.get_data().iteritems())
+        get = '&'.join("%s=%s" % (k,v) for k, v in self.get_data.iteritems())
         ret = "%s?%s" % (self.url, get)
         return ret
 
@@ -31,7 +29,7 @@ class UrlString(WebString):
 
     def with_get(self, get_dict):
         ret = self.copy()
-        self.extra_get.update(get_dict)
+        ret.get_data.update(get_dict)
         return ret
 
     @staticmethod
@@ -57,14 +55,18 @@ class UrlString(WebString):
 
 class PageUrlString(UrlString):
     def __init__(self, symbol, configuration=configuration):
-        super(PageUrlString, self).__init__(configuration=configuration)
+        super(PageUrlString, self).__init__(symbol, configuration=configuration)
         from wikipediabase.web_string.symbol import SymbolString
 
-        if not isinstance(self.symbol, SymbolString):
+        self.symbol = symbol
+        if not isinstance(symbol, SymbolString):
             self.symbol = SymbolString(symbol, configuration=configuration)
 
         self.url = (configuration.ref.remote.url & \
-                    configuration.ref.remote.api_base).lens(lambda a,b: a+'/'+b)
+                    configuration.ref.remote.api_base) \
+            .lens(lambda a,b: a+'/'+b)
+        if not self.url:
+            import pdb; pdb.set_trace()
 
     @classmethod
     def from_url(cls, base, get, configuration=configuration):
@@ -76,8 +78,7 @@ class PageUrlString(UrlString):
 
 class EditUrlString(PageUrlString):
     def __init__(self, symbol, configuration=configuration):
-        super(EditUrlString, self).__init__(symbol=symbol,
-                                            configuration=configuration)
+        super(EditUrlString, self).__init__(symbol, configuration=configuration)
         self.get_data['action'] = 'edit'
 
     @classmethod
@@ -90,11 +91,10 @@ class EditUrlString(PageUrlString):
 
 class ApiUrlString(UrlString):
     def __init__(self, get_data, configuration=configuration):
-        super(ApiUrlString, self).__init__(configuration=configuration)
+        super(ApiUrlString, self).__init__(get_data, configuration=configuration)
         self.url = (configuration.ref.remote.url & \
                     configuration.ref.remote.api_base).lens(lambda a,b: a+'/'+b)
         self.get_data = get_data
-
 
     @classmethod
     def from_url(cls, base, get, configuration=configuration):

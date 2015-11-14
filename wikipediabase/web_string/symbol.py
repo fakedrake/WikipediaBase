@@ -1,6 +1,8 @@
 import re
 
 from wikipediabase.web_string.base import WebString
+from wikipediabase.web_string.url import PageUrlString, UrlString
+from wikipediabase.config import configuration, Configurable
 
 class SymbolString(WebString):
     def __init__(self, data, configuration=configuration):
@@ -41,7 +43,6 @@ class SymbolString(WebString):
         """
         Get the true name of the article.
         """
-        from wikipediabase.web_string.url import UrlString
 
         real_url = self.fetcher.redirect_url(self)
         urlstr = UrlString.from_url(real_url, configuration=configuration)
@@ -50,9 +51,9 @@ class SymbolString(WebString):
     def literal(self):
         return re.sub(r"(\s+|_)", " ", self.symbol)
 
-    def url(self, *args, **kw):
-        if 'configuration' not in kw:
-            kw['configuration'] = self.configuration
+    def url(self, get=None, configuration=None):
+        if configuration is None:
+            configuration = self.configuration
 
-        return UrlString(self, *args, **kw)
-
+        return PageUrlString(self, configuration=configuration) \
+            .with_get(get or {})

@@ -2,6 +2,7 @@ import re
 
 from wikipediabase.web_string.base import WebString
 from wikipediabase.web_string.symbol import SymbolString
+from wikipediabase.config import configuration
 
 class MarkupString(WebString):
     """
