@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
+
 from edn_format import loads, Keyword, Symbol
 
 from wikipediabase.telnet import TelnetServer
 from wikipediabase.lispify import lispify
 from wikipediabase.provider import Acquirer, provide
-from wikipediabase.util import get_knowledgebase
+from wikipediabase.util import decode, get_knowledgebase
 
-import logging
 
 
 class Frontend(Acquirer):
@@ -45,6 +46,10 @@ class Frontend(Acquirer):
         # Are we facing a standalone literal
         if not isinstance(ls, tuple):
             return ls
+
+        # turn numeric HTML entities into unicode
+        # TODO: remove when we upgrade to Guile 2.0
+        ls = map(decode, ls)
 
         fn = self.get_callable(self._eval(ls[0]))
         args = [self._eval(a) for a in ls[1:]]

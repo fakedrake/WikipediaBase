@@ -5,9 +5,7 @@ import redis
 import requests
 import logging
 
-from peewee import DoesNotExist
-
-from wikipediabase.dbutil import db, Article
+from wikipediabase.dbutil import get_markup
 from wikipediabase.log import Logging
 from wikipediabase.util import Expiry, get_user_agent
 
@@ -73,35 +71,21 @@ class Fetcher(BaseFetcher):
         to True, the markup will be fetched from live wikipedia.org
         """
         if force_live:
-            return self.markup_source_live(symbol)
-
-        return self.markup_source_backend(symbol)
-
-    def markup_source_live(self, symbol):
-        params = {'action': 'raw', 'title': symbol}
-        page = self.urlopen(self.url, params)
-
-        # handle redirecions silently
-        redirect_match = re.search(REDIRECT_REGEX, page)
-        if redirect_match:
-            redirect = redirect_match.group(1)
-            self.redirect = redirect
-            self.log().debug("Redirecting '%s' to '%s'", symbol, redirect)
-            params['title'] = redirect
+            params = {'action': 'raw', 'title': symbol}
             page = self.urlopen(self.url, params)
 
-        return page
+            # handle redirecions silently
+            redirect_match = re.search(REDIRECT_REGEX, page)
+            if redirect_match:
+                redirect = redirect_match.group(1)
+                self.redirect = redirect
+                self.log().debug("Redirecting '%s' to '%s'", symbol, redirect)
+                params['title'] = redirect
+                page = self.urlopen(self.url, params)
 
-    def markup_source_backend(self, symbol):
-        try:
-            db.connect()
-            article = Article.get(Article.title == symbol)
-            db.close()
-            return article.markup
-        except DoesNotExist:
-            db.close()
-            raise LookupError("Error fetching: %s. Symbol not found in the db" %
-                              (symbol))
+            return page
+
+        return get_markup(symbol)
 
 
 class CachingFetcher(Fetcher):
@@ -133,7 +117,6 @@ class CachingFetcher(Fetcher):
         return html
 
     def markup_source(self, symbol, force_live=False, expiry=Expiry.DEFAULT):
-
         # distinguish between markup fetched live or from the backend
         content_type = 'source_backend'
         if force_live:

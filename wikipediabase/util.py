@@ -8,6 +8,7 @@ import copy
 
 from bs4 import UnicodeDammit
 from lxml import etree as ET, html
+from namedentities import numeric_entities, unicode_entities
 
 _USER_AGENT = "WikipediaBase/1.0 " \
     "(http://start.csail.mit.edu; wikibase-admins@csail.mit.edu)"
@@ -275,6 +276,19 @@ def string_reduce(string):
 
 def markup_unlink(markup):
     return re.sub(r"\[+(.*\||)(?P<content>.*?)\]+", r'\g<content>', markup)
+
+
+def encode(s):
+    return numeric_entities(s)
+
+
+def decode(s):
+    if isinstance(s, tuple):
+        return tuple(map(decode, s))
+    elif isinstance(s, basestring):
+        return unicode(unicode_entities(s))
+    else:
+        return s
 
 
 def output(s):

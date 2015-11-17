@@ -8,6 +8,8 @@ test_fetcher
 Tests for `fetcher` module.
 """
 
+from __future__ import unicode_literals
+
 try:
     import unittest2 as unittest
 except ImportError:

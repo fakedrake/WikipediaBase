@@ -6,9 +6,8 @@ A simple socket server for WikipediaBase
 
 import SocketServer
 
-from namedentities import numeric_entities
-
 from wikipediabase.log import Logging
+from wikipediabase.util import encode
 
 
 class TelnetHandler(SocketServer.StreamRequestHandler, Logging):
@@ -25,7 +24,7 @@ class TelnetHandler(SocketServer.StreamRequestHandler, Logging):
         # e.g. "&#160;" for Unicode non-breaking space
         # encoding to HTML entities is about 10x slower than encoding to utf-8
         # TODO: use answer.encode('utf-8') instead of HTML entities
-        self.wfile.write(numeric_entities(answer))
+        self.wfile.write(encode(answer))
 
 
 class TelnetServer(SocketServer.TCPServer):
