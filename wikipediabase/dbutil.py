@@ -8,7 +8,7 @@ from wikipediabase.util import encode
 LINK_PATTERN = re.compile(r'\*+.*?\[\[(.*?)\]\]')
 REDIRECT_PATTERN = re.compile(r"#REDIRECT:? ?\[\[(.*)?\]\]", flags=re.I)
 
-db = PostgresqlExtDatabase('wikipediabase_backend', user='start', register_hstore=False)
+db = PostgresqlExtDatabase('wikipediabase', user='wikipediabase', register_hstore=False)
 
 
 class Article(Model):

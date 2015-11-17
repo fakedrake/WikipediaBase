@@ -30,6 +30,8 @@ setup(
         'namedentities',
         'overlay-parse',
         'peewee',
+        'psycopg2',
+        'python-Levenshtein',
         'redis',
         'requests',
         'sqlitedict',
