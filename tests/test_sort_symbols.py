@@ -20,12 +20,11 @@ class TestSortSymbols(unittest.TestCase):
 
     def test_sort_cake(self):
         symbols = ["Cake (TV series)", "Cake (firework)", "Cake (2005 film)",
-                   "Cake (drug)", "Cake", "Cake (band)",
-                   "Cake (advertisement)", "The Cake"]
+                   "Cake", "Cake (band)", "Cake (advertisement)", "The Cake"]
 
         expected = ["Cake (band)", "Cake (advertisement)", "Cake",
                     "Cake (TV series)", "The Cake", "Cake (2005 film)",
-                    "Cake (firework)", "Cake (drug)"]
+                    "Cake (firework)"]
 
         self.assertEquals(expected, sort_by_length(*symbols))
 
@@ -39,11 +38,10 @@ class TestSortSymbolsNamed(unittest.TestCase):
 
     def test_cake(self):
         symbols = ["Cake (TV series)", "Cake (firework)", "Cake (2005 film)",
-                   "Cake (drug)", "Cake", "Cake (band)",
-                   "Cake (advertisement)", "The Cake"]
+                   "Cake", "Cake (band)", "Cake (advertisement)", "The Cake"]
 
         expected = ["Cake", "Cake (band)", "Cake (advertisement)",
                     "Cake (TV series)", "The Cake", "Cake (2005 film)",
-                    "Cake (firework)", "Cake (drug)"]
+                    "Cake (firework)"]
 
         self.assertEquals(expected, sort_named("cake", *symbols))
