@@ -5,25 +5,22 @@ from itertools import chain
 from wikipediabase.config import configuration
 from wikipediabase.provider import Provider, provide
 from wikipediabase.util import get_article, get_infobox
+from wikipediabase.enchantments import enchant
 
 
-class KnowledgeBase(Provider):
+class Knowledgebase(Provider):
     """
     Use this to interface with START.
     """
 
     def __init__(self, configuration=configuration):
 
-        super(KnowledgeBase, self).__init__(configuration)
-        self.frontend = kw.get('frontend')
+        super(Knowledgebase, self).__init__(configuration=configuration)
 
-        if self.frontend:
-            self.provide_to(self.frontend)
-
-        self.fetcher = configuration.ref.fetcher
-        self.resolvers = configuration.ref.resolvers
-        self.classifiers = configuration.ref.classifiers
-        self.synonym_inducers = configuration.ref.synonym_inducers
+        self.fetcher = configuration.ref.fetcher.with_args(configuration=configuration)
+        self.resolvers = configuration.ref.resolvers.with_args(configuration=configuration)
+        self.classifiers = configuration.ref.classifiers.with_args(configuration=configuration)
+        self.synonym_inducers = configuration.ref.synonym_inducers.with_args(configuration=configuration)
 
     @provide(name='sort-symbols')
     def sort_symbols(self, *args):
@@ -72,7 +69,6 @@ class KnowledgeBase(Provider):
 
         it = chain.from_iterable((c.classify(symbol)
                                   for c in self.classifiers))
-
         return enchant(None, list(it))
 
     @provide(name="get-attributes")

@@ -35,8 +35,8 @@ class StaticClassifier(BaseClassifier):
 class InfoboxClassifier(BaseClassifier):
 
     def classify(self, symbol, configuration=configuration):
-        types = configuration.ref.infobox_types.deref()
-        return types[re.sub(r"Template:Infobox\s*", "", str(symbol), re.I)]
+        types = get_infobox(symbol).types()
+        return [re.sub(r"Template:Infobox\s*", "", t, re.I) for t in types]
 
 
 class _CategoryClassifier(BaseClassifier):

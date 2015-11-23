@@ -4,24 +4,21 @@
 from edn_format import loads, Keyword, Symbol
 
 from wikipediabase.telnet import TelnetServer
+from wikipediabase.config import configuration
 from wikipediabase.enchantments import enchant
 from wikipediabase.provider import Acquirer, provide
-from wikipediabase.util import get_knowledgebase
 
 import logging
 
 
 class Frontend(Acquirer):
 
-    def __init__(self, knowledgebase=None, *args, **kwargs):
-        super(Frontend, self).__init__(*args, **kwargs)
+    def __init__(self, configuration=configuration):
+        super(Frontend, self).__init__(configuration=configuration)
 
-        if 'providers' not in kwargs:
-            self.knowledgebase = knowledgebase or get_knowledgebase(
-                frontend=self,
-                fetcher=kwargs.get('fetcher')
-            )
-
+        self.kb = configuration.ref.knowledgebase.with_args(
+            configuration=configuration)
+        self.acquire_from(self.kb)
         logging.getLogger("edn_format").setLevel(logging.WARNING)
 
     @provide(name='commands')

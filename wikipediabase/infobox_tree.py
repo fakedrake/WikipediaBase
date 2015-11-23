@@ -42,6 +42,8 @@ class InfoboxSuperclasses(Configurable):
             if type_ == key:
                 return parents_
 
+            raise LookupError("No such infobox: %s" % key)
+
     def get_categories(self, source):
         """
         (category_name, category_source) pairs

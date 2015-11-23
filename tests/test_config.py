@@ -88,11 +88,28 @@ class TestConfig(unittest.TestCase):
         sf.eval()[0].name = 'new_name'
         self.assertEqual([i.name for i in sf.eval()], ['new_name', 'B', 'C', 'E'])
 
+    def test_subclass_methods(self):
+        this = self
+        class A(Configurable):
+            def __init__(self, config):
+                self.hello = config.ref.hello
+
+            def top_method(self):
+                return 0xdeadbeef
+
+        class B(A): pass
+        b = B(Configuration({'hello': 1}))
+        self.assertEqual(b.top_method(), 0xdeadbeef)
+
     def test_references(self):
         this = self
         class A(Configurable):
             def __init__(self, config):
                 self.hello = config.ref.hello
+
+            def top_method(self):
+                return 0xdeadbeef
+
 
         cfg = Configuration()
         a = A(cfg)

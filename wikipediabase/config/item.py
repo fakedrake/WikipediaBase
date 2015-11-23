@@ -137,13 +137,9 @@ class SubclassesItem(VersionedItem):
         # Get all subclasses but not the root as it is just a dummy
         # baseclass
         rcls = self.all_subclasses(self.cls, including=False)
-
-        # Make sure priorities are defined and sort the subclasses
-        for c in rcls:
-            assert isinstance(c.priority, int), \
-                "type(%s . priority) = %s != int" % (repr(c), type(c.priority.name))
-
-        clss = sorted(rcls, key=lambda c: c.priority, reverse=True)
+        clss = sorted(rcls,
+                      key=lambda c: c.priority if hasattr(c, 'priority') else 0,
+                      reverse=True)
 
         # Return the list
         if not self.instantiate:

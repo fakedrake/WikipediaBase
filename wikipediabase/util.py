@@ -38,18 +38,28 @@ def iwindow(seq, n):
 
 
 def get_meta_infobox(symbol, configuration=configuration):
-    return configuration.ref.object_cache.meta_infoboxes.with_args(symbol,
-                                                                   configuration=configuration).deref()
+    return configuration.ref.object_cache \
+                            .meta_infoboxes \
+                            .with_args(symbol, configuration=configuration) \
+                            .deref()
 
 def get_infobox(symbol, configuration=configuration):
-    return configuration.ref.object_cache.infoboxes.with_args(symbol, configuration=configuration).deref()
+    return configuration.ref.object_cache \
+                            .infoboxes \
+                            .with_args(symbol, configuration=configuration) \
+                            .deref()
 
 def get_article(symbol, configuration=configuration):
-    return configuration.ref.object_cache.articles.with_args(symbol, configuration=configuration).deref()
+    return configuration.ref.object_cache \
+                        .articles \
+                        .with_args(symbol, configuration=configuration) \
+                        .deref()
 
 
 def get_knowledgebase(configuration=configuration):
-    return configuration.ref.object_cache.knowledgebases.with_args(configuration=configuration).deref()
+    return configuration.ref.knowledgebase \
+                            .with_args(configuration=configuration) \
+                            .deref()
 
 def _get_persistent_dict(filename=None):
     """

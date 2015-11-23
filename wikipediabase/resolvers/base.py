@@ -23,7 +23,6 @@ class BaseResolver(Provider):
 
     def resolve(self, article, attribute, **kw):
         """
-
         Use your resources to resolve. Use provided methods if available
         or return None.
         """

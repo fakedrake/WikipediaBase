@@ -29,8 +29,6 @@ class TelnetServer(Configurable):
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((ip, port))
         self.sock.listen(channel)
-        self.log().info("Opened socket at %s:%d, channel: %d" %
-                        (ip, port, channel))
         self.connection_list = [self.sock]
 
         self.safeword = safeword
@@ -39,12 +37,9 @@ class TelnetServer(Configurable):
 
     def stop(self):
         if not self._running:
-            self.log().warning("No server thread running.")
             return
 
         if hasattr(self, 'thread') and self.thread:
-            self.log().info("Killing server...")
-
             self.lock.acquire()
             self._running = False
             self.lock.release()
@@ -65,12 +60,10 @@ class TelnetServer(Configurable):
 
         self._running = True
         if thread:
-            self.log().info("Threading enabled.")
             self.thread = threading.Thread(
                 target=lambda: self._start(bufsize, timeout))
             self.thread.start()
         else:
-            self.log().info("Threading disabled.")
             return self._start(bufsize, None)
 
     def _start(self, bufsize=4096, select_timeout=1):
@@ -78,8 +71,6 @@ class TelnetServer(Configurable):
         Run the server. The socket is read with select. Use timeout to
         kill it.
         """
-
-        self.log().info("Running server...")
 
         self.lock.acquire()
         while self._running:
@@ -92,16 +83,11 @@ class TelnetServer(Configurable):
                     sockfd, addr = sock.accept()
                     self.connection_list.append(sockfd)
 
-                    self.log().info("Connected: %s:%d" % addr)
-
                 else:
                     # Message received
                     data = sock.recv(bufsize).strip()
-                    self.log().info("Received message '%s'" % data)
                     ans = self.answer(data)
                     if ans:
-                        self.log().info("Answering '%s'" % ans)
-
                         sock.send(ans.encode('utf-8'))
                         sock.send(self.prompt)
 

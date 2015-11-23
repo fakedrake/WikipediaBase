@@ -104,3 +104,12 @@
     immutables
 *** Homotopy theory
     A type theory where propositional equality is paths in a space.
+* Todo
+
+** Renderer
+  Make a redirect handler for rendering api. Also test the non-api
+  version.
+
+** Infobox
+
+   The infobox class is ENORMOUS. Break it up a bit.

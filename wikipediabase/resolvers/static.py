@@ -21,7 +21,6 @@ class StaticResolver(BaseResolver):
 
     @provide(name="word-count")
     def word_cout(self, article, attribute):
-        self.log().info("Trying 'word-count' tag from static resolver.")
         self._tag = "html"
         return len(self._words(self.fetcher.download(article)))
 
@@ -99,7 +98,8 @@ class StaticResolver(BaseResolver):
         url = article.url()
 
         # We may be hitting a mirror so return the original here.
-        url = url.replace(article.fetcher.url.strip('/'), "http://en.wikipedia.org")
+        url = url.raw().replace(
+            article.fetcher.url.strip('/'), "http://en.wikipedia.org")
 
         mirror_dir = article.fetcher.base.strip('/').split("/")
         org_dir = "wiki/index.php".split("/")

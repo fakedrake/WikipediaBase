@@ -36,7 +36,7 @@ class TestFetcher(unittest.TestCase):
     def test_redirect(self):
         redir = "index.php?title=hansolo"
         pres = self.fetcher.redirect_url("Template:Infobox_president")
-        self.assertTrue(self.fetcher.redirect_url("hansolo").endswith(redir))
+        self.assertTrue(self.fetcher.redirect_url("han_solo").endswith("Han_Solo"))
         self.assertTrue(pres.endswith('officeholder'), pres)
 
     def test_source_redirect(self):

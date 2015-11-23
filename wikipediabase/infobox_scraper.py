@@ -68,7 +68,7 @@ class MetaInfobox(Infobox):
             (self.symbol.url_friendly(), '\n'.join(attr_pairs))
 
     def html_source(self):
-        return self.renderer.render(self.markup_source())
+        return self.xml_string(self.renderer.render(self.markup_source()))
 
     def rendered_keys(self):
         """

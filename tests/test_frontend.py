@@ -13,6 +13,7 @@ try:
 except ImportError:
     import unittest
 
+from .common import testcfg
 from wikipediabase.provider import Provider
 from wikipediabase.frontend import Frontend
 
@@ -24,9 +25,10 @@ def get_attribute(x, y):
 class TestFrontend(unittest.TestCase):
 
     def setUp(self):
-        self.simple_fe = Frontend(providers=[Provider(
-            resources={"get": get_attribute})])
-        self.fe = Frontend()
+        fakekb = Provider(resources={"get": get_attribute})
+        cfg = testcfg.child({'knowledgebase': fakekb})
+        self.simple_fe = Frontend(testcfg)
+        self.fe = Frontend(configuration=testcfg)
 
     def test_simple(self):
         self.assertEqual(str(self.simple_fe.eval("(get \"article\" words)")),

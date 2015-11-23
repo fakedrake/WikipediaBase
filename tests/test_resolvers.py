@@ -21,11 +21,13 @@ import logging
 from wikipediabase import resolvers
 from wikipediabase import fetcher
 from wikipediabase.frontend import Frontend
+from wikipediabase.knowledgebase import Knowledgebase
 
 from wikipediabase.util import get_knowledgebase
 
 from wikipediabase.resolvers.paragraph import first_paren
 
+from .common import testcfg
 from tests.examples import *
 
 ARTICLE_BODY = u"""A ninja (忍者?) or shinobi (忍び?) was a covert agent or mercenary
@@ -52,13 +54,17 @@ class TestResolvers(unittest.TestCase):
 
     def setUp(self):
         self.log = logging.getLogger("resolver-testing")
-        self.simple_resolver = resolvers.StaticResolver(
-            fetcher=fetcher.BaseFetcher())
-        self.ibresolver = resolvers.InfoboxResolver(
-            fetcher=fetcher.CachingSiteFetcher())
+        self.simple_resolver = resolvers.StaticResolver(configuration=testcfg)
+        self.ibresolver = resolvers.InfoboxResolver(configuration=testcfg)
 
-        self.fe = Frontend()
+        self.fe = Frontend(configuration=testcfg)
         self.kb = get_knowledgebase()
+
+    def test_basics(self):
+        self.assertTrue(self.simple_resolver.resolve)
+        self.assertTrue(isinstance(self.kb, Knowledgebase))
+        self.assertTrue(self.kb.classifiers)
+
 
     def test_resolver(self):
         self.assertEqual(self.simple_resolver.resolve(ARTICLE_BODY, "word-count"),
@@ -80,33 +86,22 @@ class TestResolvers(unittest.TestCase):
         self.assertEqual(band_name, '((:html "The Def Leppard E.P."))')
 
     def test_compat(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
-
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES):
             self.assertEqual(ans, rx, msg=msg)
 
     def test_strageness(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
-
         for ans, rx, msg in self._ans_match(DEGENERATE_EXAMPLES, All()):
             self.assertEqual(ans, rx, msg=msg)
 
     def test_compat_not(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher(
-            **TEST_FETCHER_SETUP)
-
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT):
             self.assertNotEqual(ans, rx, msg=msg)
 
     def test_compat_rx(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
-
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_RX):
             self.assertRegexpMatches(ans, rx, msg=msg)
 
     def test_compat_not_rx(self):
-        self.ibresolver.fetcher = fetcher.CachingSiteFetcher()
-
         for ans, rx, msg in self._ans_match(WIKI_EXAMPLES_NOT_RX):
             self.assertNotRegexpMatches(ans, rx, msg=msg)
 

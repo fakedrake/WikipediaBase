@@ -1,12 +1,17 @@
+"""
+This is a mechanism to provide resources under certain names. The
+purpose of this module is to organize the frontend language
+configuration.
+"""
+
 from itertools import chain
 
 from wikipediabase.config import Configurable
 
-def provide(name=None, memoize=True):
+def provide(name=None):
     """
     Argumented decorator for methods of providers to be automagically
-    provided. It also may provide memoization. The returned functions
-    are unbound.
+    provided.
     """
 
     def decorator(fn):
@@ -46,12 +51,14 @@ class Provider(Configurable):
 
     """
     Can provide a dictionary of resources managed by name. Resources
-    can be anything but most of the time they will be callables.
+    can be anything but most of the time they will be callables. All
+    providers are merged so the acquirer can transparently request
+    resources and not care where they are coming from.
     """
 
     __metaclass__ = ProviderMeta
 
-    def __init__(self, resources={}, acquirer=None, *args, **kwargs):
+    def __init__(self, resources={}, *args, **kwargs):
         self._resources = {}
 
         for k, f in self.meta_resources:
@@ -59,18 +66,12 @@ class Provider(Configurable):
 
         self._resources.update(resources)
 
-        if acquirer:
-            self.provide_to(acquirer)
-
     def provide(self, name, resource):
         """
         Provide 'resource' under name.
         """
 
         self._resources[name] = resource
-
-    def provide_to(self, acquirer):
-        return acquirer.acquire_from(self)
 
 
 class Acquirer(Provider):

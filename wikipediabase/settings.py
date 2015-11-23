@@ -50,7 +50,7 @@ configuration.ref.offline = False
 # configuration.ref.remote.sandbox_title = "CSAIL_Wikipedia:Sandbox"
 
 # Wikipedia
-configuration.ref.remote.url = 'http://wikipedia.org'
+configuration.ref.remote.url = 'https://en.wikipedia.org'
 configuration.ref.remote.base = 'w/index.php'
 configuration.ref.remote.sandbox_title = "Wikipedia:Sandbox"
 configuration.ref.remote.api_base = 'w/api.php'
@@ -78,18 +78,31 @@ from wikipediabase.fetcher import CachingSiteFetcher
 configuration.ref.fetcher = VersionedItem(CachingSiteFetcher)
 
 ## Renderer
-from wikipediabase.renderer import SandboxRenderer
-configuration.ref.renderer = VersionedItem(SandboxRenderer)
+from wikipediabase.renderer import ApiRenderer
+configuration.ref.renderer = VersionedItem(ApiRenderer)
 
 ## Infobox Superclasses
 from wikipediabase.infobox_tree import InfoboxSuperclasses
 configuration.ref.infobox_types = VersionedItem(InfoboxSuperclasses)
 
-## Classifiers
-from wikipediabase.classifiers import BaseClassifier
-configuration.ref.classifiers = SubclassesItem(BaseClassifier, configuration=configuration)
+## Resolvers
+from wikipediabase.resolvers import BaseResolver
+configuration.ref.resolvers = SubclassesItem(
+    BaseResolver, configuration=configuration)
 
 ## Classifiers
+from wikipediabase.classifiers import BaseClassifier
+configuration.ref.classifiers = SubclassesItem(
+    BaseClassifier, configuration=configuration)
+
+## Knowledgebase
+from wikipediabase.knowledgebase import Knowledgebase
+configuration.ref.knowledgebase = VersionedItem(
+    Knowledgebase, configuration=configuration)
+
+## Frontend
+from wikipediabase.frontend import Frontend
+configuration.ref.frontend = VersionedItem(Frontend, configuration=configuration)
 
 ## String manipulation
 
@@ -109,11 +122,11 @@ configuration.ref.strings.xml_string_class = VersionedItem(CurryingFactory(ws.Lx
 configuration.ref.strings.symbol_string_class = VersionedItem(CurryingFactory(ws.SymbolString).kw,
                                                               configuration=configuration)
 configuration.ref.strings.url_api_string_class = VersionedItem(CurryingFactory(ws.ApiUrlString).kw,
-                                                           configuration=configuration)
+                                                               configuration=configuration)
 configuration.ref.strings.url_edit_string_class = VersionedItem(CurryingFactory(ws.EditUrlString).kw,
-                                                           configuration=configuration)
+                                                                configuration=configuration)
 configuration.ref.strings.url_page_string_class = VersionedItem(CurryingFactory(ws.PageUrlString).kw,
-                                                           configuration=configuration)
+                                                                configuration=configuration)
 configuration.ref.strings.xml_preprocessor = VersionedItem(ws.XmlStringPreprocessor,
                                                            configuration=configuration)
 configuration.ref.strings.xml_prune_tags = ['script', 'style']
@@ -126,10 +139,6 @@ configuration.ref.object_cache.infoboxes = VersionedItem(Infobox,
 from wikipediabase.article import Article
 configuration.ref.object_cache.articles = VersionedItem(Article,
                                                         configuration=configuration)
-
-from wikipediabase.knowledgebase import KnowledgeBase
-configuration.ref.object_cache.knowledgebases = VersionedItem(KnowledgeBase,
-                                                              configuration=configuration)
 
 from wikipediabase.infobox_scraper import MetaInfobox
 configuration.ref.object_cache.meta_infoboxes = VersionedItem(MetaInfobox,

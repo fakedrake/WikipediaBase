@@ -19,6 +19,7 @@ class InfoboxResolver(BaseResolver):
         """
 
         super(InfoboxResolver, self).__init__(configuration=configuration, **kw)
+        self.configuration = configuration
         self.fetcher = configuration.ref.fetcher
         self._tag = "html"
 
@@ -27,8 +28,6 @@ class InfoboxResolver(BaseResolver):
         Return the value of the attribute for the article.
         """
 
-        self.log().info("Using infobox resolver in %s mode" %
-                        "compatibility" if self.compat else "classic")
         if "\n" in article:
             # There are no newlines in article titles
             return None
@@ -38,17 +37,9 @@ class InfoboxResolver(BaseResolver):
         else:
             key, attr = None, attribute
 
-        ibox = get_infobox(article, self.fetcher)
+        ibox = get_infobox(article, configuration=self.configuration)
 
         if ibox:
             ret = ibox.get(attr)
             if ret:
-                self.log().info("Found infobox attribute '%s'" % attr)
-                return enchant(key, ret, result_from=attr,
-                               log=self.log())
-
-            self.log().warning("Could nont find infobox attribute '%s'"
-                               % attr)
-        else:
-            self.log().warning("Could nont find infobox for article '%s'"
-                               % article)
+                return enchant(key, ret, result_from=attr)

@@ -7,14 +7,15 @@ from wikipediabase.util import (totext,
                                 get_meta_infobox,
                                 get_article)
 
+from wikipediabase.caching import cached, Caching
 from wikipediabase.config import Configurable, configuration
 
 
 INFOBOX_ATTRIBUTE_REGEX = r"\|\s*(?P<key>[a-z\-_0-9]+)\s*=" \
-                          "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
+                                                            "[\t ]*(?P<val>.*?)\s*(?=(\n|\\n)\s*\|)"
 
 
-class Infobox(Configurable):
+class Infobox(Caching):
 
     """
     The interface with attributes accepts and provides attributes with
@@ -25,11 +26,12 @@ class Infobox(Configurable):
     box_rx = ur"\b(infobox|Infobox|taxobox|Taxobox)\b"
 
 
-    def __init__(self, symbol, title=None, configuration=configuration):
+    def __init__(self, symbol, configuration=configuration):
         """
         It is a good idea to provide a fetcher as caching will be done
         much better.
         """
+        super(Infobox, self).__init__(configuration=configuration)
 
         self.configuration = configuration
         self.symbol_string = configuration.ref.strings.symbol_string_class
@@ -144,21 +146,18 @@ class Infobox(Configurable):
         txt = self.fetcher.source(self.symbol).raw()
         return self._braces_markup(txt)
 
+    @cached('_html')
     def html_source(self):
         """
         A div with all the infoboxes in it.
         """
 
-        if self._html is not None:
-            return self._html
-
         html = self.fetcher.download(self.symbol.url_friendly())
         bs = self.xml_string(html)
-        self._html = self.xml_string(
+        return self.xml_string(
             '\n'.join([t.raw() for t in bs.xpath(".//table")
                        if 'infobox' in t.get('class', '')]))
 
-        return self._html
 
     def rendered(self):
         return self.html_source().text()
@@ -171,10 +170,6 @@ class Infobox(Configurable):
 
         ignore_tags = ['br', 'ul', 'li']
         soup = self.html_source()
-
-        if isinstance(soup, str):
-            import pdb; pdb.set_trace()
-
 
         # Render all tags except <ul> and <li> and <br>. Escape them
         # in some way and then reparse

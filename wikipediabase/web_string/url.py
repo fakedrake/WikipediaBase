@@ -2,6 +2,7 @@ import os
 
 from wikipediabase.web_string.base import WebString
 from wikipediabase.config import SubclassesItem, configuration
+from urllib import quote, unquote
 
 class UrlString(WebString):
     """
@@ -20,7 +21,7 @@ class UrlString(WebString):
         return ret
 
     def raw(self):
-        get = '&'.join("%s=%s" % (k,v) for k, v in self.get_data.iteritems())
+        get = '&'.join("%s=%s" % (k, quote(unquote(v))) for k, v in self.get_data.iteritems())
         ret = "%s?%s" % (self.url, get)
         return ret
 
@@ -96,11 +97,11 @@ class EditUrlString(PageUrlString):
         return None
 
 class ApiUrlString(UrlString):
-    def __init__(self, get_data, configuration=configuration):
+    def __init__(self, get_data=None, configuration=configuration):
         super(ApiUrlString, self).__init__(get_data, configuration=configuration)
         self.url = (configuration.ref.remote.url & \
                     configuration.ref.remote.api_base).lens(lambda a,b: a+'/'+b)
-        self.get_data = get_data
+        self.get_data = get_data or {}
 
     @classmethod
     def from_url(cls, base, get, configuration=configuration):

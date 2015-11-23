@@ -46,12 +46,7 @@ class MockUrlFd(Configurable):
         if ret:
             return ret
 
-        try:
-            fd = real_urlopen(self.url, data=self.post_data)
-
-        except urllib.HTTPError:
-            raise LookupError("Failed opening: %s" % self.url)
-
+        fd = real_urlopen(self.url, data=self.post_data)
         ret = getattr(fd, op)()
         self.cache[key] = ret
         return ret
@@ -76,7 +71,7 @@ testcfg.ref.strings.xml_prune_tags = ['script', 'style', r'div.*navigation', 'he
 # configuration.ref.remote.base = 'mediawiki/index.php'
 # configuration.ref.remote.url = 'http://ashmore.csail.mit.edu:8080'
 
-testcfg.ref.remote.url = 'http://wikipedia.org'
+testcfg.ref.remote.url = 'https://en.wikipedia.org'
 testcfg.ref.remote.base = 'w/index.php'
 testcfg.ref.remote.sandbox_title = "Wikipedia:Sandbox"
 

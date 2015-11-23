@@ -1,1 +1,1 @@
-import test_infobox
+import test_frontend

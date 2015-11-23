@@ -29,10 +29,7 @@ class TestKnowledgebase(unittest.TestCase):
 
     def setUp(self):
         self.fe = Acquirer()     # A dumb frontend
-        self.kb = KnowledgeBase(frontend=self.fe)
-
-    def test_get(self):
-        self.assertEquals(self.fe.resources()['get'], self.kb.get)
+        self.kb = KnowledgeBase(configuration=common.testcfg)
 
     def test_get_attributes(self):
         self.assertIn("BIRTH-DATE",

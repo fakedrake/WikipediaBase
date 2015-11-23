@@ -11,9 +11,9 @@ class SymbolString(WebString):
         self.fetcher = configuration.ref.fetcher.with_args(
             configuration=configuration)
         self.prefix = None
-        self.symbol = re.sub(r"\s*:\s*", ":", str(data))
+        self.symbol = re.sub(ur"\s*:\s*", u":", str(data))
 
-        self.symbol = re.sub(r"\s+", " ", self.symbol).strip()
+        self.symbol = re.sub(ur"\s+", u" ", self.symbol).strip()
 
         if ':' in self.symbol:
             self.prefix, self.symbol = self.data.split(':', 1)

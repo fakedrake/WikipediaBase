@@ -52,6 +52,7 @@ class TestPersistentkv(unittest.TestCase):
         # Check that the file was created.
         # Destroy and reopen and see that the values were kept
         # Call this from test_* functions to test
+        pass
 
     def tearDown(self):
         os.remove(DATABASE)
