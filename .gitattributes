@@ -1,0 +1,2 @@
+data/wikibase-term-*symbols filter=lfs diff=lfs merge=lfs -text
+data/wikibase-term-*synonyms filter=lfs diff=lfs merge=lfs -text
