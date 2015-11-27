@@ -62,7 +62,7 @@ class Infobox(Logging):
         """
 
         items = []
-        templates = self.markup.filter_templates(recursive=False)
+        templates = self.markup.filter_templates(recursive=True)
 
         if not templates:
             return items
@@ -73,8 +73,29 @@ class Infobox(Logging):
             if item.showkey:
                 attr = item.name.strip().replace("_", "-")\
                     .replace(" ", "-").lower()
-                val = item.value.strip()
-                items.append((attr, val))
+
+                if attr == 'module':
+                    # infoboxes can include a module. More info:
+                    # wikipedia.org/wiki/Wikipedia:WikiProject_Infoboxes/embed
+                    module_templates = item.value.filter_templates()
+                    if not module_templates:
+                        continue
+
+                    module = module_templates[0]
+                    for module_item in module.params:
+                        if module_item.showkey:
+                            attr = module_item.name.strip().replace("_", "-")\
+                                .replace(" ", "-").lower()
+
+                            if attr == 'embed':
+                                # skip the 'embed' attribute of modules
+                                continue
+
+                            val = module_item.value.strip()
+                            items.append((attr, val))
+                else:
+                    val = item.value.strip()
+                    items.append((attr, val))
         return items
 
 
