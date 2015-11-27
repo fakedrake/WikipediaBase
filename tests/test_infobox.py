@@ -84,9 +84,9 @@ class TestInfobox(unittest.TestCase):
                          'wikipedia-officeholder')
         self.assertEqual(martial_artist_ibox.cls,
                          'wikipedia-martial-artist')
-        self.assertEqual(officeholder_ibox.get('image'),
-                         'Vladimir Putin 12023 (cropped).jpg')
         self.assertEqual(martial_artist_ibox.get('image'),
+                         'Vladimir Putin in Japan 3-5 September 2000-22.jpg')
+        self.assertNotEqual(officeholder_ibox.get('image'),
                          'Vladimir Putin in Japan 3-5 September 2000-22.jpg')
 
     def test_get_infoboxes(self):
