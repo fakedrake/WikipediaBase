@@ -69,8 +69,11 @@ class Fetcher(BaseFetcher):
 
         By default, markup is fetched from the backend. If force_live is set
         to True, the markup will be fetched from live wikipedia.org
+
+        When tests are ran on TravisCI, we always want to use live data. We
+        check if Travis is running tests by looking at the TRAVIS env variable.
         """
-        if force_live:
+        if force_live or os.getenv('TRAVIS', '') == 'true':
             params = {'action': 'raw', 'title': symbol}
             page = self.urlopen(self.url, params)
 
