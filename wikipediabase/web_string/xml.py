@@ -109,11 +109,16 @@ class LxmlString(XmlString):
         Data can either be a string (raw) or an lxml element (soup) or
         state object (state)
         """
+
         super(LxmlString, self).__init__(data, configuration=configuration)
         self.cleaner = configuration.ref.strings.lxml_cleaner
         self.prune_tags = configuration.ref.strings.xml_prune_tags
         self.preprocessor = configuration.ref.strings.xml_preprocessor. \
                             with_args(configuration=configuration)
+
+        if not isinstance(self.cleaner, lxml.html.clean.Cleaner):
+            raise ValueError("Expected lxml.html.clean.Cleaner. Got %s" %
+                             self.cleaner.__class__)
 
         if isinstance(self.data, LxmlStringState):
             self.state = data
@@ -124,7 +129,7 @@ class LxmlString(XmlString):
             self.state._soup = self.data
             return
 
-        if isinstance(self.data, types.StringType):
+        if isinstance(self.data, types.StringTypes):
             self.state._raw = self.preprocessor.preprocess(data)
             return
 
@@ -177,7 +182,13 @@ class LxmlString(XmlString):
         self.cleaner(self.state._soup)
         return self.state._soup
 
+
 class LxmlIgnoringString(LxmlString):
+    """
+    An xml soup that will ignore some tags, considering them plain
+    text.
+    """
+
     def __init__(self, data, configuration=configuration, tags=None,
                  trusted_state=False):
         super(LxmlIgnoringString, self).__init__(data, configuration=configuration)

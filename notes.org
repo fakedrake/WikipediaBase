@@ -113,3 +113,28 @@
 ** Infobox
 
    The infobox class is ENORMOUS. Break it up a bit.
+
+** Objects creating other objects
+
+   In the =util= module we have some getter functions that abstract
+   the =VersionedItems= and subclasses but require that the caller has
+   manually kept a reference to their configuration.
+
+   Configurables that need to track of their configuration to create
+   child objects share at least some code. Abstrct that to a
+   superclass.
+** Fetchers caching by the cache manager
+
+   The fetcher class need not know how and when to cache. That's what
+   the cache manager is for. CachingSiteFetcher is just wierd.
+** Docstring the type signature of each method
+
+   99% of the bugs were type related. We need to have type signatures
+   clear to the reader.
+
+** Freeze configurations after setup
+
+   Configurations are meant to be immutable. Therefore their setup
+   phase should be completely separate to their usage phase. Create a
+   setup state for configurations during which refs are able to write
+   but not read from them, and then freeze all the dictionaries.

@@ -14,8 +14,8 @@ class Knowledgebase(Provider):
     """
 
     def __init__(self, configuration=configuration):
-
         super(Knowledgebase, self).__init__(configuration=configuration)
+        self.configuration = configuration
 
         self.fetcher = configuration.ref.fetcher.with_args(configuration=configuration)
         self.resolvers = configuration.ref.resolvers.with_args(configuration=configuration)
@@ -93,7 +93,7 @@ class Knowledgebase(Provider):
         Get all attributes of a symbol you cna find.
         """
 
-        ibox = get_infobox(symbol, self.fetcher)
+        ibox = get_infobox(symbol, configuration=self.configuration)
 
         ret = []
         for k, v in ibox.markup_parsed_iter():

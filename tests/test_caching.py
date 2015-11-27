@@ -34,6 +34,7 @@ class TestCaching(unittest.TestCase):
         self.cfg = configuration.child()
         self.cfg.ref.cache.manager = caching.DictCacheManager()
         self.CachingClass = A
+        self.cfg.freeze()
 
     def test_dict(self):
         a = self.CachingClass(1,2, self.cfg)

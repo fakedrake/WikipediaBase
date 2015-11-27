@@ -18,8 +18,8 @@ class ErrorResolver(BaseResolver):
         kb = get_knowledgebase()
 
         if 'wikipedia-person' in kb.get_classes(article) and \
-           attribute.lower() == 'death-date' and \
+           str(attribute).lower() == 'death-date' and \
            kb.get(article, 'birth-date'):
             return self._err("Currently alive")
 
-        return self._err("Unknown")
+        return self._err("Unknown '%s' of '%s'" % (attribute, article))

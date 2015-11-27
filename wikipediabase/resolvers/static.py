@@ -98,9 +98,7 @@ class StaticResolver(BaseResolver):
         url = article.url()
 
         # We may be hitting a mirror so return the original here.
-        url = url.raw().replace(
-            article.fetcher.url.strip('/'), "http://en.wikipedia.org")
-
+        url = url.raw()
         mirror_dir = article.fetcher.base.strip('/').split("/")
         org_dir = "wiki/index.php".split("/")
         for mirror, org in zip(mirror_dir, org_dir):

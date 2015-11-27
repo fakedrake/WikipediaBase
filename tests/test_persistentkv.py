@@ -25,7 +25,7 @@ class TestPersistentkv(unittest.TestCase):
         pass
 
     def test_non_persist(self):
-        ps = pkv.PersistentDict(DATABASE)
+        ps = pkv.DbmPersistentDict(DATABASE)
         ps['hello'] = "yes"
         ps["bye"] = "no"
         ps['\xe2\x98\x83snowman'.decode('utf8')] = "well"
@@ -34,17 +34,20 @@ class TestPersistentkv(unittest.TestCase):
         del ps
 
         # Test persistence
-        ps = pkv.PersistentDict(DATABASE)
+        ps = pkv.DbmPersistentDict(DATABASE)
         self.assertEqual(ps['hello'], "yes")
         self.assertEqual(ps['bye'], "no")
         self.assertEqual(ps['\xe2\x98\x83snowman'.decode('utf8')], "well")
         del ps
 
         # Test file dependency
-        os.remove(DATABASE)
-        ps = pkv.PersistentDict(DATABASE)
+        pkv.DbmPersistentDict(DATABASE).remove_db()
+        ps = pkv.DbmPersistentDict(DATABASE)
         with self.assertRaises(KeyError):
-            bo = ps['hello'] == "yes"
+            self.assertNotEqual(ps['test'], "yes")
+
+        with self.assertRaises(KeyError):
+            self.assertNotEqual(ps['hello'], "yes")
 
     def internal_test_database(self, pkv_type, filename):
         # TODO:
@@ -55,7 +58,7 @@ class TestPersistentkv(unittest.TestCase):
         pass
 
     def tearDown(self):
-        os.remove(DATABASE)
+        pkv.DbmPersistentDict(DATABASE).remove_db()
 
 if __name__ == '__main__':
     unittest.main()

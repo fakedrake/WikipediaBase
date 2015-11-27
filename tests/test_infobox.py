@@ -25,6 +25,12 @@ class TestInfobox(unittest.TestCase):
     def setUp(self):
         self.ibox = get_infobox("Led Zeppelin", configuration=testcfg)
 
+    def test_getter(self):
+        lzi = get_infobox("Led Zeppelin")
+        bci = get_infobox("Bill Clinton")
+        self.assertEqual(lzi.symbol.raw(), "Led Zeppelin")
+        self.assertEqual(bci.symbol.raw(), "Bill Clinton")
+
     def test_markup(self):
         self.assertEqual(self.ibox.markup_source()[:9], "{{Infobox")
 
@@ -38,7 +44,8 @@ class TestInfobox(unittest.TestCase):
 
     def test_rendered_keys(self):
         clinton = get_infobox("Bill Clinton", configuration=testcfg)
-        self.assertEqual(clinton.rendered_keys().get("birth_place"), "Born")
+        self.assertEqual(clinton.rendered_keys().get("birth_place"), "Born",
+                         clinton.html_source())
 
     def test_infobox_html_parsed(self):
         self.assertIn((u'Origin', u'London, England'),
@@ -65,13 +72,11 @@ class TestInfobox(unittest.TestCase):
     def test_html_keys(self):
         # XXX: bbc news was vandalized on the mirror, until this is
         # fixed use live just for this
-        bbccfg = testcfg.child()
-        bbccfg.ref.remote.url = 'http://wikipedia.org'
-        bbccfg.ref.remote.base = 'w/index.php'
-
-        bbc = get_infobox("BBC News", configuration=bbccfg)
-        self.assertEquals("Owner(s)", bbc.rendered_keys().get("owner"),
-                          bbc.rendered_keys())
+        bbc = get_infobox("BBC News", configuration=testcfg)
+        self.assertEquals("[[BBC]]", dict(bbc.markup_parsed()).get("owner"),
+                          list(bbc.html_parsed()))
+        self.assertEquals("BBC", bbc.get('Owner'))
+        self.assertEquals("BBC", bbc.get('owner'))
 
     def tearDown(self):
         pass

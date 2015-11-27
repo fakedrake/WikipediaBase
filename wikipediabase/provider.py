@@ -58,13 +58,11 @@ class Provider(Configurable):
 
     __metaclass__ = ProviderMeta
 
-    def __init__(self, resources={}, *args, **kwargs):
-        self._resources = {}
+    def __init__(self, resources=None, *args, **kwargs):
+        self._resources = resources or {}
 
         for k, f in self.meta_resources:
             self._resources[k] = getattr(self, f)
-
-        self._resources.update(resources)
 
     def provide(self, name, resource):
         """

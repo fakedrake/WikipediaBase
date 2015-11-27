@@ -92,5 +92,11 @@ class ApiRenderer(Caching):
                    contentmodel='wikitext')
         url = self.url_string()
         ufd = urllib.urlopen(url.raw(), urlencode(req))
-        # ret = json.loads(ufd.read())
-        return ufd.read()
+        resp = ufd.read()
+        try:
+            dic = json.loads(resp)
+        except ValueError:
+            import pdb; pdb.set_trace()
+            raise ValueError('Bad mediawiki API response: ' + resp)
+
+        return dic['parse']['text']['*']

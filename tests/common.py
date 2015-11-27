@@ -65,7 +65,7 @@ def download_all():
         f.source(p)
 
 # wikipediabase.fetcher.WIKIBASE_FETCHER.cache_file = data('pages.db')
-testcfg.ref.test.offline_cache = DbmPersistentDict(data('pages.dumbdbm'))
+testcfg.ref.test.offline_cache = DbmPersistentDict(data('pages.cache'))
 testcfg.ref.strings.xml_prune_tags = ['script', 'style', r'div.*navigation', 'head']
 
 # configuration.ref.remote.base = 'mediawiki/index.php'
@@ -78,3 +78,4 @@ testcfg.ref.remote.sandbox_title = "Wikipedia:Sandbox"
 
 testcfg.ref.cache.pages = dict()
 testcfg.ref.offline = False
+testcfg.freeze()

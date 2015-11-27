@@ -29,6 +29,12 @@ class EncodedDict(collections.MutableMapping, Configurable):
         self.transactions = 0
         self.sync_period = configuration.ref.cache.sync_period
 
+    def _encode_val(self, val):
+        """
+        Override to encode values coming in.
+        """
+        return self._encode_key(val)
+
     def _encode_key(self, key):
         """
         Override to encode keys coming in.
@@ -53,7 +59,7 @@ class EncodedDict(collections.MutableMapping, Configurable):
         if self.transactions % self.sync_period:
             self.sync()
 
-        self.db[self._encode_key(key)] = val
+        self.db[self._encode_key(key)] = self._encode_val(val)
 
     def __getitem__(self, key):
         return self.db[self._encode_key(key)]
@@ -137,15 +143,22 @@ class DbmPersistentDict(EncodedDict):
     """
 
     def __init__(self, filename=None, configuration=configuration):
-        self.filename = configuration.ref.cache.path.lens(lambda x: x + (filename or 'default.dbm'))
-        flag = 'w' if os.path.exists(filename) else 'n'
+        lens = lambda x: [x + (filename or 'default.dbm') + end
+                          for end in ['.dat', '.dir', '.bak']]
+        self.filenames = lens('')
+        if not filename.startswith('/'):
+            self.filenames = configuration.ref.cache.path.lens(lens)
 
+        exists = reduce(lambda ret, v: ret or os.path.exists(v),
+                        self.filenames, False)
+        flag = 'n' if exists else 'w'
         try:
             database = dbm.open(filename, flag)
         except:
             raise IOError("Failed dbm.open('%s', '%s')" % (filename, flag))
 
-        super(DbmPersistentDict, self).__init__(database, configuration=configuration)
+        super(DbmPersistentDict, self).__init__(database,
+                                                configuration=configuration)
 
     def __hash__(self):
         # Basically unique for the current run
@@ -162,6 +175,11 @@ class DbmPersistentDict(EncodedDict):
         # Unicodify
         return key.decode('unicode_escape')
 
+    def remove_db(self):
+        self.db = {}
+        for f in self.filenames:
+            if os.path.exists(f):
+                os.remove(f)
 
 class SqlitePersistentDict(EncodedDict):
     def __init__(self, filename, configuration=configuration):

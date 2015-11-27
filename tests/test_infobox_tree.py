@@ -13,8 +13,9 @@ try:
 except ImportError:
     import unittest
 
+from wikipediabase import util
 from wikipediabase import infobox_tree
-from .common import read_data
+from .common import read_data, testcfg
 
 MU = read_data("dummy_ibox_tree.txt")
 
@@ -42,7 +43,7 @@ class TestInfoboxTree(unittest.TestCase):
         ==== Head 4.1.1.1 ====
         Body 4.1.1.1
         """
-        self.ibx = infobox_tree.InfoboxSuperclasses()
+        self.ibx = infobox_tree.InfoboxSuperclasses(configuration=testcfg)
 
     def test_header_levels(self):
         self.assertEqual(list(self.ibx.header_levels("")), [(0, None, '')])
@@ -108,6 +109,10 @@ class TestInfoboxTree(unittest.TestCase):
     #                      3, msg=repr(tree['California State Legislature']))
     #     self.assertNotIn("party", tree["state gun laws"])
     #     self.assertIn(u'Other politics and government', tree["state gun laws"])
+    #
+    def test_company(self):
+        ibx = util.get_meta_infobox('Template:Infobox_company')
+        self.assertEqual(ibx.rendered_keys()['rating'], 'Rating')
 
     def tearDown(self):
         pass

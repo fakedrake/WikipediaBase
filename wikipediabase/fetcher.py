@@ -50,7 +50,8 @@ class WikipediaSiteFetcher(BaseFetcher):
     priority = 1
 
     def __init__(self, configuration=configuration):
-        self.xml_string = configuration.ref.strings.xml_string_class
+        self.xml_string = configuration.ref.strings.xml_string_class. \
+                          with_args(configuration=configuration)
         self.configuration = configuration
 
     def get_wikisource(self, xml_string, symbol):
@@ -66,7 +67,7 @@ class WikipediaSiteFetcher(BaseFetcher):
             return MarkupString(box.text())
 
         open("/tmp/err.html", "w").write(str(xml_string))
-        raise Exception("Couldn't get wikisource")
+        raise Exception("Couldn't get wikisource for '%s'" % str(symbol))
 
     def download(self, symbol, get=None):
         return self.urlopen(symbol, get=get).read()
@@ -118,7 +119,7 @@ class WikipediaSiteFetcher(BaseFetcher):
         html = self.download(symbol, get=get_request)
         xml = self.xml_string(html)
 
-        src = self.get_wikisource(xml, str(symbol))
+        src = self.get_wikisource(xml, symbol)
         if src is None:
             return None
 
@@ -145,6 +146,12 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
         online. The default is True.
         """
 
+        import lxml.html.clean
+        if not isinstance(configuration.ref.strings.lxml_cleaner.deref(),
+                          lxml.html.clean.Cleaner):
+            raise ValueError("Expected lxml.html.clean.Cleaner. Got %s" %
+                             self.cleaner.__class__)
+
         self.offline = configuration.ref.offline
         self.data = configuration.ref.cache.pages
 
@@ -153,7 +160,7 @@ class CachingSiteFetcher(WikipediaSiteFetcher):
     def redirect_url(self, symbol):
         key = "REDIRECT:" + str(symbol)
         if key in self.data:
-            ret = self.data[key]
+             return self.data[key]
 
         ret = super(CachingSiteFetcher, self).redirect_url(symbol)
         self.data[key] = ret

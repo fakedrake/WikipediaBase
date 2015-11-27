@@ -21,9 +21,12 @@ class UrlString(WebString):
         return ret
 
     def raw(self):
-        get = '&'.join("%s=%s" % (k, quote(unquote(v))) for k, v in self.get_data.iteritems())
-        ret = "%s?%s" % (self.url, get)
-        return ret
+        get = '&'.join("%s=%s" % (k, v) for k, v in self.get_data.iteritems())
+
+        if len(get):
+            return "%s?%s" % (self.url, get)
+
+        return self.url
 
     def literal(self):
         return self.raw()
@@ -49,7 +52,7 @@ class UrlString(WebString):
                 return None
 
             first = class_list[0].from_url(base, get,
-                                            configuration=configuration)
+                                           configuration=configuration)
             return first or \
                 search_subclasses(class_list[0].__subclasses__()) or \
                 search_subclasses(class_list[1:])
@@ -73,7 +76,8 @@ class PageUrlString(UrlString):
 
     @classmethod
     def from_url(cls, base, get, configuration=configuration):
-        title = get.get('title', None) or os.path.basename(url)
+        get = get or {}
+        title = get.get('title', None) or os.path.basename(base)
         symbol_cls = configuration.ref.strings.symbol_string_class.deref()
         if get.get('action') != 'edit' and not title.endswith(".php"):
             return cls(symbol_cls(title, configuration=configuration),
@@ -88,10 +92,11 @@ class EditUrlString(PageUrlString):
 
     @classmethod
     def from_url(cls, base, get, configuration=configuration):
-        title = get.get('title', None) or os.path.basename(url)
+        get = get or {}
+        title = get.get('title', None) or os.path.basename(base)
         symbol_cls = configuration.ref.strings.symbol_string_class.deref()
         if get.get('action') == 'edit' and not title.endswith(".php"):
-            return cls(symbol_cl(title, configuration=configuration),
+            return cls(symbol_cls(title, configuration=configuration),
                        configuration=configuration)
 
         return None
@@ -105,6 +110,7 @@ class ApiUrlString(UrlString):
 
     @classmethod
     def from_url(cls, base, get, configuration=configuration):
+        get = get or {}
         title = get.get('title', None) or os.path.basename(url)
         if title == configuration.ref.remote.api_base:
             return cls(title, configuration=configuration)

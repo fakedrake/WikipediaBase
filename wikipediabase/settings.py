@@ -45,7 +45,7 @@ class CurryingFactory(object):
 configuration.ref.offline = False
 
 # Wikipedia mirror
-# configuration.ref.remote.url = 'http://ashmore.csail.mit.edu:8080'
+# configuration.ref.remote.url = 'http://a`hmore.csail.mit.edu:8080'
 # configuration.ref.remote.base = 'mediawiki/index.php'
 # configuration.ref.remote.sandbox_title = "CSAIL_Wikipedia:Sandbox"
 
@@ -148,5 +148,6 @@ configuration.ref.object_cache.persistent_dict = VersionedItem(pkv.DbmPersistent
                                                                filename='default')
 
 # Note: For testing add child configurations insted of editing these
+configuration.freeze()
 
 __all__ = ['configuration']

@@ -69,22 +69,6 @@ class TestWebString(unittest.TestCase):
         self.assertEqual(next(lxmlstr.xpath('.//b')).text(),
                          'b bodyc body')
 
-    def test_url_string(self):
-        example_url = web_string.UrlString.from_url("example.com/title/a_title")
-        title_url = web_string.UrlString.from_url("example.com/title?title=b_title")
-        edit_url = web_string.UrlString.from_url("example.com/title?title=b_title&action=edit")
-        edit_notitle_url = web_string.UrlString.from_url("example.com/title?action=edit")
-        cfg = testcfg.child()
-        cfg.ref.remote.url = "example.com"
-        cfg.ref.remote.base = "base/index.php"
-        symbol_url = web_string.UrlString('sym', cfg)
-        self.assertEqual(symbol_url.raw(),
-                         "example.com/base/index.php?action=edit&title=sym")
-        self.assertEqual(str(example_url.symbol()), "a_title")
-        self.assertEqual(str(title_url.symbol()), "b_title")
-        self.assertEqual(str(edit_url.symbol()), "b_title")
-        self.assertEqual(edit_url.edit, True)
-
     def test_symbol_string(self):
         sym = web_string.SymbolString('The Beatles')
         url = web_string.SymbolString('the Beatles')

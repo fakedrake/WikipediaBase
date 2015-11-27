@@ -1,1 +1,1 @@
-import test_frontend
+import test_config

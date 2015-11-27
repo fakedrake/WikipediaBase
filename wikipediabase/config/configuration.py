@@ -1,19 +1,24 @@
 from random import random
 
-from .ref import ConfigRef
 
 class Configuration(object):
     """
-    A configuration is a key-value container that can have
-    children. The local config has precedence over children. A later
-    child gets prescedence over a previous child.
+    A transparent dict that falls back to parent configurations in
+    case of missing keys.
     """
 
     def __init__(self, local=None, parent=None):
         self._local = local or {}
         self._parent = parent
         self._id = random()
+        self.frozen = False
+
+        from .ref import ConfigRef
         self.ref = ConfigRef(self)
+
+    def freeze(self):
+        self.frozen = True
+        return self
 
     def __hash__(self):
         return self._id

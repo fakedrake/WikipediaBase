@@ -25,9 +25,9 @@ def get_attribute(x, y):
 class TestFrontend(unittest.TestCase):
 
     def setUp(self):
-        fakekb = Provider(resources={"get": get_attribute})
-        cfg = testcfg.child({'knowledgebase': fakekb})
-        self.simple_fe = Frontend(testcfg)
+        self.fakekb = Provider(resources={"get": get_attribute})
+        self.cfg = testcfg.child({'knowledgebase': self.fakekb}).freeze()
+        self.simple_fe = Frontend(self.cfg)
         self.fe = Frontend(configuration=testcfg)
 
     def test_simple(self):
@@ -37,7 +37,7 @@ class TestFrontend(unittest.TestCase):
     def test_unicode(self):
         date = self.fe.eval(
             '(get "wikipedia-military-conflict" "World War I" (:code "DATE"))')
-        self.assertEqual(date, '((:yyyymmdd 19140728))')
+        self.assertEqual(date, '((:yyyymmdd 19140728))', "Response was: " + date)
 
     def tearDown(self):
         pass

@@ -111,7 +111,7 @@ class TestConfig(unittest.TestCase):
                 return 0xdeadbeef
 
 
-        cfg = Configuration()
+        cfg = Configuration().freeze()
         a = A(cfg)
 
         with self.assertRaises(KeyError):
@@ -124,7 +124,9 @@ class TestConfig(unittest.TestCase):
         self.assertNotIn('hello', a.local_config_scope)
         self.assertEqual(a.hello, 2)
 
+        cfg = cfg.child()
         cfg.ref.hello = 3
+        cfg.freeze()
         self.assertEqual(a.hello, 2,
                          "The attribute is no longer a reference to config")
 
@@ -139,28 +141,28 @@ class TestConfig(unittest.TestCase):
 
     def test_lenses(self):
         # Multiple lenses can be stacked
-        self.assertEqual(Configuration({'hello': 1}).ref.hello.lens(lambda x: x+1).lens(lambda x: x+2).deref(), 4)
+        cfg = Configuration({'hello': 1}).freeze()
+        self.assertEqual(cfg.ref.hello.lens(lambda x: x+1).lens(lambda x: x+2).deref(), 4)
 
         # Lenses do not affect the ability to create further
         # references
-        cfg = Configuration({'hello': 1, 'hi': {'there': 0}})
+        cfg = Configuration({'hello': 1, 'hi': {'there': 0}}).freeze()
         lens1 = cfg.ref.hi.there.lens(lambda x: x+1)
         lens2 = lens1.lens(lambda x: x+2)
         self.assertEqual(lens2.deref(), 3)
 
         # Non lensed stuff still works
-        self.assertEqual(Configuration({'hello': 1}).ref.hello.deref(), 1)
+        self.assertEqual(Configuration({'hello': 1}). \
+                         freeze().ref.hello.deref(), 1)
 
         # Lens closure with extra args
-        conf = Configuration({'num': 1, 'subtract': 1})
+        conf = Configuration({'num': 1, 'subtract': 1}).freeze()
         self.assertEqual((conf.ref.num & 1).lens(lambda n, s: n-s).deref(), 0)
 
     def test_multilenses(self):
-        cfg = Configuration({'a': 1, 'b':2, 'c':3})
+        cfg = Configuration({'a': 1, 'b':2, 'c':3}).freeze()
         multilens = (cfg.ref.a & cfg.ref.b & cfg.ref.c).lens(lambda a, b, c: a+b+c)
         self.assertEqual(multilens.deref(), 6)
-        cfg.ref.a = 11
-        self.assertEqual(multilens.deref(), 16)
 
     def test_versioned_items(self):
         def constructor(x):
@@ -207,6 +209,8 @@ class TestConfig(unittest.TestCase):
 
         # We can configure configurables
         cfg.ref.item = item3
+        cfg.freeze()
+
         a = A()
         a.item = cfg.ref.item
         self.assertEqual(a.item, "Item:second")
@@ -222,20 +226,30 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(a.item, "Item:second")
         self.assertEqual(constructor.times_called, 4)
 
-        # And when we change the config to a non-versioned item that
-        # is handled accordingly
-        cfg.ref.item = 'hello'
-        self.assertEqual(a.item, "hello")
+        # Get versioned from other configs
+        child = cfg.child()
+        child.ref.item = cfg.ref.item.with_args('third').deref()
+        child.freeze()
+        a.deep = child.ref.item
+        self.assertEqual(a.deep, "Item:third")
         self.assertEqual(constructor.times_called, 4)
 
-        # A 'downside' of versioned items is that the configurable now
-        # has a reference to an item that is not directly accessible
-        # by the configuration. Therefore changing the configuration
-        # will have no effect on the configurable's percieved
-        # state.
-        cfg.ref.item = item
-        self.assertEqual(a.item, "Item:second")
-        self.assertEqual(constructor.times_called, 4)
+        ### Configurations are not mutable anymore.
+        # # And when we change the config to a non-versioned item that
+        # # is handled accordingly
+        # cfg.ref.item = 'hello'
+        # self.assertEqual(a.item, "hello")
+        # self.assertEqual(constructor.times_called, 4)
+
+        # # A 'downside' of versioned items is that the configurable now
+        # # has a reference to an item that is not directly accessible
+        # # by the configuration. Therefore changing the configuration
+        # # will have no effect on the configurable's percieved
+        # # state.
+        # cfg.ref.item = item
+        # self.assertEqual(a.item, "Item:second")
+        # self.assertEqual(constructor.times_called, 4)
+        ###
 
         # For this reason, and in general to avoid state handling and
         # sharing, the user is strongly discouraged from editing the
@@ -243,13 +257,13 @@ class TestConfig(unittest.TestCase):
         # children and create from scratch. (A case where the
         # configuration is passed to the configurable would be much
         # more demostrative)
-        cfg1 = cfg.child()
+        cfg1 = cfg.child().freeze()
         a1 = A()
         self.assertEqual(a.item, "Item:second")
         a1.item = cfg1.ref.item.with_args('first')
         self.assertEqual(a.item, "Item:second")
         self.assertEqual(a1.item, "Item:first")
-        self.assertEqual(constructor.times_called, 4)
+        self.assertEqual(constructor.times_called, 5)
 
     def tearDown(self):
         pass

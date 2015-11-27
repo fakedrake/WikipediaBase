@@ -146,7 +146,6 @@ class Infobox(Caching):
         txt = self.fetcher.source(self.symbol).raw()
         return self._braces_markup(txt)
 
-    @cached('_html')
     def html_source(self):
         """
         A div with all the infoboxes in it.

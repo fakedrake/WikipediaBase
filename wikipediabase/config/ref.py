@@ -1,4 +1,5 @@
-from wikipediabase.config.item import BaseItem, VersionedItem
+from .configuration import Configuration
+from .item import BaseItem, VersionedItem
 
 class AttributeFallback(object):
     """
@@ -59,59 +60,23 @@ class AttributeFallback(object):
         raise LookupError("'%s' not found in %s." % (attr, repr(self)))
 
 
-class ConfigRef(AttributeFallback):
-    """
-    Convenience class to provide configurations that change
-    dynamically. Basically a reference to a configuration ref that is
-    dereferenced on the fly. To evaluate something over the return
-    value (eg. clear whitespaces) each time the ref is taken use
-    lenses.
-    """
-
-    _config = None
-    _path = None
-    _children = None
-
-    def __init__(self, config=None, path=None):
+class WithArgsGenMixin(object):
+    def with_args(self, *args, **kwargs):
         """
-        Create a reference to a member of a config object. The lens attribute
-        """
-        self._config = config
-        self._path = path or []
-        self._children = {}
-
-    def _getattr_fallback(self, key):
-        """
-        Used as the
+        For versioned items only. Apply arguments to the versioned
+        item. This creates closures instead of explicitly holding the
+        arguments.
         """
 
-        return ConfigRef(config=self._config, path=self._path + [key])
+        def maybe_with_args(x):
+            if isinstance(x, VersionedItem):
+                return x.with_args(*args, **kwargs)
 
-    def _setattr_fallback(self, key, val):
-        """
-        Realize the reference path so far, creating empty dicts where
-        necessary and set the value to the final key.
-        """
+            return x
 
-        tip = self._config
-        for k in self._path:
-            if k not in tip.keys():
-                tip[k] = {}
+        return ShallowLensConfigRef(self, maybe_with_args)
 
-            tip = tip[k]
-
-        tip[key] = val
-
-
-    def __and__(self, argument):
-        """
-        Return a multilens that will pass argument as an extra argument to
-        the lens. Argument will be derefernced if it is a reference
-        before being passed.
-        """
-
-        return MultiLensConfigRef([self, argument])
-
+class LensGenMixin(object):
     def lens(self, lens, *args, **kw):
         """
         Return a ConfigRef that when checked will use the provided
@@ -148,23 +113,77 @@ class ConfigRef(AttributeFallback):
 
         return LensConfigRef(self, closure)
 
-    def with_args(self, *args, **kwargs):
+    def __and__(self, argument):
         """
-        For versioned items only. Apply arguments to the versioned item.
+        Return a multilens that will pass argument as an extra argument to
+        the lens. Argument will be derefernced if it is a reference
+        before being passed.
         """
-        def maybe_with_args(x):
-            if isinstance(x, VersionedItem):
-                return x.with_args(*args, **kwargs)
 
-            return x
+        return MultiLensConfigRef([self, argument])
 
-        return ShallowLensConfigRef(self, maybe_with_args)
+
+class ConfigRef(AttributeFallback, WithArgsGenMixin, LensGenMixin):
+    """
+    Convenience class to provide configurations that change
+    dynamically. Basically a reference to a configuration ref that is
+    dereferenced on the fly. To evaluate something over the return
+    value (eg. clear whitespaces) each time the ref is taken use
+    lenses.
+    """
+
+    _config = None
+    _path = None
+    _children = None
+
+    def __init__(self, config=None, path=None):
+        """
+        Create a reference to a member of a config object. The lens attribute
+        """
+        self._config = config
+        self._path = path or []
+        self._children = {}
+
+    def _getattr_fallback(self, key):
+        """
+        Used as the
+        """
+
+        return ConfigRef(config=self._config, path=self._path + [key])
+
+    def _setattr_fallback(self, key, val):
+        """
+        We can't realize the reference path so far, creating empty dicts
+        where necessary and set the value to the final key because
+        this way we may end up mutating a parent configuration. We
+        need to make sure we are mutating only the local config and no
+        parents.
+
+        However this way we may be completely whiting out parents if
+        we just put dicts in there. To fix this we will be putting as
+        children configurations.
+        """
+
+        if self._config.frozen:
+            raise TypeError("Can't set to frozen dict. Create child.")
+
+        tip = self._config      # :: Configuration
+        for k in self._path:
+            if k not in tip._local.keys():
+                tip[k] = Configuration(local={}, parent=tip.get(k, None))
+
+            tip = tip[k]
+
+        tip[key] = val
 
     def deref(self, eval_items=True):
         """
         Dereference the config ref that acts like a pointer. If it's a
         lazy ref evaluate it first.
         """
+
+        if not self._config.frozen:
+            raise TypeError("Freeze the underlying config before using.")
 
         # Each config ref knows it's path and the config that path
         # refers to so just follow the path starting from the config
@@ -218,9 +237,9 @@ class LensConfigRef(ConfigRef):
 
 class ShallowLensConfigRef(LensConfigRef):
     """
-    For internal use. Like a lens only it does not deref before
-    applying lens. This is useful if our lens function acts on items
-    instead of their underlying values.
+    For internal use. Like a lens only it does not eval the underlying
+    item before applying lens. This is useful if our lens function
+    acts on items instead of their underlying values.
 
     Note the case where the underlying ConfigItem changes and the lens
     will now raise an error. This case happens here:
@@ -242,7 +261,6 @@ class ShallowLensConfigRef(LensConfigRef):
             return item.eval()
 
         return item
-
 
 class MultiLensConfigRef(ConfigRef):
     """
