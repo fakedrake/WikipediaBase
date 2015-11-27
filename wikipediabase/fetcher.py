@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import logging
+import os
 import re
 import redis
 import requests
-import logging
 
 from wikipediabase.dbutil import get_markup
 from wikipediabase.log import Logging
