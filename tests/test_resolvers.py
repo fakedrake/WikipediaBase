@@ -15,14 +15,11 @@ except ImportError:
 
 import logging
 
+from tests.examples import *
 from wikipediabase import resolvers
 from wikipediabase.frontend import Frontend
-
-from wikipediabase.util import get_knowledgebase
-
+from wikipediabase.knowledgebase import KnowledgeBase
 from wikipediabase.resolvers.person import first_paren
-
-from tests.examples import *
 
 ARTICLE_BODY = u"""A ninja (忍者?) or shinobi (忍び?) was a covert agent or mercenary
 in feudal Japan. The functions of the ninja included espionage,
@@ -49,7 +46,7 @@ class TestResolvers(unittest.TestCase):
     def setUp(self):
         self.log = logging.getLogger("resolver-testing")
         self.fe = Frontend()
-        self.kb = get_knowledgebase()
+        self.kb = KnowledgeBase()
         self.term_resolver = resolvers.TermResolver()
 
     def test_word_count(self):
@@ -98,7 +95,7 @@ class TestResolvers(unittest.TestCase):
     def test_error_resolver(self):
         alive_err = '((:error attribute-value-not-found :reply '\
             '"Currently alive"))'
-        err = self.kb.get('wikipedia-president', 'Bill Clinton', 'death-date')
+        err = self.kb.get('wikibase-person', 'Bill Clinton', 'death-date')
         self.assertEqual(str(err), alive_err)
         err = self.kb.get('wikibase-person', 'Barack Obama', 'death-date')
         self.assertEqual(str(err), alive_err)

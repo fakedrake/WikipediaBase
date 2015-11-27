@@ -13,9 +13,7 @@ try:
 except ImportError:
     import unittest
 
-import common
 from wikipediabase import renderer
-from wikipediabase.util import fromstring
 
 class TestRenderer(unittest.TestCase):
 

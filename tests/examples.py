@@ -33,7 +33,6 @@ WIKI_EXAMPLES = [
      '((:yyyymmdd 19460819))'),
     ('(get "wikibase-person" "Bill Clinton" "BIRTH-DATE")',
      '((:yyyymmdd 19460819))'),
-
     ('(get "wikipedia-president" "Bill Clinton" "BIRTH-DATE")',
      '((:yyyymmdd 19460819))'),
     ('(get "wikibase-person" "Klaus Barbie" "BIRTH-DATE")',
@@ -69,12 +68,18 @@ WIKI_EXAMPLES = [
     ('(get "wikibase-person" "Barack Obama" "BIRTH-DATE")',
      '((:yyyymmdd 19610804))'),
     ('(get "wikibase-person" "Barack Obama" "DEATH-DATE")',
-     # 'nil'),
+     '((:error attribute-value-not-found :reply "Currently alive"))'),
+    ('(get "wikibase-person" "Bill Clinton" "BIRTH-DATE")',
+     '((:yyyymmdd 19460819))'),
+    ('(get "wikibase-person" "Bill Clinton" "DEATH-DATE")',
+     '((:error attribute-value-not-found :reply "Currently alive"))'),
+    ('(get "wikibase-person" "Adele" "BIRTH-DATE")',
+     '((:yyyymmdd 19880505))'),
+    ('(get "wikibase-person" "Adele" "DEATH-DATE")',
      '((:error attribute-value-not-found :reply "Currently alive"))'),
     ('(get "wikibase-person" "Jamie Glover" "BIRTH-DATE")',
      '((:yyyymmdd 19690710))'),
     ('(get "wikibase-person" "Jamie Glover" "DEATH-DATE")',
-     #  'nil'),
      '((:error attribute-value-not-found :reply "Currently alive"))'),
     ('(get "wikibase-person" "John Lennon" "BIRTH-DATE")',
      '((:yyyymmdd 19401009))'),
@@ -209,10 +214,12 @@ DEGENERATE_EXAMPLES = [
     ('(get "wikibase-term" "2000–01 Northampton Town F.C. season" (:calculated "NUMBER"))',
      '((:error attribute-value-not-found :message "Could not calculate NUMBER: the article does not have a first paragraph"))'),
 
-    ('(get "wikipedia-person" "Barack Obama" "DEATH-DATE")',
+    ('(get "wikibase-person" "Barack Obama" "DEATH-DATE")',
      '((:error attribute-value-not-found :reply "Currently alive"))'),
-    ('(get "wikipedia-person" "Barack Obama" "DEATH-PLACE")',
-     '((:error attribute-value-not-found :reply "Currently alive"))'),
+
+    # TODO: should DEATH-PLACE be a calculated attributes of wikibase-person?
+    ('(get "wikipedia-officeholder" "Barack Obama" "DEATH-PLACE")',
+     '((:error attribute-value-not-found :message "Unknown"))'),
 
     # infobox defined outside the article, in its own template
     ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',

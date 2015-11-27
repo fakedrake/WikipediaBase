@@ -5,10 +5,11 @@ import logging
 
 from edn_format import loads, Keyword, Symbol
 
-from wikipediabase.telnet import TelnetServer
+from wikipediabase.knowledgebase import KnowledgeBase
 from wikipediabase.lispify import lispify
 from wikipediabase.provider import Acquirer, provide
-from wikipediabase.util import decode, get_knowledgebase
+from wikipediabase.telnet import TelnetServer
+from wikipediabase.util import decode
 
 
 
@@ -18,8 +19,7 @@ class Frontend(Acquirer):
         super(Frontend, self).__init__(*args, **kwargs)
 
         if 'providers' not in kwargs:
-            self.knowledgebase = knowledgebase or \
-                get_knowledgebase(frontend=self)
+            self.knowledgebase = knowledgebase or KnowledgeBase(frontend=self)
 
         logging.getLogger("edn_format").setLevel(logging.WARNING)
 

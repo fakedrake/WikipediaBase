@@ -6,7 +6,7 @@ import overlay_parse
 
 from wikipediabase.article import get_article
 from wikipediabase.classifiers import InfoboxClassifier
-from wikipediabase.lispify import lispify
+from wikipediabase.lispify import lispify, lispify_error
 from wikipediabase.provider import provide
 from wikipediabase.resolvers import InfoboxResolver
 from wikipediabase.resolvers.base import BaseResolver
@@ -87,7 +87,13 @@ class PersonResolver(BaseResolver):
 
     @provide(name='death-date')
     def death_date(self, symbol, _):
-        return find_date(symbol, 'death-date')
+        death_date = find_date(symbol, 'death-date')
+        if death_date:
+            return death_date
+        else:
+            if self.birth_date(symbol, _):
+                return lispify_error('attribute-value-not-found',
+                                     reply='Currently alive')
 
     @provide(name='gender')
     def gender(self, symbol, _):

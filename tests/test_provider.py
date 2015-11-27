@@ -13,14 +13,12 @@ try:
 except ImportError:
     import unittest
 
-import common
 from wikipediabase.provider import Acquirer, Provider
 
 
 class TestProvider(unittest.TestCase):
 
     def setUp(self):
-        # WTF: how does knowledge base get in here??
         self.aq = Acquirer()
         self.double = lambda x: 2 * x
         self.prov = Provider(
