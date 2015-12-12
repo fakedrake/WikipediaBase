@@ -19,8 +19,8 @@ logging.basicConfig(filename='symbols.log', level=logging.DEBUG)
 logging.getLogger("peewee").setLevel(logging.WARNING)
 
 # TODO: change paths; pass in data_dir in sys.argv
-symbols_f = open('../data/wikibase-term-foo-symbols', 'w')
-synonyms_f = open('../data/wikibase-term-foo-generated-synonyms', 'w')
+symbols_f = open('../data/wikibase-term-symbols', 'w')
+synonyms_f = open('../data/wikibase-term-generated-synonyms', 'w')
 
 latest_symbols = LRUCache(100)
 
