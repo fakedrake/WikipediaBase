@@ -72,9 +72,10 @@ class Fetcher(BaseFetcher):
         to True, the markup will be fetched from live wikipedia.org
 
         When tests are ran on TravisCI, we always want to use live data. We
-        check if Travis is running tests by looking at the TRAVIS env variable.
+        check if Travis is running tests by looking at the
+        WIKIPEDIABASE_FORCE_LIVE env variable.
         """
-        if force_live or os.getenv('TRAVIS', '') == 'true':
+        if force_live or os.getenv('WIKIPEDIABASE_FORCE_LIVE', '') == 'true':
             params = {'action': 'raw', 'title': symbol}
             page = self.urlopen(self.url, params)
 

@@ -65,6 +65,8 @@ Tests can then be run with:
 
     python setup.py test
 
+_Note: tests assume that you have set up the backend. To fetch from wikipedia.org instead of reading from the database, set the env variable `WIKIPEDIABASE_FORCE_LIVE=true`. This is strongly discouraged if you plan to use or contribute to WikipediaBase, as performance will be slow._
+
 ## API documentation
 
 Generate the documentation with:
