@@ -22,7 +22,7 @@ class TestSortSymbols(unittest.TestCase):
         symbols = ["Cake (TV series)", "Cake (firework)", "Cake (2005 film)",
                    "Cake", "Cake (band)", "Cake (advertisement)", "The Cake"]
 
-        expected = ["Cake (band)", "Cake (advertisement)", "Cake",
+        expected = ["Cake (band)", "Cake", "Cake (advertisement)",
                     "Cake (TV series)", "The Cake", "Cake (2005 film)",
                     "Cake (firework)"]
 
