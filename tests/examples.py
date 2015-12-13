@@ -224,6 +224,10 @@ DEGENERATE_EXAMPLES = [
     # infobox defined outside the article, in its own template
     ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
      ('((:yyyymmdd 19140728))')),
+
+    # Ignore the sup tag. There is no way to represent it otherwise.
+    ('(get "wikipedia-sea" "Black Sea" (:code "AREA"))',
+     '((:html "436,402 km<sup>2</sup> (168,500 sq mi)"))')
 ]
 
 WIKI_EXAMPLES_NOT = [

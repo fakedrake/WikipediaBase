@@ -734,18 +734,23 @@ class InfoboxUtil:
         Given the infobox html, return a list of (key, value) pairs.
         """
 
+        ignoring_tags = ['ul', 'li', 'b', 'em', 'i', 'small', 'strong',
+                         'sub', 'sup', 'ins', 'del', 'mark',]
         def escape_lists(val):
             if val is None:
                 return u""
 
-            return re.sub(
-                r"<\s*(/?\s*(br\s*/?|/?ul|/?li))\s*>", "&lt;\\1&gt;", val)
+            regex = r"<\s*(/?\s*(br\s*/?|/?%s))\s*>" % \
+                    r"|/?".join(ignoring_tags)
+
+            return re.sub(regex , "&lt;\\1&gt;", val)
 
         def unescape_lists(val):
             if val is None:
                 return u""
 
-            val = re.sub(r"&lt;(/?\s*(br\s*/?|ul|li))&gt;", "<\\1>", val)
+            val = re.sub(r"&lt;(/?\s*(br\s*/?|%s))&gt;" % \
+                         r"|".join(ignoring_tags), "<\\1>", val)
             return val
 
         soup = fromstring(html_source)
