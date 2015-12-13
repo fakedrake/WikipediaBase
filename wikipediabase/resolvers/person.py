@@ -40,12 +40,18 @@ def first_paren(text):
     for s, e in iter_paren(text, "."):
         return text[s:e]
 
+def remove_annotations(text):
+    return re.sub(r'\[[0-9]+\]', '', text)
 
 def find_date(symbol, date_type):
     """
     Resolve birth and death dates from infoboxes, or, if it is not found,
     from the first paragraph
     """
+
+    def missing(ls):
+        return sum([x==0 for x in ls])
+
     for cls in InfoboxClassifier().classify(symbol):
         ibox_date = InfoboxResolver().resolve_infobox(cls, symbol, date_type)
         if ibox_date is not None:
@@ -54,20 +60,30 @@ def find_date(symbol, date_type):
     # TODO: look at categories for dates
 
     article = get_article(symbol)
-    text = article.paragraphs()[0]  # the first paragraph
+    text = remove_annotations(article.paragraphs()[0])  # the first paragraph
     for s, e in iter_paren(text, "."):
         paren = text[s:e]
 
-        for ovl in overlay_parse.dates.just_ranges(paren):
-            if date_type == 'birth-date':
-                return lispify(ovl[0], typecode='yyyymmdd')
-            elif date_type == 'death-date':
-                return lispify(ovl[1], typecode='yyyymmdd')
+        # The date range with the least missing values
+        nil = ((0,0,0),(0,0,0))
+        best_rng = reduce(lambda (x1,x2), (y1,y2): (x1,x2) if \
+                          missing(x1)+missing(x2) <= missing(y1)+missing(y2)
+                          else (y1,y2),
+                          overlay_parse.dates.just_ranges(paren),
+                          nil)
 
-        # If there is just one date and we need a birth date, get that
+        if best_rng is not nil:
+            if date_type == 'birth-date':
+                return lispify(best_rng[0], typecode='yyyymmdd')
+            elif date_type == 'death-date':
+                return lispify(best_rng[1], typecode='yyyymmdd')
+
         if date_type == 'birth-date':
-            for ovl in overlay_parse.dates.just_dates(paren):
-                return lispify(ovl, typecode='yyyymmdd')
+            nil = (0,0,0)
+            best_date = reduce(lambda x, y: x if missing(x) <= missing(y) else y,
+                               overlay_parse.dates.just_dates(paren), nil)
+            if best_date is not nil:
+                return lispify(best_date, typecode='yyyymmdd')
 
 
 class PersonResolver(BaseResolver):

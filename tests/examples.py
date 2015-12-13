@@ -224,6 +224,11 @@ DEGENERATE_EXAMPLES = [
     # infobox defined outside the article, in its own template
     ('(get "wikipedia-military-conflict" "World War I" (:code "DATE"))',
      ('((:yyyymmdd 19140728))')),
+
+    ('(get "wikibase-person" "Wolfgang Amadeus Mozart" (:code "BIRTH-DATE"))',
+     '((:yyyymmdd 17560127))'),
+    ('(get "wikibase-person" "Ludwig van Beethoven" (:CODE "BIRTH-DATE"))',
+     '((:yyyymmdd 17701217))')
 ]
 
 WIKI_EXAMPLES_NOT = [
