@@ -732,6 +732,13 @@ class InfoboxUtil:
     def parse_infobox_html(html_source):
         """
         Given the infobox html, return a list of (key, value) pairs.
+
+        Values may contain html that makes sense only in the context
+        of the infobox: inner <td> tags, <span> without the
+        corresponding css, and unqualified links. This list may or may
+        not be comprehensive, so it is safer to only allow text
+        formatting tags, lists, and line breaks and throw away
+        everything else.
         """
 
         ignoring_tags = ['ul', 'li', 'b', 'em', 'i', 'small', 'strong',
