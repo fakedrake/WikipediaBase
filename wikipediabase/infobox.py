@@ -735,22 +735,31 @@ class InfoboxUtil:
 
         Values may contain html that makes sense only in the context
         of the infobox: inner <td> tags, <span> without the
-        corresponding css, and unqualified links. This list may or may
-        not be comprehensive, so it is safer to only allow text
-        formatting tags, lists, and line breaks and throw away
-        everything else.
+        corresponding css, images, icons, and unqualified links. This list
+        may or may not be comprehensive, so it is safer to only allow
+        text formatting tags, lists, and line breaks and throw away
+        everything else. Notably we throw away all anchor tags <a>.
         """
 
         ignoring_tags = ['ul', 'li', 'b', 'em', 'i', 'small', 'strong',
-                         'sub', 'sup', 'ins', 'del', 'mark',]
+                         'ol', 'sub', 'sup', 'ins', 'del', 'mark']
+
+        # Some tags' attributes contain very crucial
+        # information. Ideally we would want to filter those too.
+        ignoring_tags_with_attrs = ['abbr']
+
         def escape_lists(val):
             if val is None:
                 return u""
 
-            regex = r"<\s*(/?\s*(br\s*/?|/?%s))\s*>" % \
-                    r"|/?".join(ignoring_tags)
+            attr_block_regex = r"<\s*(/?\s*(br\s*/?|/?%s))\s*.*?>" % \
+                               r"|/?".join(ignoring_tags)
+            attr_allow_regex = r"<\s*(/?\s*%s.*?)\s*>" % \
+                               r"|/?".join(ignoring_tags_with_attrs)
 
-            return re.sub(regex , "&lt;\\1&gt;", val)
+            val = re.sub(attr_block_regex , "&lt;\\1&gt;", val)
+            val = re.sub(attr_allow_regex , "&lt;\\1&gt;", val)
+            return val
 
         def unescape_lists(val):
             if val is None:
@@ -759,6 +768,19 @@ class InfoboxUtil:
             val = re.sub(r"&lt;(/?\s*(br\s*/?|%s))&gt;" % \
                          r"|".join(ignoring_tags), "<\\1>", val)
             return val
+
+        def normalize_text(val):
+            """
+            Strip annotations (eg [2] or <sup>[2]</sup>) as they are out of
+            context in a response, reduce series of spaces to single
+            spaces to make the text more dense and strip leading and
+            trailing spaces.
+            """
+
+            val = re.sub(r'\[[0-9]+\]', '', val)
+            val = re.sub(r'<sup>\s*</sup>', '', val)
+            val = re.sub(r'\s+', ' ', val)
+            return val.strip()
 
         soup = fromstring(html_source)
         # Render all tags except <ul> and <li> and <br>. Escape them
@@ -789,7 +811,9 @@ class InfoboxUtil:
                 # replace nbsp (unicode code 160) with space
                 val = val.replace(unichr(160), u' ')
 
-                val = unescape_lists(val.strip())
+                val = unescape_lists(val)
+                val = normalize_text(val)
+
                 tpairs.append((key, val))
 
         return tpairs

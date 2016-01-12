@@ -33,6 +33,30 @@ class TestInfobox(unittest.TestCase):
         ibox = get_rendered_infoboxes("AC/DC")[0]
         self.assertIn(("Origin", "Sydney, Australia"), ibox._html_items())
 
+    def test_tag_keeping(self):
+        ibox = dict(get_rendered_infoboxes("Black Sea")[0]._html_items())
+        self.assertEqual(ibox['Water volume'],
+                      u'547,000 km<sup>3</sup> (131,200 cu mi)',
+                      "Avoid stripping <sup> tags.")
+
+    def test_tag_stripping(self):
+        ibox = dict(get_rendered_infoboxes("Manchester")[0]._html_items())
+        self.assertEqual(ibox['Website'],
+                         u'www.manchester.gov.uk',
+                         "Avoid passing along links.")
+
+    def test_tag_annotation_stripping(self):
+        ibox = dict(get_rendered_infoboxes("Manchester")[0]._html_items())
+        self.assertEqual(ibox["GDP"], u'US$ 92.3 billion')
+        self.assertIn("Paul Murphy", ibox.values())
+
+        ibox = dict(get_rendered_infoboxes("Bill Clinton")[0]._html_items())
+        self.assertEqual(ibox['Religion'], u'Baptist (formerly Southern Baptist)')
+        self.assertEqual(ibox['Spouse(s)'],
+                         u'Hillary Rodham (<abbr title="married">m.</abbr>' +
+                         u' <abbr title="October 11, 1975">1975</abbr>)',
+                         'Keep abbreviations with their attributes.')
+
     def test_attributes(self):
         churchill = get_infoboxes("Winston Churchill")[0]
         self.assertIn("death-place", churchill.attributes)
